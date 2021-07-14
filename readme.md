@@ -1,2 +1,3 @@
-# Effectidor\ https://effectidor.tau.ac.il/
+# Effectidor
+https://effectidor.tau.ac.il/
 
