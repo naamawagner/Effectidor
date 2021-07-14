@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Eff3ctidor</title>
+
+    <link rel="shortcut icon" type="image/x-icon" href="/pics/logo.gif" />
+
+    <meta charset="utf-8">
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
+    
+    <!--files for the select tag-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/i18n/defaults-*.min.js"></script>
+
+    <!--files for the checkbox tag (toggle)-->
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
+    <link rel="stylesheet" href="css/general.css">
+    <script src="form_handler.js"></script>
+</head>
+<body>
+    <nav role="navigation" class="navbar navbar-fixed-top">
+        <div class="jumbotron" id="jumbo">
+            <div class="container">            
+                <div class="row" id="title-row" align="center">
+                    <div class="col-md-1">
+                    </div>
+                    <div class="col-md-10" align="center">
+                        <!--<span id="server-title">Effectidor</span><br>-->
+                        <img src="pics/logo.gif" id="nav_bar_image" style="height: 120px;"><br>
+                        <span id="sub-title">A machine learning based type 3 effectors predictor</span>
+                        <br><br>
+                    </div>
+                </div>
+            </div>       
+        </div>
+        <div class="jumbotron" id="nav_container">
+                <div class="row">
+                    <div style="display:table; margin:0 auto;">
+                        <ul class="nav navbar-nav" id="menu-nav">
+                            <li class="active" style="display:table-cell; padding: 0px 10px;">
+                                <a href="index.html">Home</a>
+                            </li>
+                            <li style="display:table-cell; padding: 0px 10px;">
+                                <a href="FAQ.html">FAQ</a>
+                            </li>
+                            <li style="display:table-cell; padding: 0px 10px;">
+                                <a href="data.html">Data</a>
+                            </li>
+                            <li style="float: right">
+                                <a href="https://english.tau.ac.il/" id="tau-link" target="_blank">
+                                    <img src=pics/TAU_LOGO.png id="tau-logo">
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+        </div>
+    </nav>
+    <div id="behind-nav-bar-results">
+    </div>
+    <div class="container">
+    <div class="col-md-10">
+        <div class="container" style="width: 100%">
+        <br><br>
+            <div class="form-group" id="short_description">
+                <p align="justify">Effectidor allows running a full classification pipline to find uncharacterized type 3 effectors in an input bacterium.
+                                    It produces both graphical and tabular analysis of the effectors repertoire in the input bacterium.
+                                    Example output can be found <b><a href="/results/example_run/output.html" target="_blank">here</a></b>.</p>
+            </div>
+            <br>
+        </div>
+        <div class="col-md-1">
+        </div>
+    
+    <div class="container">
+        <form ID="EFFECTIDOR_form" method="post" action="https://effectidor.tau.ac.il/cgi-bin/webserver_cgi.py" ENCTYPE="multipart/form-data" onsubmit="return validate_read_files()">
+            <div>
+                <label for="ORFs">Select an input ORFs file: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info1">
+                                            <span class="glyphicon glyphicon-question-sign"></span>
+                                        </button></label><br>
+                <label class="btn btn-default btn-file">
+                <input type="file" id="ORFs" name="ORFs" required>
+                </label>
+            </div>
+            <br>
+            <div>
+                <label for="effectors">Select an input effectors file: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info2">
+                                            <span class="glyphicon glyphicon-question-sign"></span>
+                                        </button></label><br>
+                <label class="btn btn-default btn-file">
+                <input type="file" id="effectors" name="effectors">
+                </label>
+            </div>
+            <br>
+            <div class="form-group row">
+            <div class="col-md-3">
+                <label for="email">E-mail (optional):</label><br>
+                <input type="email" id="email" name="email" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label for="job_title">Job title (optional):</label><br>
+                <input type="text" id="job_title" name="job_title" class="form-control">
+            </div>
+            </div>
+            <div>
+                <label for="confirm_email"></label>
+                <input type="hidden" id="confirm_email" name="confirm_email">
+            </div>
+            <button type="button" class="btn btn-warning" id="advanced_button" onclick="openAdvanced()"><span class="glyphicon glyphicon-cog"></span>&nbsp; Advanced options</button>
+                <div id="advanced" style="display:none;">
+                    <div class="form-group row">
+                        <div class="col-md-8">
+                            <label for="host">Upload a host proteome archive: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info3">
+                                            <span class="glyphicon glyphicon-question-sign"></span>
+                                        </button></label><br>
+                            <label class="btn btn-default btn-file">
+                            <input type="file" id="host" name="host">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-8">
+                            <label for="no_T3SS">Upload an archive with proteomes records of close bacteria without T3SS: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info4">
+                                            <span class="glyphicon glyphicon-question-sign"></span>
+                                        </button></label><br>
+                            <label class="btn btn-default btn-file">
+                            <input type="file" id="no_T3SS" name="no_T3SS">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-8">
+                            <label for="full_genome">Is the genome fully assembled? (In one, circular, contig) <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info5">
+                                            <span class="glyphicon glyphicon-question-sign"></span>
+                                        </button></label>
+                            <label class="radio-inline"><input type="radio" name="full_genome" value="yes">Yes</label>
+                            <label class="radio-inline"><input type="radio" name="full_genome" id="full_genome" value="no" checked>No</label>
+                        </div>
+                    </div>
+                    <br>
+                    
+                    <div>
+                        <label>To search for PIP-box please supply the following data: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info6">
+                                            <span class="glyphicon glyphicon-question-sign"></span>
+                                        </button></label>
+                        <br><br>
+                        <div class="form-group row">
+                            <div class="col-md-4">
+                                <label for="gff">Choose a <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file:</label>
+                                <label class="btn btn-default btn-file">
+                                <input type="file" id="gff" name="gff">
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="genome">Choose a full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file:</label>
+                                <label class="btn btn-default btn-file">
+                                <input type="file" id="genome" name="genome">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <br><br>
+            <button type="submit" class="btn btn-success"> <!--g-recaptcha" data-callback="onSubmit" data-sitekey="6LdIEO4UAAAAAG8KoM5Netgx5LgEJnwfZAngTljA">-->
+                                <span class="glyphicon glyphicon-cloud-upload"></span>&nbsp;
+                                Submit
+                            </button>
+                            
+            <!-- Modals -->
+            <div class="modal fade" id="info1" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <div class="modal-title"><b>Input specification</b></div>
+                        </div>
+                        <div class="modal-body">
+                        <b>
+                            The input for the web server is a text file with all the ORFs sequences of the analyzed genome.
+                            The file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
+                            <br>You can find instructions to download this file <a href="instructions.html" target="_blank">here</a>.
+                        </b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="info2" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <div class="modal-title"><b>Input specification</b></div>
+                        </div>
+                        <div class="modal-body">
+                        <b>
+                            This file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
+                            The records supplied in this file must be records from the main ORFs file and they will be treated as known effectors to train the machine-learning algorithm.
+                            <br> This is an optional (and recommended) input. If you choose not to supply it, the records that show homology to our effectors dataset will be used as the known effectors.
+                        </b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="info3" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <div class="modal-title"><b>Input specification</b></div>
+                        </div>
+                        <div class="modal-body">
+                        <b>
+                            In this input you may upload host proteome(s).
+                            You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip file</a>.<br>
+                            If you upload this archive, a BLAST will be ran against all the protein sequences in the fasta files compressed in it. Homology to the host proteins is potentially a very important feature for the classification.
+                        </b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="info4" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <div class="modal-title"><b>Input specification</b></div>
+                        </div>
+                        <div class="modal-body">
+                        <b>
+                            In this input you may upload proteomes records of closely related bacteria without a T3SS.<br>
+                            You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip file</a>.<br>
+                            Homology to closely related bacteria without a T3SS is a strong negative feature for T3Es classification.
+                        </b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="info5" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <div class="modal-title"><b>Input specification</b></div>
+                        </div>
+                        <div class="modal-body">
+                        <b>
+                            If you choose Yes, genome organization features would be extracted.<br>
+                            Do not choose this option if the genome is in several contigs.
+                        </b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="info6" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <div class="modal-title"><b>Input specification</b></div>
+                        </div>
+                        <div class="modal-body">
+                        <b>
+                            PIP-box is a pattern existing in many T3Es of phytopathogenic bacteria.<br>
+                            If the bacterium you are analyzing is a phytopathogenic bacterium and the genome is fully assembled, add a full genome sequence <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file and a corresponding <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file.
+                            These files will be used for PIP-box search in the promoters of the ORFs.
+                        </b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        </div>
+    <nav role="navigation" class="navbar-inverse navbar-fixed-bottom ng-binding" style="color: #cccccc; text-align: center; font-family: Calibri;">
+        <h4>
+                Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank">Pupko Group</a>
+        </h4>
+    </nav>
+</body>
+</html>
+    

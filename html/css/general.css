@@ -1,0 +1,165 @@
+#nav_container a {
+    color: #fff;
+    background-color: #000000;
+}
+
+
+#nav_container a:hover, #nav_container .active a {
+    color: #9ACD32;
+    background-color: #000000;
+}
+
+#tau-logo{
+    height: 38px;
+    width: 75px;
+    padding: 0px;
+}
+
+#title-row{
+    padding-top: 2px;
+}
+
+#jumbo{
+    font-family: 'Kalam';
+    /*font-family: "PT Sans";*/
+    margin-bottom: 0px;
+    padding: 0.5%;
+    background-color: #9ACD32;
+    /*font-family: "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;*/
+}
+
+#nav_container{
+    margin-bottom: 0px;
+    padding: 0px;
+    background-color: #000000;
+}
+
+
+#server-title{
+    margin-top: 10px;
+    font-size: 50px;
+}
+
+#sub-title{
+    font-size: 2em;
+}
+
+#research-site{
+    font-size: 20px;
+}
+
+#nav_container{
+    /*font-family: 'Kalam';*/
+    /*font-family: "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;*/
+    /*font-family: "PT Sans";*/
+    font-size: 30px;
+    padding-top: 10px;
+    line-height: 60px;
+}
+
+#EFFECTIDOR_form{
+    padding-top: 20px;
+    padding-bottom: 100px;
+}
+
+label {
+    font-size: 18px;
+    font-family: sans-serif;
+}
+
+p {
+    font-size: 18px;
+    font-family: sans-serif;
+}
+
+ol {
+    font-size: 18px;
+    font-family: sans-serif;
+}
+
+#full_genome label{
+    padding-left: 5px;
+}
+
+#overview_container, #download_container, #credits_container{
+    /*font-family: 'Kalam';*/
+    /*font-family: "Sans";*/
+    /*font-family: "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;*/
+    font-size: 20px;
+    font-family: Ubuntu, sans-serif;
+}
+
+#short_description{
+    /*font-family: 'Kalam';*/
+    /*font-family: "Sans";*/
+    /*font-family: "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;*/
+    font-size: 18px;
+    font-family: Ubuntu, sans-serif;
+    line-height: 1.6;
+}
+
+#basic{
+    /*font-family: 'Kalam';*/
+    /*font-family: "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;*/
+    font-size: 20px;
+}
+
+#overview_picture{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 500px;
+}
+
+#file-button {
+    width: 150px;
+}
+
+#please-note{
+    color: red;
+}
+
+#behind-nav-bar-results{
+    padding: 160px;
+}
+
+#behind-footer{
+    padding-bottom: 100px;
+}
+
+#behind-nav-bar{
+    padding: 20px;
+}
+
+#advanced_button{
+    margin-bottom: 10px
+}
+
+table {
+  border-collapse: collapse;
+  width: 90%;
+}
+
+th, td {
+    padding: 10px
+}
+
+.indent{
+    margin-left: 20px;
+}
+
+#lib_info{
+    padding: 0px;
+    border: 0px;
+    top: 0px;
+    margin-bottom: 3px;
+    outline: none;
+}
+
+#msa_info_modal, #running_mode_info_modal{
+    font-size: 18px;
+}
+
+#running_mode_info{
+    padding: 0px;
+}

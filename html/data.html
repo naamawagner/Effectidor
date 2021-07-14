@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Eff3ctidor</title>
+
+    <link rel="shortcut icon" type="image/x-icon" href="/pics/logo.gif" />
+
+    <meta charset="utf-8">
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
+    
+    <!--files for the select tag-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/i18n/defaults-*.min.js"></script>
+
+    <!--files for the checkbox tag (toggle)-->
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
+    <link rel="stylesheet" href="css/general.css">
+    <script src="handle_FAQ.js"></script>
+</head>
+<body>
+    <nav role="navigation" class="navbar navbar-fixed-top">
+        <div class="jumbotron" id="jumbo">
+            <div class="container">            
+                <div class="row" id="title-row" align="center">
+                    <div class="col-md-1">
+                    </div>
+                    <div class="col-md-10" align="center">
+                        <!--<span id="server-title">Effectidor</span><br>-->
+                        <img src="pics/logo.gif" id="nav_bar_image" style="height: 120px;"><br>
+                        <span id="sub-title">A machine learning based type 3 effectors predictor</span>
+                        <br><br>
+                    </div>
+                </div>
+            </div>       
+        </div>
+        <div class="jumbotron" id="nav_container">
+                <div class="row">
+                    <div style="display:table; margin:0 auto;">
+                        <ul class="nav navbar-nav" id="menu-nav">
+                            <li style="display:table-cell; padding: 0px 10px;">
+                                <a href="index.html">Home</a>
+                            </li>
+                            <li style="display:table-cell; padding: 0px 10px;">
+                                <a href="FAQ.html">FAQ</a>
+                            </li>
+                            <li class="active" style="display:table-cell; padding: 0px 10px;">
+                                <a href="data.html">Data</a>
+                            </li>
+                            <li style="float: right">
+                                <a href="https://english.tau.ac.il/" id="tau-link" target="_blank">
+                                    <img src=pics/TAU_LOGO.png id="tau-logo">
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+        </div>
+    </nav>
+    <div id="behind-nav-bar-results"></div>
+    <div class="container">
+    <p>
+    Effectidor uses a type III effectors dataset for homology search as well as for composing the positive group if no effectors file is supplied.<br>
+    This dataset can be downloaded from <a href="T3EsV2.faa">here</a>.</p>
+    </div>
+    <div id="behind-footer"></div>
+    </container>
+    <nav role="navigation" class="navbar-inverse navbar-fixed-bottom ng-binding" style="color: #cccccc; text-align: center; font-family: Calibri;">
+        <h4>
+                Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank">Pupko Group</a>
+        </h4>
+    </nav>
+</doby>
+</html>
