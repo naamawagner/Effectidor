@@ -148,7 +148,7 @@
                     <br>
                     
                     <div>
-                        <label>To search for PIP-box please supply the following data: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info6">
+                        <label>To search for regulatory motifs in the promoters of the genes please supply the following data: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info6">
                                             <span class="glyphicon glyphicon-question-sign"></span>
                                         </button></label>
                         <br><br>
@@ -188,6 +188,7 @@
                             The input for the web server is a text file with all the ORFs sequences of the analyzed genome.
                             The file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
                             <br>You can find instructions to download this file <a href="instructions.html" target="_blank">here</a>.
+                            <br>If the analyzed genome is composed of several contigs, or a chromosome and plasmids, the ORFs from the different contigs should be in seperate files, such that each file contains all the ORFs of a specific contig, and the files should be compressed together to a ZIP archive. Otherwize, a FASTA file can be uploaded.
                         </b>
                         </div>
                     </div>
@@ -274,9 +275,9 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            PIP-box is a pattern existing in many T3Es of phytopathogenic bacteria.<br>
                             If the bacterium you are analyzing is a phytopathogenic bacterium and the genome is fully assembled, add a full genome sequence <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file and a corresponding <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file.
-                            These files will be used for PIP-box search in the promoters of the ORFs.
+                            These files will be used for PIP-box, hrp-box, mxiE-box, and exs-box search in the promoters of the ORFs.<br>
+                            These patterns are known recognition motifs of TFs regulating T3Es in phytopathogenic bacteria.
                         </b>
                         </div>
                     </div>
