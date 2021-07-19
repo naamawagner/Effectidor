@@ -79,27 +79,29 @@ def verify_genome_one_contig(genome_path, file_name):
     
 def verify_zip(file,name):
     if not file.endswith('.zip'):
-        return f'{name} not in zip format. Make sure to upload a zip archive resubmit your job.'
+        return f'{name} not in zip format. Make sure to upload a zip archive and resubmit your job.'
     
 
 def validate_input(output_dir_path, ORFs_path, effectors_path, host_proteome, genome_path, gff_path, no_T3SS_path, error_path):
     logger.info('Validating input...')
-
-    error_msg = verify_zip(ORFs_path,'ORFs')
-    if error_msg:
-        fail(error_msg, error_path)
-    os.makedirs(f'{output_dir_path}/contigs_ORFs')
-    shutil.unpack_archive(f'{output_dir_path}/ORFs.zip',f'{output_dir_path}/contigs_ORFs')
-    ORFs=[]
-    for file in os.listdir(f'{output_dir_path}/contigs_ORFs'):
-        error_msg = verify_fasta_format(f'{output_dir_path}/contigs_ORFs/{file}','DNA')
+    if ORFs_path.endswith('.zip'):
+        os.makedirs(f'{output_dir_path}/contigs_ORFs')
+        shutil.unpack_archive(f'{output_dir_path}/ORFs.zip',f'{output_dir_path}/contigs_ORFs')
+        ORFs=[]
+        for file in os.listdir(f'{output_dir_path}/contigs_ORFs'):
+            error_msg = verify_fasta_format(f'{output_dir_path}/contigs_ORFs/{file}','DNA')
+            if error_msg:
+                error_msg = f'Illegal fasta files in {file} in ORFs archive: {error_msg}'
+                fail(error_msg,error_path)
+            recs = SeqIO.parse(f'{output_dir_path}/contigs_ORFs/{file}','fasta')
+            for rec in recs:
+                ORFs.append(rec)
+        SeqIO.write(ORFs,f'{output_dir_path}/ORFs.fasta','fasta')
+    else:
+        error_msg = verify_fasta_format(ORFs_path,'DNA')
         if error_msg:
-            error_msg = f'Illegal fasta files in {file} in ORFs archive: {error_msg}'
+            error_msg = f'Illegal fasta file in ORFs file: {error_msg}'
             fail(error_msg,error_path)
-        recs = SeqIO.parse(f'{output_dir_path}/contigs_ORFs/{file}','fasta')
-        for rec in recs:
-            ORFs.append(rec)
-    SeqIO.write(ORFs,f'{output_dir_path}/ORFs.fasta','fasta')
     if effectors_path:
         error_msg = verify_fasta_format(effectors_path,'DNA')
         if error_msg:

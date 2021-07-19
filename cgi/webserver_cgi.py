@@ -246,8 +246,11 @@ def run_cgi():
         gff_name = form['gff'].filename
         
         genome_f_name = form['genome'].filename
-
-        ORFs_path = os.path.join(wd, 'ORFs.zip')
+        
+        if ORFs_name.endswith('zip'): #ZIP archive
+            ORFs_path = os.path.join(wd, 'ORFs.zip')
+        else: #FASTA
+            ORFs_path = os.path.join(wd, 'ORFs.fasta')
         upload_file(form, 'ORFs', ORFs_path, cgi_debug_path)
         write_to_debug_file(cgi_debug_path, f'ORFs file was saved to disk successfully\n\n')
         
