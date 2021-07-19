@@ -130,7 +130,9 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     # learning step
     
     subprocess.check_output(['python',f'{scripts_dir}/learning.py'])
-    
+    if os.path.exists(r'out_learning/learning_failed.txt'):
+        error_msg = 'Learning failed. It can be due to a small training set, or other reasons. For further details you can contact us.'
+        fail(error_msg,error_path)
     # making final output files and tables
     
     in_f = r'out_learning/concensus_predictions.csv'

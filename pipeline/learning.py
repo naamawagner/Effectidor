@@ -88,9 +88,9 @@ scoring = 'average_precision'
 models = []
 models.append(('LDA', LinearDiscriminantAnalysis()))
 models.append(('NB',GaussianNB()))
-models.append(('KNN', KNeighborsClassifier(weights='distance')))
+#models.append(('KNN', KNeighborsClassifier(weights='distance')))
 models.append(('SVM', SVC(probability=True)))
-
+models.append(('LR', LogisticRegression(penalty='l1',solver='liblinear')))
 x_y_options={'untouched':(X_train,X_test,y_train,y_test,features,X,Y),'normalized':(X_train_norm, X_test_norm,y_train_norm, y_test_norm,norm_features,X_norm,Y_norm),'standardized':(X_train_stand, X_test_stand,y_train_stand, y_test_stand,stand_features,X_stand,Y_stand)}
 new_models=[]
 for name,model in models:
@@ -114,7 +114,8 @@ for name,model in models:
             break
     X_train,X_test,Y_train,Y_test,full_features,full_X,full_Y=x_y_options[best]
     new_models.append((name,model,best,X_train,X_test,Y_train,Y_test,full_features,full_X,full_Y))
-new_models.append(('LR', LogisticRegression(),'normalized',X_train_norm,X_test_norm,y_train_norm,y_test_norm,norm_features,X_norm,Y_norm)) # LR requires normalized features for convergance
+new_models.append(('KNN', KNeighborsClassifier(weights='distance'),'normalized',X_train_norm,X_test_norm,y_train_norm,y_test_norm,norm_features,X_norm,Y_norm))
+#new_models.append(('LR', LogisticRegression(),'normalized',X_train_norm,X_test_norm,y_train_norm,y_test_norm,norm_features,X_norm,Y_norm)) # LR requires normalized features for convergance
 #new_models.append(('RDF', RandomForestClassifier(n_estimators=1000,max_depth=10),'untouched',X_train,X_test,y_train,y_test,features,X,Y)) # RDF can handle different "untouched" data
 #%%
 #feature selection
@@ -256,82 +257,85 @@ for name,model,X_TRAIN,X_TEST,Y_TRAIN,Y_TEST,all_X,all_data in updated_models:
             for i in range(len(model_proba)):
                 predictions[name][array[i][0]]=model_proba[i][1]
             algorithms_names.append(name)
-       
-with open(f'{out_dir}/predictions.csv','w',newline='') as file:
-    f_writer = csv.writer(file)
-    header=['locus']
-    weights=[]
-    for name in algorithms_names:
-        header.append(f'{name} (AUPRC {"%.3f" % results_test[name][0]})')
-        weights.append(results_test[name][0])
-    header.append(f'wVote (AUPRC {"%.3f" % w_av_AUPRC})')
-    header.append('is_effector')
-    f_writer.writerow(header)
-    for locus in sorted(predictions['RDF'],key=predictions['RDF'].get,reverse=True):
-        l=[locus]
+if len(algorithms_names) > 0:      
+    with open(f'{out_dir}/predictions.csv','w',newline='') as file:
+        f_writer = csv.writer(file)
+        header=['locus']
+        weights=[]
         for name in algorithms_names:
-            l.append(predictions[name][locus])
-        l.append(np.average(l[1:len(algorithms_names)+1],weights=weights))
-        if locus in list(yes.locus):
-            l.append('yes')
-        elif locus in list(no.locus):
-            l.append('no')
-        else:
-            l.append('?')
-        f_writer.writerow(l)
-
-preds_df = pd.read_csv(f'{out_dir}/predictions.csv')
-
-classifiers_scores = {f'{name} (AUPRC {"%.3f" % results_test[name][0]})':results_test[name][0] for name in results_test}
-classifiers_scores[f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'] = w_av_AUPRC
+            header.append(f'{name} (AUPRC {"%.3f" % results_test[name][0]})')
+            weights.append(results_test[name][0])
+        header.append(f'wVote (AUPRC {"%.3f" % w_av_AUPRC})')
+        header.append('is_effector')
+        f_writer.writerow(header)
+        for locus in sorted(predictions[algorithms_names[0]],key=predictions[algorithms_names[0]].get,reverse=True):
+            l=[locus]
+            for name in algorithms_names:
+                l.append(predictions[name][locus])
+            l.append(np.average(l[1:len(algorithms_names)+1],weights=weights))
+            if locus in list(yes.locus):
+                l.append('yes')
+            elif locus in list(no.locus):
+                l.append('no')
+            else:
+                l.append('?')
+            f_writer.writerow(l)
     
-best_classifier = max(classifiers_scores,key= lambda key: classifiers_scores[key])
-#if classifiers_scores[best_classifier]-w_av_AUPRC > 0.02: # if another classifier is significantly better than the vote, take it.
-#    concensus_df = preds_df[['locus',f'{best_classifier}','is_effector']]
-#    concensus_df.rename(columns = {best_classifier:f'likelihood to be effector by {best_classifier}'},inplace=True)
-#    sorted_concensus = concensus_df.sort_values(by=f'likelihood to be effector by {best_classifier}',ascending=False)
-#    sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
-#else: # vote is the best classifier or very close to it, so take it
-concensus_df = preds_df[['locus',f'wVote (AUPRC {"%.3f" % w_av_AUPRC})','is_effector']]
-sorted_concensus = concensus_df.sort_values(by=f'wVote (AUPRC {"%.3f" % w_av_AUPRC})',ascending=False)
-sorted_concensus.rename(columns = {f'wVote (AUPRC {"%.3f" % w_av_AUPRC})':f'score (AUPRC on test set: {"%.3f" % w_av_AUPRC})'},inplace=True)
-sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
-
-# figures
-
-importance_f = f'{out_dir}/feature_importance.csv'
-best_features =[]
-with open(importance_f,'r') as in_f:
-    reader = csv.reader(in_f)
-    next(reader)
-    for i in range(10):
-        feature = next(reader)[0]
-        best_features.append(feature)
-f = features_file
-#f = r'C:\Users\TalPNB2\Naama\Naama\effectors\Citrobacter_rodentium\revision\Citrobacter_features_with_addition.csv'
-data = pd.read_csv(f)
-labeled=data[data.is_effector!='?']
-f_names = labeled.columns[1:-1]
-labeled[f_names] = labeled[f_names].astype(float)
-for i in range(len(best_features)):
-    fig = plt.figure(figsize=(8,6))
-    ax = sns.violinplot(x="is_effector", y=best_features[i], data=labeled)
-    y_label = ' '.join(best_features[i].split('_'))
-    if len(y_label)>45:
-        y_lable_l = best_features[i].split('_')
-        y_label = ' '.join(y_lable_l[:len(y_lable_l)//2])+'\n'+' '.join(y_lable_l[len(y_lable_l)//2:])
-    ax.set(ylabel=y_label)
-    fig.savefig(f'{out_dir}/{str(i)}.png')
-
-
-df=pd.read_csv(importance_f)
-fig=plt.figure(figsize=(10,5))
-ax=sns.barplot(x='importance',y='feature',data=df.head(n=10))
-ax.set_xlabel('')
-ax.set_ylabel('',fontsize=16)
-#ax.set_xticklabels(ax.get_xticklabels(),rotation=90)
-#fig.suptitle('Feature importance\n',y=1)
-fig.subplots_adjust(left=0.5)
-fig.tight_layout()
-
-fig.savefig(f'{out_dir}/feature_importance.png')
+    preds_df = pd.read_csv(f'{out_dir}/predictions.csv')
+    
+    classifiers_scores = {f'{name} (AUPRC {"%.3f" % results_test[name][0]})':results_test[name][0] for name in results_test}
+    classifiers_scores[f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'] = w_av_AUPRC
+        
+    best_classifier = max(classifiers_scores,key= lambda key: classifiers_scores[key])
+    #if classifiers_scores[best_classifier]-w_av_AUPRC > 0.02: # if another classifier is significantly better than the vote, take it.
+    #    concensus_df = preds_df[['locus',f'{best_classifier}','is_effector']]
+    #    concensus_df.rename(columns = {best_classifier:f'likelihood to be effector by {best_classifier}'},inplace=True)
+    #    sorted_concensus = concensus_df.sort_values(by=f'likelihood to be effector by {best_classifier}',ascending=False)
+    #    sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
+    #else: # vote is the best classifier or very close to it, so take it
+    concensus_df = preds_df[['locus',f'wVote (AUPRC {"%.3f" % w_av_AUPRC})','is_effector']]
+    sorted_concensus = concensus_df.sort_values(by=f'wVote (AUPRC {"%.3f" % w_av_AUPRC})',ascending=False)
+    sorted_concensus.rename(columns = {f'wVote (AUPRC {"%.3f" % w_av_AUPRC})':f'score (AUPRC on test set: {"%.3f" % w_av_AUPRC})'},inplace=True)
+    sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
+    
+    # figures
+    
+    importance_f = f'{out_dir}/feature_importance.csv'
+    best_features =[]
+    with open(importance_f,'r') as in_f:
+        reader = csv.reader(in_f)
+        next(reader)
+        for i in range(10):
+            feature = next(reader)[0]
+            best_features.append(feature)
+    f = features_file
+    #f = r'C:\Users\TalPNB2\Naama\Naama\effectors\Citrobacter_rodentium\revision\Citrobacter_features_with_addition.csv'
+    data = pd.read_csv(f)
+    labeled=data[data.is_effector!='?']
+    f_names = labeled.columns[1:-1]
+    labeled[f_names] = labeled[f_names].astype(float)
+    for i in range(len(best_features)):
+        fig = plt.figure(figsize=(8,6))
+        ax = sns.violinplot(x="is_effector", y=best_features[i], data=labeled)
+        y_label = ' '.join(best_features[i].split('_'))
+        if len(y_label)>45:
+            y_lable_l = best_features[i].split('_')
+            y_label = ' '.join(y_lable_l[:len(y_lable_l)//2])+'\n'+' '.join(y_lable_l[len(y_lable_l)//2:])
+        ax.set(ylabel=y_label)
+        fig.savefig(f'{out_dir}/{str(i)}.png')
+    
+    
+    df=pd.read_csv(importance_f)
+    fig=plt.figure(figsize=(10,5))
+    ax=sns.barplot(x='importance',y='feature',data=df.head(n=10))
+    ax.set_xlabel('')
+    ax.set_ylabel('',fontsize=16)
+    #ax.set_xticklabels(ax.get_xticklabels(),rotation=90)
+    #fig.suptitle('Feature importance\n',y=1)
+    fig.subplots_adjust(left=0.5)
+    fig.tight_layout()
+    
+    fig.savefig(f'{out_dir}/feature_importance.png')
+else:
+    endfile = open(f'{out_dir}/learning_failed.txt','w')
+    endfile.close()
