@@ -158,7 +158,7 @@ def write_cmds_file(cmds_file, run_number, parameters):
     with open(cmds_file, 'w') as f:
         f.write(f'module load {required_modules}')
         f.write(new_line_delimiter)
-        f.write(f'{" ".join(["python", CONSTS.MAIN_SCRIPT, parameters])}\teffectidor{run_number}\n')
+        f.write(f'{" ".join(["python", "/groups/pupko/naamawagner/T3Es_webserver/scripts/main_T3Es.py", parameters])}\teffectidor{run_number}\n')
 
 def run_cgi():
 
@@ -247,7 +247,7 @@ def run_cgi():
         
         genome_f_name = form['genome'].filename
 
-        ORFs_path = os.path.join(wd, 'ORFs.fasta')
+        ORFs_path = os.path.join(wd, 'ORFs.zip')
         upload_file(form, 'ORFs', ORFs_path, cgi_debug_path)
         write_to_debug_file(cgi_debug_path, f'ORFs file was saved to disk successfully\n\n')
         
@@ -261,31 +261,28 @@ def run_cgi():
             
         if form['host'].value: # not empty string / empy bytes - the file was supplied by the user
             os.makedirs(f'{wd}/blast_data')
-            host_path = os.path.join(f'{wd}/blast_data', 'host.faa')
+            host_path = os.path.join(f'{wd}/blast_data', 'host.zip')
             upload_file(form, 'host', host_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'host file was saved to disk successfully\n\n')
             
             parameters += f' --host {host_path}'
             
         if form['no_T3SS'].value: # not empty string / empy bytes - the file was supplied by the user
-            if not non_T3SS_name.endswith('zip'):
-                write_to_debug_file(cgi_debug_path, f'no_T3SS FILE FORMAT IS ILLEGAL!!')
-                raise ValueError
             no_T3SS_path = os.path.join(wd, 'non_T3SS.zip')
             upload_file(form, 'no_T3SS', no_T3SS_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'no_T3SS file was saved to disk successfully\n\n')
         
         if form['genome'].value: # not empty string / empy bytes - the file was supplied by the user
-            genome_path = os.path.join(wd, 'genome.fasta')
+            genome_path = os.path.join(wd, 'genome_sequence.zip')
             upload_file(form,'genome',genome_path,cgi_debug_path)
-            write_to_debug_file(cgi_debug_path,'genome record was saved to disc successfully\n\n')
+            write_to_debug_file(cgi_debug_path,'genome archive was saved to disc successfully\n\n')
             
             parameters += f' --genome_path {genome_path}'
             
         if form['gff'].value: # not empty string / empy bytes - the file was supplied by the user
-            gff_path = os.path.join(wd, 'genome.gff3')
+            gff_path = os.path.join(wd, 'genome_features.zip')
             upload_file(form,'gff',gff_path,cgi_debug_path)
-            write_to_debug_file(cgi_debug_path,'gff file was saved to disc successfully\n\n')
+            write_to_debug_file(cgi_debug_path,'gff archive was saved to disc successfully\n\n')
             
             parameters += f' --gff_path {gff_path}'
 
