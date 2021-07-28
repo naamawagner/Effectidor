@@ -105,6 +105,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, host_proteome, ge
     if effectors_path:
         error_msg = verify_fasta_format(effectors_path,'DNA')
         if error_msg:
+            error_msg = f'Illegal effectors file: {error_msg}'
             fail(error_msg, error_path)
         error_msg = verify_effectors_f(effectors_path,f'{output_dir_path}/ORFs.fasta')
         if error_msg:
