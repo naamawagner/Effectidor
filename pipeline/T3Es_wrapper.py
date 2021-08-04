@@ -26,19 +26,21 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         os.makedirs(f'{working_directory}/blast_data/temp_extract')
         shutil.unpack_archive(f'{working_directory}/non_T3SS.zip',f'{working_directory}/blast_data/temp_extract')
         for file in os.listdir(f'{working_directory}/blast_data/temp_extract'):
-            new_name_l = file.replace(' ','_').split('.')
-            new_name = '.'.join(new_name_l[:-1])+'.'+'faa'
-            os.rename(f'{working_directory}/blast_data/temp_extract/{file}',f'{working_directory}/blast_data/temp_extract/{new_name}')
-            shutil.move(f'{working_directory}/blast_data/temp_extract/{new_name}',f'{working_directory}/blast_data')
+            if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{working_directory}/blast_data/temp_extract/{file}'):
+                new_name_l = file.replace(' ','_').split('.')
+                new_name = '.'.join(new_name_l[:-1])+'.'+'faa'
+                os.rename(f'{working_directory}/blast_data/temp_extract/{file}',f'{working_directory}/blast_data/temp_extract/{new_name}')
+                shutil.move(f'{working_directory}/blast_data/temp_extract/{new_name}',f'{working_directory}/blast_data')
     if os.path.exists(f'{working_directory}/blast_data/host.zip'):
         if not os.path.exists(f'{working_directory}/blast_data/temp_extract'):
             os.makedirs(f'{working_directory}/blast_data/temp_extract')
         shutil.unpack_archive(f'{working_directory}/blast_data/host.zip',f'{working_directory}/blast_data/temp_extract')
         recs = []
         for f in os.listdir(f'{working_directory}/blast_data/temp_extract'):
-            f_recs= SeqIO.parse(f'{working_directory}/blast_data/temp_extract/{f}','fasta')
-            for rec in f_recs:
-                recs.append(rec)
+            if not f.startswith('_') and not f.startswith('.') and os.path.isfile(f'{working_directory}/blast_data/temp_extract/{f}'):
+                f_recs= SeqIO.parse(f'{working_directory}/blast_data/temp_extract/{f}','fasta')
+                for rec in f_recs:
+                    recs.append(rec)
         SeqIO.write(recs,f'{working_directory}/blast_data/host.faa','fasta')
     cmd = f'cp {blast_datasets_dir}/*.faa ./blast_data/'
     subprocess.check_output(cmd,shell=True)
@@ -55,6 +57,9 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         eff_recs = list(SeqIO.parse(effectors_prots,'fasta'))
         if len(eff_recs) == 0:
             error_msg = 'No effectors were found in the data! Make sure you run the analysis on a bacterium with an active T3SS and try to run it again with an effectors file containing all the known effectors in the bacterium.'
+            fail(error_msg,error_path)
+        elif len(eff_recs) < 5:
+            error_msg = f'Not enough effectors were found in the data! Only {len(eff_recs)} were found in the initial homology serach. This is not enough to train a classifier.If you know more effectors are available in the bacterium, try to run it again with an effectors file containing all the known effectors in the bacterium.'
             fail(error_msg,error_path)
     # find and create non effectors fasta file
     subprocess.check_output(['python',f'{scripts_dir}/find_non_effectors.py',all_prots,effectors_prots])

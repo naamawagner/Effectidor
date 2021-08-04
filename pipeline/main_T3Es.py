@@ -84,8 +84,8 @@ def verify_zip(file,name):
 
 def validate_input(output_dir_path, ORFs_path, effectors_path, host_proteome, genome_path, gff_path, no_T3SS_path, error_path):
     logger.info('Validating input...')
-    if ORFs_path.endswith('.zip'):
-        os.makedirs(f'{output_dir_path}/contigs_ORFs')
+    os.makedirs(f'{output_dir_path}/contigs_ORFs')
+    if ORFs_path.endswith('.zip'):     
         shutil.unpack_archive(f'{output_dir_path}/ORFs.zip',f'{output_dir_path}/contigs_ORFs')
         ORFs=[]
         for file in os.listdir(f'{output_dir_path}/contigs_ORFs'):
@@ -98,6 +98,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, host_proteome, ge
                 ORFs.append(rec)
         SeqIO.write(ORFs,f'{output_dir_path}/ORFs.fasta','fasta')
     else:
+        shutil.copy(ORFs_path,f'{output_dir_path}/contigs_ORFs')
         error_msg = verify_fasta_format(ORFs_path,'DNA')
         if error_msg:
             error_msg = f'Illegal fasta file in ORFs file: {error_msg}'
@@ -120,20 +121,27 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, host_proteome, ge
         shutil.unpack_archive(f'{output_dir_path}/genome_sequence.zip',f'{output_dir_path}/full_genome')
         genome_files_names = []
         for file in os.listdir(f'{output_dir_path}/full_genome'):
-            error_msg = verify_fasta_format(f'{output_dir_path}/full_genome/{file}','DNA')
-            if error_msg:
-                error_msg = f'Illegal fasta files in {file} in full genome archive: {error_msg}'
-                fail(error_msg,error_path)
-            error_msg = verify_genome_one_contig(f'{output_dir_path}/full_genome/{file}',file)
-            if error_msg:
-                fail(error_msg,error_path)
-            genome_files_names.append(file.split('.')[0])
+            if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/full_genome/{file}'): # discard system files and directories
+                error_msg = verify_fasta_format(f'{output_dir_path}/full_genome/{file}','DNA')
+                if error_msg:
+                    error_msg = f'Illegal fasta files in {file} in full genome archive: {error_msg}'
+                    fail(error_msg,error_path)
+                error_msg = verify_genome_one_contig(f'{output_dir_path}/full_genome/{file}',file)
+                if error_msg:
+                    fail(error_msg,error_path)
+                genome_files_names.append(file.split('.')[0])
         # gff
         os.makedirs(f'{output_dir_path}/gff')
         shutil.unpack_archive(f'{output_dir_path}/genome_features.zip',f'{output_dir_path}/gff')
-        gff_files_names = [file.split('.')[0] for file in os.listdir(f'{output_dir_path}/gff')]
+        gff_files_names = [file.split('.')[0] for file in os.listdir(f'{output_dir_path}/gff') if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/gff/{file}')]
         if set(gff_files_names) != set(genome_files_names):
+            in_gff_not_genome = set(gff_files_names).difference(set(genome_files_names))
+            in_genome_not_in_gff = set(genome_files_names).difference(set(gff_files_names))
             error_msg = 'The names of the files in the gff archive are not matching the names of the files in the full genome archive!'
+            if len(in_gff_not_genome) > 0:
+                error_msg += f' The following file names are present in the GFF archive but not in the full genome archive: {in_gff_not_genome}'
+            if len(in_genome_not_in_gff) > 0:
+                error_msg += f' The following file names are present in the full genome archive but not in the GFF archive: {in_genome_not_in_gff}'
             fail(error_msg,error_path)
     if no_T3SS_path:
         error_msg = verify_zip(no_T3SS_path,'no_T3SS')

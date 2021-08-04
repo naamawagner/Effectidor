@@ -7,7 +7,7 @@ import fasta_parser
 ORFs_file = argv[1]
 working_directory = argv[2]
 gff_dir = argv[3]
-gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir)]
+gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
 genome_dir = argv[4]
 os.chdir(working_directory)
 locus_dic = fasta_parser.parse_ORFs(ORFs_file)

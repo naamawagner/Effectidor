@@ -218,7 +218,7 @@ for key in results_test:
 
 max_result = max(values)
 for algorithm in list(results_test.keys()):
-    if results_test[algorithm][0] < 0.7*max_result or ((results_train[algorithm][0]-results_test[algorithm][0])**2)**0.5 > 0.2 or results_train[algorithm][2]<0.8:
+    if results_test[algorithm][0] < 0.7*max_result or ((results_train[algorithm][0]-results_test[algorithm][0])**2)**0.5 > 0.2 or results_train[algorithm][2]<0.75:
         with open(f'{out_dir}/deleted_algorithms.txt','a') as f:
             f.write(f'{algorithm}: test:{results_test[algorithm][0]}, train:{results_train[algorithm][0]},{results_train[algorithm][1]} range:{results_train[algorithm][2]}\n')
         results_test.pop(algorithm)
@@ -252,12 +252,12 @@ for name,model,X_TRAIN,X_TEST,Y_TRAIN,Y_TEST,all_X,all_data in updated_models:
     if name in results_test:
         model.fit(all_X,Y)
         model_proba=model.predict_proba(all_data)
-        if max(model_proba[:,1])-min(model_proba[:,1]) >= 0.8:
+        if max(model_proba[:,1])-min(model_proba[:,1]) >= 0.6:
             predictions[name]={}
             for i in range(len(model_proba)):
                 predictions[name][array[i][0]]=model_proba[i][1]
             algorithms_names.append(name)
-if len(algorithms_names) > 0:      
+try:      
     with open(f'{out_dir}/predictions.csv','w',newline='') as file:
         f_writer = csv.writer(file)
         header=['locus']
@@ -336,6 +336,6 @@ if len(algorithms_names) > 0:
     fig.tight_layout()
     
     fig.savefig(f'{out_dir}/feature_importance.png')
-else:
+except:
     endfile = open(f'{out_dir}/learning_failed.txt','w')
     endfile.close()
