@@ -52,7 +52,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     # translate the input fasta files
     subprocess.check_output(['python',f'{scripts_dir}/translate_fasta.py',ORFs_file,effectors_file,all_prots,effectors_prots])
     if not effectors_file:
-        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3EsV2.faa',all_prots,effectors_prots])
+        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots])
         # make sure effectors were found before proceeding!
         eff_recs = list(SeqIO.parse(effectors_prots,'fasta'))
         if len(eff_recs) == 0:

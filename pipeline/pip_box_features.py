@@ -81,7 +81,7 @@ exs_box_l = ['A']*5+['[ATGC]']+['[AT]','[ATGC]','[AC]','[CT]']+['[ATGC]']*3+['[A
 exs_box_one_mismatch = create_box_one_mismatch(exs_box_l)
 
 pip_box = 'TTCG[TCG][ATCG]{15}TTCG[TCG]'
-pip_box_l = ['T']*2+['C','G','[TCG]']+['[ATCG]']*15+['T']*2+['C','G','[TCG]']
+pip_box_l = ['T']*2+['C','G','[TCG]']+['[ATGC]']*15+['T']*2+['C','G','[TCG]']
 pip_box_one_mismatch = create_box_one_mismatch(pip_box_l)
  
 mxiE_box = 'GTATCGT{7}A[ATGC]AG'
