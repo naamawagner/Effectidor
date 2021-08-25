@@ -94,7 +94,7 @@ def upload_file(form, form_key_name, file_path, cgi_debug_path):
         f.write(content)
 
 
-def write_running_parameters_to_html(output_path, job_title, ORFs_name, effectors_name, host_name, non_T3SS_name, full, gff_name, genome_f_name):
+def write_running_parameters_to_html(output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, full, gff_name, genome_f_name):
     with open(output_path, 'a') as f:
 
         # regular params row
@@ -115,6 +115,12 @@ def write_running_parameters_to_html(output_path, job_title, ORFs_name, effector
             f.write('<div class="row" style="font-size: 20px;">')
             f.write('<div class="col-md-12">')
             f.write(f'<b>effectors input file: </b>{effectors_name}')
+            f.write('</div></div>')
+            
+        if T3Es_name !='':
+            f.write('<div class="row" style="font-size: 20px;">')
+            f.write('<div class="col-md-12">')
+            f.write(f'<b>T3Es of other bacteria input file: </b>{T3Es_name}')
             f.write('</div></div>')
             
         if host_name != '':
@@ -236,6 +242,8 @@ def run_cgi():
         # human readable parameters for results page and confirmation email
         ORFs_name = form['ORFs'].filename
         effectors_name = form['effectors'].filename
+        
+        T3Es_name = form['T3Es'].filename
 
         host_name = form['host'].filename
         
@@ -261,6 +269,13 @@ def run_cgi():
             write_to_debug_file(cgi_debug_path, f'effectors file was saved to disk successfully\n\n')
             
             parameters += f' --input_effectors_path {effectors_path}'
+            
+        if form['T3Es'].value: # not empty string / empy bytes - the file was supplied by the user
+            T3Es_path = os.path.join(wd, 'user_T3Es.fasta')
+            upload_file(form, 'T3Es', T3Es_path, cgi_debug_path)
+            write_to_debug_file(cgi_debug_path, f'user_T3Es file was saved to disk successfully\n\n')
+            
+            parameters += f' --input_T3Es_path {T3Es_path}'
             
         if form['host'].value: # not empty string / empy bytes - the file was supplied by the user
             os.makedirs(f'{wd}/blast_data')
@@ -292,7 +307,7 @@ def run_cgi():
         if full_genome == 'yes':
             parameters += ' --full_genome'
             
-        write_running_parameters_to_html(output_path, job_title, ORFs_name, effectors_name, host_name, non_T3SS_name, full_genome, gff_name, genome_f_name)
+        write_running_parameters_to_html(output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, full_genome, gff_name, genome_f_name)
         write_to_debug_file(cgi_debug_path, f'{ctime()}: Running parameters were written to html successfully.\n')
 
         cmds_file = os.path.join(wd, 'qsub.cmds')
@@ -318,6 +333,7 @@ def run_cgi():
                 notification_content += f'Job title: {job_title}\n'
             notification_content += f'ORFs file: {ORFs_name}\n' \
                                     f'known effectors file: {effectors_name}\n' \
+                                    f'type 3 effectors of other bacteria file: {T3Es_name}\n'\
                                     f'host proteome file: {host_name}\n'\
                                     f'proteomes with no T3SS archive: {non_T3SS_name}\n'\
                                     f'full genome: {full_genome}\n'\

@@ -45,8 +45,18 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     cmd = f'cp {blast_datasets_dir}/*.faa ./blast_data/'
     subprocess.check_output(cmd,shell=True)
     blast_datasets_dir = './blast_data/'
-    #tmp_dir = '/groups/pupko/naamawagner/T3Es_webserver/tmp_features/'
-    
+
+    if os.path.exists('user_T3Es.fasta'): # add these records to the T3Es dataset 
+        eff1_recs=SeqIO.parse(f'{blast_datasets_dir}/T3Es.faa','fasta')
+        eff_l = list(eff1_recs)
+        seqs = [rec.seq for rec in eff_l]
+        eff2_recs=SeqIO.parse('user_T3Es.fasta','fasta')
+        for rec in eff2_recs:
+            if rec.seq not in seqs:
+                eff_l.append(rec)
+                seqs.append(rec.seq)
+        SeqIO.write(eff_l,f'{blast_datasets_dir}/T3Es.faa','fasta')
+            
     # feature extraction step
     
     # translate the input fasta files

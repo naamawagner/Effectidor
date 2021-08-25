@@ -15,19 +15,21 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('main')
 
 
-def verify_fasta_format(fasta_path,Type):
+def verify_fasta_format(fasta_path,Type,input_name):
     logger.info('Validating FASTA format')
+    flag = False
     if Type == 'DNA':
         legal_chars = set(Bio.SeqUtils.IUPACData.ambiguous_dna_letters.lower() + Bio.SeqUtils.IUPACData.ambiguous_dna_letters)
     else: #Type == 'protein'
         legal_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        flag = True
     with open(fasta_path) as f:
         line_number = 0
         try:
             line = f.readline()
             line_number += 1
             if not line.startswith('>'):
-                return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. First line in fasta starts with "{line[0]}" instead of ">".'
+                return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. First line in fasta {input_name} starts with "{line[0]}" instead of ">".'
             previous_line_was_header = True
             putative_end_of_file = False
             curated_content = f'>{line[1:]}'.replace("|", "_")
@@ -39,10 +41,10 @@ def verify_fasta_format(fasta_path,Type):
                         putative_end_of_file = line_number
                     continue
                 if putative_end_of_file:  # non empty line after empty line
-                    return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. Line {putative_end_of_file} in fasta is empty.'
+                    return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. Line {putative_end_of_file} in fasta {input_name} is empty.'
                 if line.startswith('>'):
                     if previous_line_was_header:
-                        return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. fasta contains an empty record. Both lines {line_number-1} and {line_number} start with ">".'
+                        return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. fasta {input_name} contains an empty record. Both lines {line_number-1} and {line_number} start with ">".'
                     else:
                         previous_line_was_header = True
                         curated_content += f'>{line[1:]}\n'.replace("|", "_")
@@ -51,8 +53,15 @@ def verify_fasta_format(fasta_path,Type):
                     previous_line_was_header = False
                     for c in line:
                         if c not in legal_chars:
-                            return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. Line {line_number} in fasta contains illegal {Type} character "{c}".'
+                            return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. Line {line_number} in fasta {input_name} contains illegal {Type} character "{c}".'
                     curated_content += f'{line}\n'
+            if flag: # protein
+                recs = SeqIO.parse(fasta_path,'fasta')
+                for rec in recs:
+                    seq = str(rec.seq)
+                    AGCT_count = seq.count('A')+seq.count('G')+seq.count('T')+seq.count('C')
+                    if AGCT_count >= 0.5*len(seq):
+                        return f'Protein fasta {input_name} seems to contain DNA records. Make sure all samples in the file are protein sequences and re-submit.'
         except UnicodeDecodeError as e:
             logger.info(e.args)
             line_number += 1  # the line that was failed to be read
@@ -82,14 +91,14 @@ def verify_zip(file,name):
         return f'{name} not in zip format. Make sure to upload a zip archive and resubmit your job.'
     
 
-def validate_input(output_dir_path, ORFs_path, effectors_path, host_proteome, genome_path, gff_path, no_T3SS_path, error_path):
+def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS_path, error_path):
     logger.info('Validating input...')
     os.makedirs(f'{output_dir_path}/contigs_ORFs')
     if ORFs_path.endswith('.zip'):     
         shutil.unpack_archive(f'{output_dir_path}/ORFs.zip',f'{output_dir_path}/contigs_ORFs')
         ORFs=[]
         for file in os.listdir(f'{output_dir_path}/contigs_ORFs'):
-            error_msg = verify_fasta_format(f'{output_dir_path}/contigs_ORFs/{file}','DNA')
+            error_msg = verify_fasta_format(f'{output_dir_path}/contigs_ORFs/{file}','DNA',f'{file} in ORFs archive')
             if error_msg:
                 error_msg = f'Illegal fasta files in {file} in ORFs archive: {error_msg}'
                 fail(error_msg,error_path)
@@ -99,18 +108,20 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, host_proteome, ge
         SeqIO.write(ORFs,f'{output_dir_path}/ORFs.fasta','fasta')
     else:
         shutil.copy(ORFs_path,f'{output_dir_path}/contigs_ORFs')
-        error_msg = verify_fasta_format(ORFs_path,'DNA')
+        error_msg = verify_fasta_format(ORFs_path,'DNA','input ORFs')
         if error_msg:
             error_msg = f'Illegal fasta file in ORFs file: {error_msg}'
             fail(error_msg,error_path)
     if effectors_path:
-        error_msg = verify_fasta_format(effectors_path,'DNA')
+        error_msg = verify_fasta_format(effectors_path,'DNA', 'input effectors')
         if error_msg:
             error_msg = f'Illegal effectors file: {error_msg}'
             fail(error_msg, error_path)
         error_msg = verify_effectors_f(effectors_path,f'{output_dir_path}/ORFs.fasta')
         if error_msg:
             fail(error_msg, error_path)
+    if input_T3Es_path:
+        error_msg = verify_fasta_format(input_T3Es_path,'protein', 'effectors for homology search')
     if host_proteome:
         error_msg = verify_zip(host_proteome,'Host')
         if error_msg:
@@ -122,7 +133,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, host_proteome, ge
         genome_files_names = []
         for file in os.listdir(f'{output_dir_path}/full_genome'):
             if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/full_genome/{file}'): # discard system files and directories
-                error_msg = verify_fasta_format(f'{output_dir_path}/full_genome/{file}','DNA')
+                error_msg = verify_fasta_format(f'{output_dir_path}/full_genome/{file}','DNA', f'{file} in full genome archive')
                 if error_msg:
                     error_msg = f'Illegal fasta files in {file} in full genome archive: {error_msg}'
                     fail(error_msg,error_path)
@@ -149,7 +160,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, host_proteome, ge
             fail(error_msg,error_path)
 
 
-def main(ORFs_path, output_dir_path, effectors_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False):
+def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False):
 
     error_path = f'{output_dir_path}/error.txt'
     try:
@@ -162,7 +173,7 @@ def main(ORFs_path, output_dir_path, effectors_path, host_proteome, html_path, q
         tmp_dir = f'{os.path.split(ORFs_path)[0]}/tmp'  # same folder as the input files
         os.makedirs(tmp_dir, exist_ok=True)
         
-        validate_input(output_dir_path, ORFs_path, effectors_path, host_proteome, genome_path, gff_path, no_T3SS, error_path)
+        validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS, error_path)
         if full_genome:
             if genome_path and gff_path:
                 predicted_table, positives_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, pip=True)
@@ -309,6 +320,8 @@ if __name__ == '__main__':
         parser.add_argument('--input_effectors_path', default='',
                             help='A path to a DNA fasta with positive samples. '
                                  'All samples in this file should be in the input ORFs file as well.')
+        parser.add_argument('--input_T3Es_path', default='',
+                            help='A path to protein fasta with T3Es records of other bacteria.')
         parser.add_argument('--host_proteome_path', default='',
                             help='A path to a zip archive with protein fasta files of host proteome.')
         parser.add_argument('--no_T3SS', default='',
@@ -332,6 +345,6 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(level=logging.INFO)
         if args.full_genome:
-            main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True)
+            main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True)
         else:
-            main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS)
+            main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS)
