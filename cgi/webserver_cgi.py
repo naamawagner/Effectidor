@@ -328,7 +328,7 @@ def run_cgi():
         # submission_cmd = 'ssh bioseq@powerlogin "module load python/anaconda_python-3.6.4; /bioseq/bioSequence_scripts_and_constants/q_submitter_power.py {cmds_file} {wd} -q {CONSTS.QUEUE_NAME} --verbose > {log_file}"'
 
         # simple command when using shebang header
-        submission_cmd = f'ssh bioseq@powerlogin /bioseq/bioSequence_scripts_and_constants/q_submitter_power.py {cmds_file} {wd} -q {CONSTS.QUEUE_NAME} --verbose > {log_file}'
+        submission_cmd = f'ssh bioseq@power9login /bioseq/bioSequence_scripts_and_constants/q_submitter_power.py {cmds_file} {wd} -q {CONSTS.QUEUE_NAME} --verbose > {log_file}'
 
         write_to_debug_file(cgi_debug_path, f'\nSSHing and SUBMITting the JOB to the QUEUE:\n{submission_cmd}\n')
 
