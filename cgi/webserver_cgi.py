@@ -222,7 +222,7 @@ def run_cgi():
             f.write(f'These are the keys that the CGI received:\n{"; ".join(sorted_form_keys)}\n\n')
             f.write('Form values are:\n')
             for key in sorted_form_keys:
-                if 'ORFs' in key or 'effectors' in key or 'host' in key or 'no_T3SS' in key or 'gff' in key or 'genome' in key:
+                if 'ORFs' in key or 'effectors' in key or 'host' in key or 'no_T3SS' in key or 'gff' in key or 'genome' in key or 'T3Es' in key:
                     # avoid writing the whole file
                     f.write(f'100 first characters of {key} = {form[key].value[:100]}\n')
                 else:
@@ -235,26 +235,27 @@ def run_cgi():
         job_title = ''
         if form['job_title'].value != '':
             job_title = form['job_title'].value.strip()
-
+        write_to_debug_file(cgi_debug_path, f'1\n')
         # This is hidden field that only spammer bots might fill in...
         confirm_email_add = form['confirm_email'].value  # if it is containing a value it is a spammer.
-        
+        write_to_debug_file(cgi_debug_path, f'2\n')
         # human readable parameters for results page and confirmation email
         ORFs_name = form['ORFs'].filename
+        write_to_debug_file(cgi_debug_path, f'3\n')
         effectors_name = form['effectors'].filename
-        
+        write_to_debug_file(cgi_debug_path, f'4\n')
         T3Es_name = form['T3Es'].filename
-
+        write_to_debug_file(cgi_debug_path, f'5\n')
         host_name = form['host'].filename
-        
+        write_to_debug_file(cgi_debug_path, f'6\n')
         non_T3SS_name = form['no_T3SS'].filename
-        
+        write_to_debug_file(cgi_debug_path, f'7\n')
         full_genome = form['full_genome'].value.strip()
-        
+        write_to_debug_file(cgi_debug_path, f'8\n')
         gff_name = form['gff'].filename
-        
+        write_to_debug_file(cgi_debug_path, f'9\n')
         genome_f_name = form['genome'].filename
-        
+        write_to_debug_file(cgi_debug_path, f'10\n')
         if ORFs_name.endswith('zip'): #ZIP archive
             ORFs_path = os.path.join(wd, 'ORFs.zip')
         else: #FASTA
@@ -306,6 +307,15 @@ def run_cgi():
 
         if full_genome == 'yes':
             parameters += ' --full_genome'
+            
+            if 'PIP-box' in form:
+                parameters += ' --PIP'
+            if 'hrp-box' in form:
+                parameters += ' --hrp'
+            if 'mxiE-box' in form:
+                parameters += ' --mxiE'
+            if 'exs-box' in form:
+                parameters += ' --exs'
             
         write_running_parameters_to_html(output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, full_genome, gff_name, genome_f_name)
         write_to_debug_file(cgi_debug_path, f'{ctime()}: Running parameters were written to html successfully.\n')

@@ -160,7 +160,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
             fail(error_msg,error_path)
 
 
-def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False):
+def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False, PIP=False, hrp=False, mxiE=False, exs=False):
 
     error_path = f'{output_dir_path}/error.txt'
     try:
@@ -176,7 +176,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS, error_path)
         if full_genome:
             if genome_path and gff_path:
-                predicted_table, positives_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, pip=True)
+                predicted_table, positives_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, CIS_elements=True, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs)
             else:
                 predicted_table, positives_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True)
         else:
@@ -336,6 +336,10 @@ if __name__ == '__main__':
         parser.add_argument('-v', '--verbose', help='Increase output verbosity', action='store_true')
 
         parser.add_argument('--full_genome', help='to extract genome organization features', action='store_true')
+        parser.add_argument('--PIP', help='look for PIP-box in promoters', action='store_true')
+        parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
+        parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
+        parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
         parser.add_argument('-q', '--queue_name', help='The cluster to which the job(s) will be submitted to', default='pupkolabr')
 
         args = parser.parse_args()
@@ -345,6 +349,10 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(level=logging.INFO)
         if args.full_genome:
-            main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True)
+            PIP_flag = args.PIP
+            hrp_flag = args.hrp
+            mxiE_flag = args.mxiE
+            exs_flag = args.exs
+            main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag)
         else:
             main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS)

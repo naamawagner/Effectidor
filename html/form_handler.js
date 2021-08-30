@@ -22,3 +22,24 @@ function validate_read_files() {
         
     return true;
 }
+
+function openCIS() {
+    var gff = document.getElementById("gff").value;
+    var genome = document.getElementById("genome").value;
+    
+    if (gff != '' && genome != '') {
+        var x = document.getElementById("CIS");
+        if (x.style.display === "none") {
+            x.style.display = "block";
+        } else {
+            x.style.display = "none";
+        }
+    } else {
+        var x = document.getElementById("CIS");
+        document.getElementById("PIP-box").checked = false;
+        document.getElementById("hrp-box").checked = false;
+        document.getElementById("mxiE-box").checked = false;
+        document.getElementById("exs-box").checked = false;
+        x.style.display = "none";
+    }
+}

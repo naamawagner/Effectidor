@@ -1,4 +1,4 @@
-def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,pip=False):
+def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,CIS_elements=False,PIP=False,hrp=False,mxiE=False,exs=False):
     import pandas as pd
     import subprocess
     import os
@@ -83,11 +83,21 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
             # genome organization features
             ORFs_dir = f'{working_directory}/contigs_ORFs'
             jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/genome_organization.py {ORFs_dir} {effectors_prots} {working_directory}\tgenome_organization\n')
-            if pip:
+            if CIS_elements:
                 # PIP-box features
                 gff_dir = f'{working_directory}/gff'
                 genome_dir = f'{working_directory}/full_genome'
-                jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/pip_box_features.py {ORFs_file} {working_directory} {gff_dir} {genome_dir}\tgenome_organization\n')
+                cmds = f'module load python/python-anaconda3.6.5; python {scripts_dir}/pip_box_features.py {ORFs_file} {working_directory} {gff_dir} {genome_dir}'
+                if PIP:
+                    cmds += ' --PIP'
+                if hrp:
+                    cmds += ' --hrp'
+                if mxiE:
+                    cmds += ' --mxiE'
+                if exs:
+                    cmds += ' --exs'
+                cmds +='\tgenome_organization\n'
+                jobs_f.write(cmds)
         # signal peptide
     with open(f'{working_directory}/signalp.cmds','w') as sig_f:
         sig_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/signal_peptide_features.py {ORFs_file} {all_prots} {working_directory}\tsignalP\n')
@@ -98,7 +108,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     amount_of_expected_results = 3
     if organization:
         amount_of_expected_results += 1
-        if pip:
+        if CIS_elements:
             amount_of_expected_results += 1
             
     while x < amount_of_expected_results:
@@ -127,7 +137,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     if organization:
         files_to_merge.append('genome_organization_features.csv')
         done_files.append('genome_organization_features.done')
-        if pip:
+        if CIS_elements:
             files_to_merge.append('pip_box_features.csv')
             done_files.append('pip_box_features.done')
     failed_jobs = [done_job[:-5] for done_job in done_files if not os.path.exists(done_job)]

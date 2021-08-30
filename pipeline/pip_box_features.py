@@ -1,16 +1,9 @@
 from Bio import SeqIO
 import re
 import csv
-from sys import argv
 import os
 import fasta_parser
-ORFs_file = argv[1]
-working_directory = argv[2]
-gff_dir = argv[3]
-gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
-genome_dir = argv[4]
-os.chdir(working_directory)
-locus_dic = fasta_parser.parse_ORFs(ORFs_file)
+
 #%%
 
 def parse_gff(gff_f):
@@ -88,39 +81,86 @@ mxiE_box = 'GTATCGT{7}A[ATGC]AG'
 mxiE_box_l = ['G','T','A','T','C','G']+['T']*7+['A','[ATGC]','A','G']
 mxiE_box_one_mismatch = create_box_one_mismatch(mxiE_box_l)                 
 
-promoters_dicts = []
-for gff_f in gff_files:
-    name = gff_f.split('/')[-1].split('.')[0]
-    genome_f = f'{genome_dir}/{name}.fasta'
-    locus_area_d = parse_gff(gff_f)
-    promoters_d = get_promoters(locus_area_d,genome_f)
-    promoters_dicts.append(promoters_d)
-                 
-def existence_upstream_to_AUG(locus,pattern):
-    for promoters_d in promoters_dicts:
-        if locus in promoters_d:
-            promoter = promoters_d[locus]
-            break
-    if re.search(pattern,str(promoter),re.I):
-        return 1
-    else:
-        return 0
     
+def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False, mxiE=False, exs=False):
+    gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
+    os.chdir(working_directory)
+    locus_dic = fasta_parser.parse_ORFs(ORFs_file)
+    promoters_dicts = []
+    for gff_f in gff_files:
+        name = gff_f.split('/')[-1].split('.')[0]
+        genome_f = f'{genome_dir}/{name}.fasta'
+        locus_area_d = parse_gff(gff_f)
+        promoters_d = get_promoters(locus_area_d,genome_f)
+        promoters_dicts.append(promoters_d)
+        
+    def existence_upstream_to_AUG(locus,pattern):
+        for promoters_d in promoters_dicts:
+            if locus in promoters_d:
+                promoter = promoters_d[locus]
+                break
+        if re.search(pattern,str(promoter),re.I):
+            return 1
+        else:
+            return 0
+    with open(f'pip_box_features.csv','w',newline='') as f:
+        csv_writer = csv.writer(f)
+        header=['locus']
+        if PIP:
+            header += ['PIP_box','PIP_box_mismatch']
+        if hrp:
+            header += ['hrp_box','hrp_box_mismatch']
+        if mxiE:
+            header += ['mxiE_box','mxiE_box_mismatch']
+        if exs:
+            header += ['exs_box','exs_box_mismatch']
+        csv_writer.writerow(header)
+        for locus in locus_dic:
+            l=[locus]
+            if PIP:
+                l.append(existence_upstream_to_AUG(locus,pip_box))
+                l.append(existence_upstream_to_AUG(locus,pip_box_one_mismatch))
+            if hrp:
+                l.append(existence_upstream_to_AUG(locus,hrp_box))
+                l.append(existence_upstream_to_AUG(locus,hrp_one_mismatch))
+            if mxiE:
+                l.append(existence_upstream_to_AUG(locus,mxiE_box))
+                l.append(existence_upstream_to_AUG(locus,mxiE_box_one_mismatch))
+            if exs:
+                l.append(existence_upstream_to_AUG(locus,exs_box))
+                l.append(existence_upstream_to_AUG(locus,exs_box_one_mismatch))
+            csv_writer.writerow(l)
+    endfile = open('pip_box_features.done','w')
+    endfile.close()
 
-with open(f'pip_box_features.csv','w',newline='') as f:
-    csv_writer = csv.writer(f)
-    header=['locus','PIP_box','PIP_box_mismatch','hrp_box','hrp_box_mismatch','mxiE_box','mxiE_box_mismatch','exs_box','exs_box_mismatch']
-    csv_writer.writerow(header)
-    for locus in locus_dic:
-        l=[locus]
-        l.append(existence_upstream_to_AUG(locus,pip_box))
-        l.append(existence_upstream_to_AUG(locus,pip_box_one_mismatch))
-        l.append(existence_upstream_to_AUG(locus,hrp_box))
-        l.append(existence_upstream_to_AUG(locus,hrp_one_mismatch))
-        l.append(existence_upstream_to_AUG(locus,mxiE_box))
-        l.append(existence_upstream_to_AUG(locus,mxiE_box_one_mismatch))
-        l.append(existence_upstream_to_AUG(locus,exs_box))
-        l.append(existence_upstream_to_AUG(locus,exs_box_one_mismatch))
-        csv_writer.writerow(l)
-endfile = open('pip_box_features.done','w')
-endfile.close()  
+if __name__ == '__main__':
+
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument('input_ORFs_path',
+                            help='A path to a DNA ORFs file.',
+                            type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
+        parser.add_argument('output_dir_path',
+                            help='A path to a folder in which the output files will be created.',
+                            type=lambda path: path.rstrip('/'))
+        parser.add_argument('gff_path',
+                            type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'),
+                            help='A path to GFF files archive.')
+        parser.add_argument('genome_path',
+                            type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'),
+                            help='A path to fasta files archive with full genome records.')
+        parser.add_argument('--PIP', help='look for PIP-box in promoters', action='store_true')
+        parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
+        parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
+        parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
+        
+        args = parser.parse_args()
+        ORFs_file = args.input_ORFs_path
+        working_directory = args.output_dir_path
+        gff_dir = args.gff_path
+        genome_dir = args.genome_path
+        PIP_flag = args.PIP
+        hrp_flag = args.hrp
+        mxiE_flag = args.mxiE
+        exs_flag = args.exs
+        main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag)

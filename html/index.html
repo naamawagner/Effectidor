@@ -79,7 +79,7 @@
         </div>
         <div class="col-md-1">
         </div>
-    
+    </div>
     <div class="container">
         <form ID="EFFECTIDOR_form" method="post" action="https://effectidor.tau.ac.il/cgi-bin/webserver_cgi.py" ENCTYPE="multipart/form-data" onsubmit="return validate_read_files()">
             <div>
@@ -166,24 +166,39 @@
                             <div class="col-md-4">
                                 <label for="gff">Choose a zip archive with <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> files:</label>
                                 <label class="btn btn-default btn-file">
-                                <input type="file" id="gff" name="gff">
+                                <input type="file" id="gff" name="gff" onchange="openCIS()">
                                 </label>
                             </div>
                             <div class="col-md-4">
                                 <label for="genome">Choose a zip archive with full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files:</label>
                                 <label class="btn btn-default btn-file">
-                                <input type="file" id="genome" name="genome">
+                                <input type="file" id="genome" name="genome" onchange="openCIS()">
                                 </label>
                             </div>
                         </div>
+                        <br>
+                        <div id="CIS" style="display:none;">
+                            <label>Choose regulatory elements to be searched for in the promoters:</label><br><br>
+                            <input type="checkbox" id="PIP-box" name="PIP-box" value="PIP-box">
+                            <label for="PIP-box">PIP-box</label>
+                            <br>
+                            <input type="checkbox" id="hrp-box" name="hrp-box" value="hrp-box">
+                            <label for="hrp-box">hrp-box</label>
+                            <br>
+                            <input type="checkbox" id="mxiE-box" name="mxiE-box" value="mxiE-box">
+                            <label for="mxiE-box">mxiE-box</label>
+                            <br>
+                            <input type="checkbox" id="exs-box" name="exs-box" value="exs-box">
+                            <label for="exs-box">exs-box</label>
+                        </div>
                     </div>
-            </div>
+                </div>
             <br><br>
             <button type="submit" class="btn btn-success"> <!--g-recaptcha" data-callback="onSubmit" data-sitekey="6LdIEO4UAAAAAG8KoM5Netgx5LgEJnwfZAngTljA">-->
-                                <span class="glyphicon glyphicon-cloud-upload"></span>&nbsp;
-                                Submit
-                            </button>
-                            
+                <span class="glyphicon glyphicon-cloud-upload"></span>&nbsp;
+                Submit
+            </button>
+            </div>              
             <!-- Modals -->
             <div class="modal fade" id="info1" role="dialog">
                 <div class="modal-dialog">
