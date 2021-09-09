@@ -94,66 +94,107 @@ def upload_file(form, form_key_name, file_path, cgi_debug_path):
         f.write(content)
 
 
-def write_running_parameters_to_html(output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, full, gff_name, genome_f_name):
+def write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, full, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts):
     with open(output_path, 'a') as f:
-
+        write_to_debug_file(cgi_debug_path, f'24\n') 
         # regular params row
         f.write(f"""<div class="container" style="{CONSTS.CONTAINER_STYLE}" align="justify">""")
-
+        write_to_debug_file(cgi_debug_path, f'25\n')
         if job_title != '':
+            write_to_debug_file(cgi_debug_path, f'26\n')
             f.write('<div class="row" style="font-size: 20px;">')
             f.write('<div class="col-md-12">')
             f.write(f'<b>Job title: </b>{job_title}')
             f.write('</div></div>')
-
+            write_to_debug_file(cgi_debug_path, f'27\n')
+        write_to_debug_file(cgi_debug_path, f'28\n')
         f.write('<div class="row" style="font-size: 20px;">')
         f.write('<div class="col-md-12">')
         f.write(f'<b>ORFs input file: </b>{ORFs_name}')
         f.write('</div></div>')
-        
+        write_to_debug_file(cgi_debug_path, f'29\n')
         if effectors_name != '':
+            write_to_debug_file(cgi_debug_path, f'30\n')
             f.write('<div class="row" style="font-size: 20px;">')
             f.write('<div class="col-md-12">')
             f.write(f'<b>effectors input file: </b>{effectors_name}')
             f.write('</div></div>')
+            write_to_debug_file(cgi_debug_path, f'31\n')
             
         if T3Es_name !='':
+            write_to_debug_file(cgi_debug_path, f'32\n')
             f.write('<div class="row" style="font-size: 20px;">')
             f.write('<div class="col-md-12">')
             f.write(f'<b>T3Es of other bacteria input file: </b>{T3Es_name}')
             f.write('</div></div>')
+            write_to_debug_file(cgi_debug_path, f'33\n')
             
         if host_name != '':
+            write_to_debug_file(cgi_debug_path, f'34\n')
             f.write('<div class="row" style="font-size: 20px;">')
             f.write('<div class="col-md-12">')
             f.write(f'<b>host input file: </b>{host_name}')
             f.write('</div></div>')
+            write_to_debug_file(cgi_debug_path, f'35\n')
             
         if non_T3SS_name != '':
+            write_to_debug_file(cgi_debug_path, f'36\n')
             f.write('<div class="row" style="font-size: 20px;">')
             f.write('<div class="col-md-12">')
             f.write(f'<b>bacterial proteomes without T3SS archive: </b>{non_T3SS_name}')
             f.write('</div></div>')
+            write_to_debug_file(cgi_debug_path, f'37\n')
         
         if full == 'yes':
+            write_to_debug_file(cgi_debug_path, f'38\n')
             f.write('<div class="row" style="font-size: 20px;">')
             f.write('<div class="col-md-12">')
             f.write(f'<b>including genome organization features.</b>')
             f.write('</div></div>')
+            write_to_debug_file(cgi_debug_path, f'39\n')
         
         if gff_name:
+            write_to_debug_file(cgi_debug_path, f'40\n')
             f.write('<div class="row" style="font-size: 20px;">')
             f.write('<div class="col-md-12">')
             f.write(f'<b>GFF file:</b>{gff_name}')
             f.write('</div></div>')
+            write_to_debug_file(cgi_debug_path, f'41\n')
             
         if genome_f_name:
+            write_to_debug_file(cgi_debug_path, f'42\n')
             f.write('<div class="row" style="font-size: 20px;">')
             f.write('<div class="col-md-12">')
             f.write(f'<b>full genome file:</b>{genome_f_name}')
             f.write('</div></div>')
+            write_to_debug_file(cgi_debug_path, f'43\n')
             
+        if PIP or hrp or mxiE or exs or tts:
+            write_to_debug_file(cgi_debug_path, f'44\n')
+            to_print = []
+            if PIP:
+                write_to_debug_file(cgi_debug_path, f'45\n')
+                to_print.append('PIP-box')
+            if hrp:
+                write_to_debug_file(cgi_debug_path, f'46\n')
+                to_print.append('hrp-box')
+            if mxiE:
+                write_to_debug_file(cgi_debug_path, f'47\n')
+                to_print.append('mxiE-box')
+            if exs:
+                write_to_debug_file(cgi_debug_path, f'48\n')
+                to_print.append('exs-box')
+            if tts:
+                write_to_debug_file(cgi_debug_path, f'49\n')
+                to_print.append('tts-box')
+            write_to_debug_file(cgi_debug_path, f'50\n')
+            f.write('<div class="row" style="font-size: 20px;">')
+            f.write('<div class="col-md-12">')
+            f.write(f'<b>Cis regulatory elements:</b>{",".join(to_print)}')
+            f.write('</div></div>')
+            write_to_debug_file(cgi_debug_path, f'51\n')
         f.write('</div><br>')
+        write_to_debug_file(cgi_debug_path, f'52\n')
 
 
 def write_cmds_file(cmds_file, run_number, parameters):
@@ -265,6 +306,7 @@ def run_cgi():
         
         parameters = f'{ORFs_path} {wd} --html_path {output_path} -q {CONSTS.QUEUE_NAME}'
         if form['effectors'].value: # not empty string / empy bytes - the file was supplied by the user
+            write_to_debug_file(cgi_debug_path, f'11\n')
             effectors_path = os.path.join(wd, 'effectors.fasta')
             upload_file(form, 'effectors', effectors_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'effectors file was saved to disk successfully\n\n')
@@ -272,6 +314,7 @@ def run_cgi():
             parameters += f' --input_effectors_path {effectors_path}'
             
         if form['T3Es'].value: # not empty string / empy bytes - the file was supplied by the user
+            write_to_debug_file(cgi_debug_path, f'12\n')
             T3Es_path = os.path.join(wd, 'user_T3Es.fasta')
             upload_file(form, 'T3Es', T3Es_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'user_T3Es file was saved to disk successfully\n\n')
@@ -279,6 +322,7 @@ def run_cgi():
             parameters += f' --input_T3Es_path {T3Es_path}'
             
         if form['host'].value: # not empty string / empy bytes - the file was supplied by the user
+            write_to_debug_file(cgi_debug_path, f'13\n')
             os.makedirs(f'{wd}/blast_data')
             host_path = os.path.join(f'{wd}/blast_data', 'host.zip')
             upload_file(form, 'host', host_path, cgi_debug_path)
@@ -287,11 +331,13 @@ def run_cgi():
             parameters += f' --host {host_path}'
             
         if form['no_T3SS'].value: # not empty string / empy bytes - the file was supplied by the user
+            write_to_debug_file(cgi_debug_path, f'14\n')
             no_T3SS_path = os.path.join(wd, 'non_T3SS.zip')
             upload_file(form, 'no_T3SS', no_T3SS_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'no_T3SS file was saved to disk successfully\n\n')
         
         if form['genome'].value: # not empty string / empy bytes - the file was supplied by the user
+            write_to_debug_file(cgi_debug_path, f'15\n')
             genome_path = os.path.join(wd, 'genome_sequence.zip')
             upload_file(form,'genome',genome_path,cgi_debug_path)
             write_to_debug_file(cgi_debug_path,'genome archive was saved to disc successfully\n\n')
@@ -299,25 +345,39 @@ def run_cgi():
             parameters += f' --genome_path {genome_path}'
             
         if form['gff'].value: # not empty string / empy bytes - the file was supplied by the user
+            write_to_debug_file(cgi_debug_path, f'16\n')
             gff_path = os.path.join(wd, 'genome_features.zip')
             upload_file(form,'gff',gff_path,cgi_debug_path)
             write_to_debug_file(cgi_debug_path,'gff archive was saved to disc successfully\n\n')
             
             parameters += f' --gff_path {gff_path}'
-
+            
+        PIP, hrp, mxiE, exs, tts = False,False,False,False,False
         if full_genome == 'yes':
+            write_to_debug_file(cgi_debug_path, f'17\n')
             parameters += ' --full_genome'
-            
             if 'PIP-box' in form:
+                write_to_debug_file(cgi_debug_path, f'18\n')
                 parameters += ' --PIP'
+                PIP = True
             if 'hrp-box' in form:
+                write_to_debug_file(cgi_debug_path, f'19\n')
                 parameters += ' --hrp'
+                hrp = True
             if 'mxiE-box' in form:
+                write_to_debug_file(cgi_debug_path, f'20\n')
                 parameters += ' --mxiE'
+                mxiE = True
             if 'exs-box' in form:
+                write_to_debug_file(cgi_debug_path, f'21\n')
                 parameters += ' --exs'
-            
-        write_running_parameters_to_html(output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, full_genome, gff_name, genome_f_name)
+                exs = True
+            if 'tts-box' in form:
+                write_to_debug_file(cgi_debug_path, f'22\n')
+                parameters += ' --tts'
+                tts = True
+        write_to_debug_file(cgi_debug_path, f'23\n')   
+        write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, full_genome, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts)
         write_to_debug_file(cgi_debug_path, f'{ctime()}: Running parameters were written to html successfully.\n')
 
         cmds_file = os.path.join(wd, 'qsub.cmds')

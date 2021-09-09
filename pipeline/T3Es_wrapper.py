@@ -1,4 +1,48 @@
-def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,CIS_elements=False,PIP=False,hrp=False,mxiE=False,exs=False):
+def create_effectors_html(effectors_file,ORFs_file,out_dir):
+    from Bio import SeqIO
+    import csv
+    import pandas as pd
+    recs = SeqIO.parse(ORFs_file,'fasta')
+    locus_annotation={}
+    for rec in recs:
+        is_locus = False
+        annotation = ''
+        header = rec.description
+        if 'pseudo=true' in header:
+            annotation = 'pseudogene'
+        header_l = header.split('[')
+        for a in header_l:
+            if 'locus_tag=' in a:
+                locus = a.split('=')[1].strip().strip(']')
+                is_locus = True
+            elif 'protein=' in a:
+                if annotation == 'pseudogene':
+                    annotation += ' '+a.split('=')[1].strip().strip(']')
+                else:
+                    annotation = a.split('=')[1].strip().strip(']')
+        if is_locus:
+            locus_annotation[locus] = annotation
+        else:
+            locus_annotation[rec.id] = annotation
+    locus_protein={}
+    effectors_recs = SeqIO.parse(effectors_file,'fasta')
+    for effector in effectors_recs:
+        protein = str(effector.seq)
+        protein_l = [protein[70*i:70*(i+1)] for i in range(len(protein)//70+1)]
+        if protein_l[-1]=='':
+            protein_l = protein_l[:-1]
+        protein_n = '<br>'.join(protein_l)
+        locus_protein[effector.id] = protein_n
+    with open(f'{out_dir}/effectors_for_html.csv','w',newline='') as out_f:
+        writer = csv.writer(out_f)
+        writer.writerow(['Locus tag','Annotation','Protein sequence'])
+        for locus in locus_protein:
+            writer.writerow([locus,locus_annotation[locus],protein_n])
+    data = pd.read_csv(f'{out_dir}/effectors_for_html.csv')
+    effectors_table = data.to_html(index=False,justify='left',escape=False)
+    return effectors_table,None
+            
+def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,CIS_elements=False,PIP=False,hrp=False,mxiE=False,exs=False,tts=False):
     import pandas as pd
     import subprocess
     import os
@@ -12,6 +56,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     # vars
     scripts_dir = '/groups/pupko/naamawagner/T3Es_webserver/scripts/'
     os.chdir(working_directory)
+    log_file = f'{working_directory}/log.txt'
     # input files
     #ORFs_file = 'ORFs.fasta'
     #effectors_file = 'effectors.fasta'
@@ -62,15 +107,16 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     # translate the input fasta files
     subprocess.check_output(['python',f'{scripts_dir}/translate_fasta.py',ORFs_file,effectors_file,all_prots,effectors_prots])
     if not effectors_file:
-        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots])
+        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots,log_file])
         # make sure effectors were found before proceeding!
         eff_recs = list(SeqIO.parse(effectors_prots,'fasta'))
         if len(eff_recs) == 0:
             error_msg = 'No effectors were found in the data! Make sure you run the analysis on a bacterium with an active T3SS and try to run it again with an effectors file containing all the known effectors in the bacterium.'
             fail(error_msg,error_path)
         elif len(eff_recs) < 5:
-            error_msg = f'Not enough effectors were found in the data! Only {len(eff_recs)} were found in the initial homology serach. This is not enough to train a classifier.If you know more effectors are available in the bacterium, try to run it again with an effectors file containing all the known effectors in the bacterium.'
-            fail(error_msg,error_path)
+            return create_effectors_html(effectors_prots,ORFs_file,working_directory)
+            #error_msg = f'Not enough effectors were found in the data! Only {len(eff_recs)} were found in the initial homology serach. This is not enough to train a classifier.If you know more effectors are available in the bacterium, try to run it again with an effectors file containing all the known effectors in the bacterium.'
+            #fail(error_msg,error_path)
     # find and create non effectors fasta file
     subprocess.check_output(['python',f'{scripts_dir}/find_non_effectors.py',all_prots,effectors_prots])
     # creating the features extraction commands
@@ -96,7 +142,9 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
                     cmds += ' --mxiE'
                 if exs:
                     cmds += ' --exs'
-                cmds +='\tgenome_organization\n'
+                if tts:
+                    cmds += ' --tts'
+                cmds +='\tcis_regulatory_elements\n'
                 jobs_f.write(cmds)
         # signal peptide
     with open(f'{working_directory}/signalp.cmds','w') as sig_f:
@@ -156,8 +204,9 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     
     subprocess.check_output(['python',f'{scripts_dir}/learning.py'])
     if os.path.exists(r'out_learning/learning_failed.txt'):
-        error_msg = 'Learning failed. It can be due to a small training set, or other reasons. For further details you can contact us.'
-        fail(error_msg,error_path)
+        return create_effectors_html(effectors_prots,ORFs_file,working_directory)
+        #error_msg = 'Learning failed. It can be due to a small training set, or other reasons. For further details you can contact us.'
+        #fail(error_msg,error_path)
     # making final output files and tables
     
     in_f = r'out_learning/concensus_predictions.csv'

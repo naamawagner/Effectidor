@@ -218,7 +218,7 @@ for key in results_test:
 
 max_result = max(values)
 for algorithm in list(results_test.keys()):
-    if results_test[algorithm][0] < 0.7*max_result or ((results_train[algorithm][0]-results_test[algorithm][0])**2)**0.5 > 0.2 or results_train[algorithm][2]<0.75:
+    if results_test[algorithm][0] < 0.7*max_result or ((results_train[algorithm][0]-results_test[algorithm][0])**2)**0.5 > 0.25 or results_train[algorithm][2]<0.75:
         with open(f'{out_dir}/deleted_algorithms.txt','a') as f:
             f.write(f'{algorithm}: test:{results_test[algorithm][0]}, train:{results_train[algorithm][0]},{results_train[algorithm][1]} range:{results_train[algorithm][2]}\n')
         results_test.pop(algorithm)
@@ -226,38 +226,39 @@ for algorithm in list(results_test.keys()):
         with open(f'{out_dir}/remaining_algorithms.txt','a') as rem_f:
             rem_f.write(f'{algorithm}: test:{results_test[algorithm][0]}, train:{results_train[algorithm][0]},{results_train[algorithm][1]} range:{results_train[algorithm][2]}\n')
 
-all_classifiers_preds_test=[]
-all_classifiers_scores_test=[]
-for key in results_test:
-    all_classifiers_preds_test.append(results_test[key][1][:,1])
-    all_classifiers_scores_test.append(results_test[key][0])
-
-w_average=np.average(all_classifiers_preds_test,axis=0,weights=all_classifiers_scores_test)
-w_av_AUPRC=average_precision_score(Y_TEST,w_average)
-#%%
-#feature importance
-rdf=RandomForestClassifier(n_estimators=1000)
-rdf.fit(X,Y)
-importance=rdf.feature_importances_
-sorted_feature_importance = sorted(zip(list(dataset.columns)[1:-1], importance), key=lambda x: x[1], reverse=True)
-with open(f'{out_dir}/feature_importance.csv','w',newline='') as f:
-    writer=csv.writer(f)
-    writer.writerow(['feature','importance'])
-    for feature in sorted_feature_importance:
-        writer.writerow(feature)
-
-predictions={}
-algorithms_names = []
-for name,model,X_TRAIN,X_TEST,Y_TRAIN,Y_TEST,all_X,all_data in updated_models:
-    if name in results_test:
-        model.fit(all_X,Y)
-        model_proba=model.predict_proba(all_data)
-        if max(model_proba[:,1])-min(model_proba[:,1]) >= 0.6:
-            predictions[name]={}
-            for i in range(len(model_proba)):
-                predictions[name][array[i][0]]=model_proba[i][1]
-            algorithms_names.append(name)
-try:      
+try: 
+    all_classifiers_preds_test=[]
+    all_classifiers_scores_test=[]
+    for key in results_test:
+        all_classifiers_preds_test.append(results_test[key][1][:,1])
+        all_classifiers_scores_test.append(results_test[key][0])
+    
+    w_average=np.average(all_classifiers_preds_test,axis=0,weights=all_classifiers_scores_test)
+    w_av_AUPRC=average_precision_score(Y_TEST,w_average)
+    
+    #feature importance
+    rdf=RandomForestClassifier(n_estimators=1000)
+    rdf.fit(X,Y)
+    importance=rdf.feature_importances_
+    sorted_feature_importance = sorted(zip(list(dataset.columns)[1:-1], importance), key=lambda x: x[1], reverse=True)
+    with open(f'{out_dir}/feature_importance.csv','w',newline='') as f:
+        writer=csv.writer(f)
+        writer.writerow(['feature','importance'])
+        for feature in sorted_feature_importance:
+            writer.writerow(feature)
+    
+    predictions={}
+    algorithms_names = []
+    for name,model,X_TRAIN,X_TEST,Y_TRAIN,Y_TEST,all_X,all_data in updated_models:
+        if name in results_test:
+            model.fit(all_X,Y)
+            model_proba=model.predict_proba(all_data)
+            if max(model_proba[:,1])-min(model_proba[:,1]) >= 0.6:
+                predictions[name]={}
+                for i in range(len(model_proba)):
+                    predictions[name][array[i][0]]=model_proba[i][1]
+                algorithms_names.append(name)
+     
     with open(f'{out_dir}/predictions.csv','w',newline='') as file:
         f_writer = csv.writer(file)
         header=['locus']

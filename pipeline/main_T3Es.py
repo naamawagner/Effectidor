@@ -160,7 +160,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
             fail(error_msg,error_path)
 
 
-def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False, PIP=False, hrp=False, mxiE=False, exs=False):
+def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False, PIP=False, hrp=False, mxiE=False, exs=False, tts=False):
 
     error_path = f'{output_dir_path}/error.txt'
     try:
@@ -176,7 +176,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS, error_path)
         if full_genome:
             if genome_path and gff_path:
-                predicted_table, positives_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, CIS_elements=True, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs)
+                predicted_table, positives_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, CIS_elements=True, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts)
             else:
                 predicted_table, positives_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True)
         else:
@@ -212,44 +212,50 @@ def finalize_html(html_path, error_path, run_number, predicted_table, positives_
 
 def edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_table):
     update_html(html_path, 'RUNNING', 'FINISHED')
-
-    append_to_html(html_path, f'''
-            
-            <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='left'>
-            <a href='out_learning/concensus_predictions_with_annotation.xlsx' target='_blank'>Download predictions file</a>
-            <br>
-            <a href='out_learning/pseudogenes.xlsx' target='_blank'>Download pseudogenes file</a>
-            <br>
-            <a href='out_learning/feature_importance.csv' target='_blank'>Download feature importance file</a>
-            <br>
-            <a href='features.csv' target='_blank'>Download raw features file</a>
-            <br><br>
-            <h3><b>Top 10 predictions</b></h3>
-            {predicted_table}
-            <br>
-            <h3><b>Positive samples that used to train the model</b></h3>
-            {positives_table}
-            </div>
-            <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='center'>
-            <h3><b>feature importance
-            <br>
-            <a href='out_learning/feature_importance.png'><img src='out_learning/feature_importance.png'></a>
-            <br><br>
-            best features comparison - effectors vs non-effectors:
-            <br>
-            <a href='out_learning/0.png'><img src='out_learning/0.png'></a>
-            <a href='out_learning/1.png'><img src='out_learning/1.png'></a>
-            <a href='out_learning/2.png'><img src='out_learning/2.png'></a>
-            <a href='out_learning/3.png'><img src='out_learning/3.png'></a>
-            <a href='out_learning/4.png'><img src='out_learning/4.png'></a>
-            <a href='out_learning/5.png'><img src='out_learning/5.png'></a>
-            <a href='out_learning/6.png'><img src='out_learning/6.png'></a>
-            <a href='out_learning/7.png'><img src='out_learning/7.png'></a>
-            <a href='out_learning/8.png'><img src='out_learning/8.png'></a>
-            <a href='out_learning/9.png'><img src='out_learning/9.png'></a>
-            </b></h3>
-            </div>
-''')
+    if positives_table:
+        append_to_html(html_path, f'''
+                <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='left'>
+                <a href='out_learning/concensus_predictions_with_annotation.xlsx' target='_blank'>Download predictions file</a>
+                <br>
+                <a href='out_learning/pseudogenes.xlsx' target='_blank'>Download pseudogenes file</a>
+                <br>
+                <a href='out_learning/feature_importance.csv' target='_blank'>Download feature importance file</a>
+                <br>
+                <a href='features.csv' target='_blank'>Download raw features file</a>
+                <br><br>
+                <h3><b>Positive samples that used to train the model</b></h3>
+                {positives_table}
+                <br>
+                <h3><b>Top 10 predictions, umong unlabeled samples</b></h3>
+                {predicted_table}
+                </div>
+                <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='center'>
+                <h3><b>feature importance
+                <br>
+                <a href='out_learning/feature_importance.png'><img src='out_learning/feature_importance.png'></a>
+                <br><br>
+                best features comparison - effectors vs non-effectors:
+                <br>
+                <a href='out_learning/0.png'><img src='out_learning/0.png'></a>
+                <a href='out_learning/1.png'><img src='out_learning/1.png'></a>
+                <a href='out_learning/2.png'><img src='out_learning/2.png'></a>
+                <a href='out_learning/3.png'><img src='out_learning/3.png'></a>
+                <a href='out_learning/4.png'><img src='out_learning/4.png'></a>
+                <a href='out_learning/5.png'><img src='out_learning/5.png'></a>
+                <a href='out_learning/6.png'><img src='out_learning/6.png'></a>
+                <a href='out_learning/7.png'><img src='out_learning/7.png'></a>
+                <a href='out_learning/8.png'><img src='out_learning/8.png'></a>
+                <a href='out_learning/9.png'><img src='out_learning/9.png'></a>
+                </b></h3>
+                </div>
+                ''')
+    else:
+        append_to_html(html_path, f'''
+                <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='left'>
+                Unfortunatelly, we could not train a satisfying classifier due to small positive set.<br>The effectors found based on homology are listed in the table bellow:<br>
+                {predicted_table}
+                </div>
+                ''')
 
 
 def edit_failure_html(CONSTS, error_msg, html_path, run_number):
@@ -340,6 +346,7 @@ if __name__ == '__main__':
         parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
         parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
         parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
+        parser.add_argument('--tts', help='look for tts-box in promoters', action='store_true')
         parser.add_argument('-q', '--queue_name', help='The cluster to which the job(s) will be submitted to', default='pupkolabr')
 
         args = parser.parse_args()
@@ -353,6 +360,7 @@ if __name__ == '__main__':
             hrp_flag = args.hrp
             mxiE_flag = args.mxiE
             exs_flag = args.exs
-            main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag)
+            tts_flag = args.tts
+            main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag)
         else:
             main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS)

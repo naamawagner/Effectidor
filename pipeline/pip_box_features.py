@@ -79,10 +79,14 @@ pip_box_one_mismatch = create_box_one_mismatch(pip_box_l)
  
 mxiE_box = 'GTATCGT{7}A[ATGC]AG'
 mxiE_box_l = ['G','T','A','T','C','G']+['T']*7+['A','[ATGC]','A','G']
-mxiE_box_one_mismatch = create_box_one_mismatch(mxiE_box_l)                 
+mxiE_box_one_mismatch = create_box_one_mismatch(mxiE_box_l)  
+
+tts_box = 'GTCAG[ATCG]T[TCA][ATCG][TCA]CG[AT][AC]AGC[TAC][ATCG]{3}[CTG][CG][ATCG]{3}[TC]A'
+tts_box_l = ['G','T','C','A','G','[ATGC]','T','[TCA]','[ATGC]','[TCA]','C','G','[AT]','[AC]','A','G','C','[TAC]']+['[ATGC]']*3+['[CTG]','[CG]']+['[ATGC]']*3+['[CT]','A']
+tts_box_one_mismatch = create_box_one_mismatch(tts_box_l)              
 
     
-def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False, mxiE=False, exs=False):
+def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False, mxiE=False, exs=False, tts=False):
     gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
     os.chdir(working_directory)
     locus_dic = fasta_parser.parse_ORFs(ORFs_file)
@@ -114,6 +118,8 @@ def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False
             header += ['mxiE_box','mxiE_box_mismatch']
         if exs:
             header += ['exs_box','exs_box_mismatch']
+        if tts:
+            header += ['tts_box','tts_box_mismatch']
         csv_writer.writerow(header)
         for locus in locus_dic:
             l=[locus]
@@ -129,6 +135,9 @@ def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False
             if exs:
                 l.append(existence_upstream_to_AUG(locus,exs_box))
                 l.append(existence_upstream_to_AUG(locus,exs_box_one_mismatch))
+            if tts:
+                l.append(existence_upstream_to_AUG(locus,tts_box))
+                l.append(existence_upstream_to_AUG(locus,tts_box_one_mismatch))
             csv_writer.writerow(l)
     endfile = open('pip_box_features.done','w')
     endfile.close()
@@ -153,6 +162,7 @@ if __name__ == '__main__':
         parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
         parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
         parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
+        parser.add_argument('--tts',help='look for tts-box in promoters', action='store_true')
         
         args = parser.parse_args()
         ORFs_file = args.input_ORFs_path
@@ -163,4 +173,5 @@ if __name__ == '__main__':
         hrp_flag = args.hrp
         mxiE_flag = args.mxiE
         exs_flag = args.exs
-        main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag)
+        tts_flag = args.tts
+        main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag)
