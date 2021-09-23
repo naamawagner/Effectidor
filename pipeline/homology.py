@@ -61,13 +61,13 @@ with open(f'homology_features.csv','w',newline='') as out_f:
     header=['locus']
     for dataset in datasets_l:
         header.append(f'homology_to_{dataset}_(bit_score)')
-        header.append(f'hits_to_{dataset}')
+        #header.append(f'hits_to_{dataset}')
     writer.writerow(header)
     for locus in locus_dic:
         l = [locus]
         for dataset in blast_out_dics:
             bit_score,hits = blast_features(locus,dataset)
-            l += [bit_score,hits]
+            l.append(bit_score)
         writer.writerow(l)
 
 
