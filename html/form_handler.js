@@ -12,11 +12,19 @@ function validate_read_files() {
     var gff = document.getElementById("gff").value;
     var genome = document.getElementById("genome").value;
     
+    if (!gff.endsWith(".zip")) {
+        alert("GFF3 file must be in a zip archive!");
+        return false;
+    }
+    if (!genome.endsWith(".zip")) {
+        alert("full genome file must be in a zip archive!");
+        return false;
+    }
     if (gff == '' && genome != '') {
         alert("GFF3 file is missing!");
         return false;
     } else if (gff != '' && genome == '') {
-        alert("full genome FASTA file is missing!");
+        alert("full genome file is missing!");
         return false;
     }
         

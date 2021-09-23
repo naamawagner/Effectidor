@@ -140,11 +140,11 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                 error_msg = verify_genome_one_contig(f'{output_dir_path}/full_genome/{file}',file)
                 if error_msg:
                     fail(error_msg,error_path)
-                genome_files_names.append(file.split('.')[0])
+                genome_files_names.append('.'.join(file.split('.')[:-1]))
         # gff
         os.makedirs(f'{output_dir_path}/gff')
         shutil.unpack_archive(f'{output_dir_path}/genome_features.zip',f'{output_dir_path}/gff')
-        gff_files_names = [file.split('.')[0] for file in os.listdir(f'{output_dir_path}/gff') if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/gff/{file}')]
+        gff_files_names = ['.'.join(file.split('.')[:-1]) for file in os.listdir(f'{output_dir_path}/gff') if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/gff/{file}')]
         if set(gff_files_names) != set(genome_files_names):
             in_gff_not_genome = set(gff_files_names).difference(set(genome_files_names))
             in_genome_not_in_gff = set(genome_files_names).difference(set(gff_files_names))
