@@ -1,4 +1,7 @@
 from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
+import subprocess
+import math
 import re
 import csv
 import os
@@ -85,6 +88,19 @@ tts_box = 'GTCAG[ATCG]T[TCA][ATCG][TCA]CG[AT][AC]AGC[TAC][ATCG]{3}[CTG][CG][ATCG
 tts_box_l = ['G','T','C','A','G','[ATGC]','T','[TCA]','[ATGC]','[TCA]','C','G','[AT]','[AC]','A','G','C','[TAC]']+['[ATGC]']*3+['[CTG]','[CG]']+['[ATGC]']*3+['[CT]','A']
 tts_box_one_mismatch = create_box_one_mismatch(tts_box_l)              
 
+def run_hmmer(hmm_profile_path,query,out):
+    cmd = f'module load hmmer/hmmer-3.3.2;hmmsearch {hmm_profile_path} {query} > {out}'
+    subprocess.check_output(cmd,shell=True)
+    
+def parse_hmmer(hmmer_out,locus):
+    with open(hmmer_out) as hmmer_f:
+        for line in hmmer_f:
+            if line.startswith(' ') and locus in line:
+                line_l = line.split()
+                e_val_log , score = -math.log(float(line_l[3])) , float(line_l[4])
+                return e_val_log,score
+    return 0,0
+                
     
 def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False, mxiE=False, exs=False, tts=False):
     gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
@@ -97,6 +113,14 @@ def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False
         locus_area_d = parse_gff(gff_f)
         promoters_d = get_promoters(locus_area_d,genome_f)
         promoters_dicts.append(promoters_d)
+        
+    if tts:
+        os.makedirs(f'{working_directory}/promoters')
+        os.makedirs(f'{working_directory}/hmmer_out')
+        for promoters_d in promoters_dicts:
+            for locus in promoters_d:
+                rec = SeqRecord(promoters_d[locus],id=locus)
+                SeqIO.write(rec,f'{working_directory}/promoters/{locus}.fasta','fasta')   
         
     def existence_upstream_to_AUG(locus,pattern):
         for promoters_d in promoters_dicts:
@@ -119,7 +143,7 @@ def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False
         if exs:
             header += ['exs_box','exs_box_mismatch']
         if tts:
-            header += ['tts_box','tts_box_mismatch']
+            header += ['tts_box','tts_box_mismatch','tts_hmmer_e_val_log','tts_hmmer_score']
         csv_writer.writerow(header)
         for locus in locus_dic:
             l=[locus]
@@ -138,6 +162,14 @@ def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False
             if tts:
                 l.append(existence_upstream_to_AUG(locus,tts_box))
                 l.append(existence_upstream_to_AUG(locus,tts_box_one_mismatch))
+                hmm_profile_path = r'/groups/pupko/naamawagner/T3Es_webserver/tts.hmm'
+                query = f'{working_directory}/promoters/{locus}.fasta'
+                out_hmmer = f'{working_directory}/hmmer_out/{locus}.txt'
+                run_hmmer(hmm_profile_path,query,out_hmmer)
+                e_val , score = parse_hmmer(out_hmmer,locus)
+                l.append(e_val)
+                l.append(score)
+                
             csv_writer.writerow(l)
     endfile = open('pip_box_features.done','w')
     endfile.close()
