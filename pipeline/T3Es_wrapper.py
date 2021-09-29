@@ -40,7 +40,7 @@ def create_effectors_html(effectors_file,ORFs_file,out_dir):
             writer.writerow([locus,locus_annotation[locus],protein_n])
     data = pd.read_csv(f'{out_dir}/effectors_for_html.csv')
     effectors_table = data.to_html(index=False,justify='left',escape=False)
-    return effectors_table,None
+    return effectors_table,None,None
             
 def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,CIS_elements=False,PIP=False,hrp=False,mxiE=False,exs=False,tts=False):
     import pandas as pd
@@ -212,16 +212,18 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     in_f = r'out_learning/concensus_predictions.csv'
     out_f_normal = r'out_learning/concensus_predictions_with_annotation.csv'
     out_f_pseudo = r'out_learning/pseudogenes.csv'
+    out_f_T3SS = r'out_learning/T3SS.csv'
     annotations = ORFs_file
     out_for_html_normal = r'out_learning/concensus_predictions_with_annotation_for_html.csv'
     out_for_html_pseudo = r'out_learning/pseudogenes_predictions_with_annotation_for_html.csv'
-    add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations)
+    out_T3SS_for_html = r'out_learning/T3SS_for_html.csv'
+    add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS)
     from csv_to_colored_xlsx_converter import convert_csv_to_colored_xlsx
     convert_csv_to_colored_xlsx(out_f_normal)
     convert_csv_to_colored_xlsx(out_f_pseudo)
-    add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,line_end='<br>')
-    predicted_table,positives_table = make_html_tables(out_for_html_normal)
-    return predicted_table, positives_table
+    add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,line_end='<br>')
+    predicted_table, positives_table, T3SS_table = make_html_tables(out_for_html_normal,out_T3SS_for_html)
+    return predicted_table, positives_table, T3SS_table
 
 import os
 if __name__ == '__main__':

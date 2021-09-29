@@ -176,15 +176,15 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS, error_path)
         if full_genome:
             if genome_path and gff_path:
-                predicted_table, positives_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, CIS_elements=True, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts)
+                predicted_table, positives_table, T3SS_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, CIS_elements=True, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts)
             else:
-                predicted_table, positives_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True)
+                predicted_table, positives_table, T3SS_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True)
         else:
-            predicted_table, positives_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue)
+            predicted_table, positives_table, T3SS_table = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue)
     
         if html_path:
             #shutil.make_archive(final_zip_path, 'zip', output_dir_path)
-            finalize_html(html_path, error_path, run_number, predicted_table, positives_table)
+            finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table)
 
     except Exception as e:
         logger.info(f'SUCCEEDED = False')
@@ -200,17 +200,17 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
             add_closing_html_tags(html_path, CONSTS, run_number)
 
 
-def finalize_html(html_path, error_path, run_number, predicted_table, positives_table):
+def finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table):
     succeeded = not os.path.exists(error_path)
     logger.info(f'SUCCEEDED = {succeeded}')
     if succeeded:
-        edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_table)
+        edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_table, T3SS_table)
     else:
         edit_failure_html(CONSTS, error_path, html_path, run_number)
     add_closing_html_tags(html_path, CONSTS, run_number)
 
 
-def edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_table):
+def edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_table, T3SS_table):
     update_html(html_path, 'RUNNING', 'FINISHED')
     if positives_table:
         append_to_html(html_path, f'''
@@ -228,6 +228,9 @@ def edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_
                 <br>
                 <h3><b>Top 10 predictions, umong unlabeled samples</b></h3>
                 {predicted_table}
+                <br>
+                <h3><b>Type 3 secretion system proteins that were found in the genome:</b></h3>
+                {T3SS_table}
                 </div>
                 <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='center'>
                 <h3><b>feature importance

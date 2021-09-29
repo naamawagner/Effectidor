@@ -50,13 +50,32 @@ prots_dict=SeqIO.to_dict(SeqIO.parse(all_prots,'fasta'))
 effectors_dict = SeqIO.to_dict(SeqIO.parse(effectors_prots,'fasta'))
 
 protein_blast_all_vs_all(all_prots,k12_dataset,k12_out_file)
-k12_out_list=sorted(parse_blast_out(k12_out_file,e_val=0.0001).keys())
+k12_dict = parse_blast_out(k12_out_file,e_val=0.0001)
+k12_out_list=sorted(k12_dict.keys())
 
 protein_blast_all_vs_all(all_prots,T3SS_dataset,T3SS_out_file)
-T3SS_out_list=sorted(parse_blast_out(T3SS_out_file,e_val=0.0001).keys())
+T3SS_dict = parse_blast_out(T3SS_out_file,e_val=10**(-10))
+T3SS_out_list=sorted(T3SS_dict.keys())
 
 non_effectors_recs=[]
+T3SS_recs = []
 for prot in prots_dict:
-    if (prot in k12_out_list or prot in T3SS_out_list) and prot not in effectors_dict:
+    #if (prot in k12_out_list or prot in T3SS_out_list) and prot not in effectors_dict:
+    if prot not in effectors_dict:
+        if prot in k12_out_list and prot not in T3SS_out_list:
+            non_effectors_recs.append(prots_dict[prot])
+        elif prot not in k12_out_list and prot in T3SS_out_list:
+            T3SS_recs.append(prots_dict[prot])
+        elif prot in k12_out_list and prot in T3SS_out_list:
+            if k12_dict[prot][1] >= T3SS_dict[prot][1]:
+                non_effectors_recs.append(prots_dict[prot])
+            else:
+                T3SS_recs.append(prots_dict[prot])
+    '''            
+    if prot in k12_out_list and prot not in effectors_dict:
         non_effectors_recs.append(prots_dict[prot])
+    elif prot in T3SS_out_list and prot not in effectors_dict:
+        T3SS_recs.append(prots_dict[prot])
+    '''
 SeqIO.write(non_effectors_recs,'non_effectors.faa','fasta')
+SeqIO.write(T3SS_recs,'T3SS_proteins.faa','fasta')
