@@ -2,8 +2,9 @@ from Bio import SeqIO
 import csv
 import pandas as pd
 
-def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,line_end='\n'):
+def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS,line_end='\n'):
     recs = SeqIO.parse(annotations,'fasta')
+    T3SS_recs = SeqIO.to_dict(SeqIO.parse('T3SS_proteins.faa','fasta'))
     locus_annotation={}
     locus_prot = {}
     for rec in recs:
@@ -40,21 +41,26 @@ def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,li
             writer_normal = csv.writer(out_normal)
             with open(out_f_pseudo,'w',newline='') as out_pseudo:
                 writer_pseudo = csv.writer(out_pseudo)
-                header = next(reader)
-                header.append('Annotation')
-                header.append('Protein sequence')
-                writer_normal.writerow(header)
-                writer_pseudo.writerow(header)
-                for row in reader:
-                    row.append(locus_annotation[row[0]])
-                    row.append(locus_prot[row[0]])
-                    if 'pseudogene' in row[-2]:
-                        writer_pseudo.writerow(row)
-                    else:
-                        writer_normal.writerow(row)
+                with open(out_f_T3SS,'w',newline='') as out_T3SS:
+                    writer_T3SS = csv.writer(out_T3SS)
+                    header = next(reader)
+                    header.append('Annotation')
+                    header.append('Protein sequence')
+                    writer_normal.writerow(header)
+                    writer_pseudo.writerow(header)
+                    writer_T3SS.writerow([header[0]]+header[-2:])
+                    for row in reader:
+                        row.append(locus_annotation[row[0]])
+                        row.append(locus_prot[row[0]])
+                        if row[0] in T3SS_recs:
+                            writer_T3SS.writerow([row[0]]+row[-2:])
+                        elif 'pseudogene' in row[-2]:
+                            writer_pseudo.writerow(row)
+                        else:
+                            writer_normal.writerow(row)
 
 
-def make_html_tables(predictions_f):
+def make_html_tables(predictions_f,T3SS):
     data = pd.read_csv(predictions_f)
     predicted = data[data.is_effector=='?']
     positives = data[data.is_effector=='yes']
@@ -67,5 +73,7 @@ def make_html_tables(predictions_f):
     positives.drop(columns=['is_effector'], inplace=True)
     predicted_table = predicted.head(10).to_html(index=False,justify='left',escape=False)
     positives_table = positives.to_html(index=False,justify='left',escape=False)
-    return predicted_table,positives_table
+    T3SS_data = pd.read_csv(T3SS)
+    T3SS_table = T3SS_data.to_html(index=False,justify='left',escape=False)
+    return predicted_table,positives_table,T3SS_table
     
