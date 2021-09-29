@@ -12,11 +12,11 @@ function validate_read_files() {
     var gff = document.getElementById("gff").value;
     var genome = document.getElementById("genome").value;
     
-    if (!gff.endsWith(".zip")) {
+    if (gff != '' && (!gff.endsWith(".zip"))) {
         alert("GFF3 file must be in a zip archive!");
         return false;
     }
-    if (!genome.endsWith(".zip")) {
+    if (genome != '' && (!genome.endsWith(".zip"))) {
         alert("full genome file must be in a zip archive!");
         return false;
     }
