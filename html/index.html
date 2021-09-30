@@ -151,34 +151,36 @@
                             <label for="full_genome">Is the genome fully assembled? (In one, circular, contig) <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info6">
                                             <span class="glyphicon glyphicon-question-sign"></span>
                                         </button></label>
-                            <label class="radio-inline"><input type="radio" name="full_genome" value="yes">Yes</label>
-                            <label class="radio-inline"><input type="radio" name="full_genome" id="full_genome" value="no" checked>No</label>
+                            <label class="radio-inline"><input type="radio" name="full_genome" id="full_genome_yes" value="yes" onclick="ShowHideDiv()">Yes</label>
+                            <label class="radio-inline"><input type="radio" name="full_genome" id="full_genome_no" value="no" checked onclick="ShowHideDiv()">No</label>
                         </div>
                     </div>
                     <br>
                     
-                    <div>
-                        <label>To search for regulatory motifs in the promoters of the genes please supply the following data: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info7">
-                                            <span class="glyphicon glyphicon-question-sign"></span>
-                                        </button></label>
-                        <br><br>
-                        <div class="form-group row">
-                            <div class="col-md-4">
-                                <label for="gff">Choose a zip archive with <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> files:</label>
-                                <label class="btn btn-default btn-file">
-                                <input type="file" id="gff" name="gff" onchange="openCIS()">
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="genome">Choose a zip archive with full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files:</label>
-                                <label class="btn btn-default btn-file">
-                                <input type="file" id="genome" name="genome" onchange="openCIS()">
-                                </label>
+                    <div id="promoters" style="display:none;">
+                        <div>
+                            <label>To search for regulatory motifs in the promoters of the genes please supply the following data: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info7">
+                                                <span class="glyphicon glyphicon-question-sign"></span>
+                                            </button></label>
+                            <br><br>
+                            <div class="form-group row">
+                                <div class="col-md-4">
+                                    <label for="gff">Choose a zip archive with <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> files:</label>
+                                    <label class="btn btn-default btn-file">
+                                    <input type="file" id="gff" name="gff" onchange="openCIS()">
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="genome">Choose a zip archive with full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files:</label>
+                                    <label class="btn btn-default btn-file">
+                                    <input type="file" id="genome" name="genome" onchange="openCIS()">
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         <br>
                         <div id="CIS" style="display:none;">
-                            <label>Choose regulatory elements to be searched for in the promoters:</label><br><br>
+                            <label>Select regulatory elements to be searched for in the promoters:</label><br><br>
                             <input type="checkbox" id="PIP-box" name="PIP-box" value="PIP-box">
                             <label for="PIP-box">PIP-box</label>
                             <br>
@@ -320,8 +322,7 @@
                         <div class="modal-body">
                         <b>
                             If the bacterium you are analyzing is a phytopathogenic bacterium and the genome is fully assembled, add a zip archive with full genome sequence <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file(s) and a zip archive with corresponding <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file(s).
-                            These files will be used for PIP-box, hrp-box, mxiE-box, and exs-box search in the promoters of the ORFs.<br>
-                            These patterns are known recognition motifs of TFs regulating T3Es in phytopathogenic bacteria.<br><br>
+                            These files will be used to serach for CIS-regulatory elements in the promoters of the genes, according to your selection.<br><br>
                             Note that the names of the GFF3 files and the names of the FASTA files should be matching. So if for example in your data there are a chromosome and a plasmid, and the names of the FASTA files are "chromosome.fasta" and "plasmid.fasta", the names of the corresponding GFF3 files should be "chromosome.gff3" and "plasmid.gff3".<br>
                             The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these keys at the beginning of your file names.
                         </b>

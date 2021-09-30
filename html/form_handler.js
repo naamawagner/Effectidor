@@ -51,3 +51,9 @@ function openCIS() {
         x.style.display = "none";
     }
 }
+
+function ShowHideDiv() {
+    var full_genome_yes = document.getElementById("full_genome_yes");
+    var promoters = document.getElementById("promoters");
+    promoters.style.display = full_genome_yes.checked ? "block" : "none";
+}
