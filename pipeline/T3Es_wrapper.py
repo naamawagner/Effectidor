@@ -53,6 +53,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     import sys
     sys.path.append('/bioseq/effectidor/auxiliaries')
     from auxiliaries import fail
+    low_quality_flag = False
     # vars
     scripts_dir = '/groups/pupko/naamawagner/T3Es_webserver/scripts/'
     os.chdir(working_directory)
@@ -113,8 +114,8 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         if len(eff_recs) == 0:
             error_msg = 'No effectors were found in the data! Make sure you run the analysis on a bacterium with an active T3SS and try to run it again with an effectors file containing all the known effectors in the bacterium.'
             fail(error_msg,error_path)
-        elif len(eff_recs) < 5:
-            return create_effectors_html(effectors_prots,ORFs_file,working_directory)
+        #elif len(eff_recs) < 5:
+        #    return create_effectors_html(effectors_prots,ORFs_file,working_directory)
             #error_msg = f'Not enough effectors were found in the data! Only {len(eff_recs)} were found in the initial homology serach. This is not enough to train a classifier.If you know more effectors are available in the bacterium, try to run it again with an effectors file containing all the known effectors in the bacterium.'
             #fail(error_msg,error_path)
     # find and create non effectors fasta file
@@ -204,7 +205,8 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     
     subprocess.check_output(['python',f'{scripts_dir}/learning.py'])
     if os.path.exists(r'out_learning/learning_failed.txt'):
-        return create_effectors_html(effectors_prots,ORFs_file,working_directory)
+        low_quality_flag = True
+        #return create_effectors_html(effectors_prots,ORFs_file,working_directory)
         #error_msg = 'Learning failed. It can be due to a small training set, or other reasons. For further details you can contact us.'
         #fail(error_msg,error_path)
     # making final output files and tables
@@ -223,7 +225,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     convert_csv_to_colored_xlsx(out_f_pseudo)
     add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,line_end='<br>')
     predicted_table, positives_table, T3SS_table = make_html_tables(out_for_html_normal,out_T3SS_for_html)
-    return predicted_table, positives_table, T3SS_table
+    return predicted_table, positives_table, T3SS_table, low_quality_flag
 
 import os
 if __name__ == '__main__':

@@ -340,3 +340,129 @@ try:
 except:
     endfile = open(f'{out_dir}/learning_failed.txt','w')
     endfile.close()
+    
+    results_train={}
+    results_test={}
+    for name,model,X_TRAIN,X_TEST,Y_TRAIN,Y_TEST,all_X,all_data in updated_models:
+        predictions_train_cv=model_selection.cross_val_predict(model,X_TRAIN,Y_TRAIN,cv=kfold,method="predict_proba")
+        AUPRC_train_cv=average_precision_score(Y_TRAIN,predictions_train_cv[:,1])
+        model.fit(X_TRAIN,Y_TRAIN)
+        predictions_train = model.predict_proba(X_TRAIN)
+        AUPRC_train = average_precision_score(Y_TRAIN,predictions_train[:,1])
+        range_train_predictions = max(predictions_train[:,1])-min(predictions_train[:,1])
+        results_train[name]=(AUPRC_train_cv,AUPRC_train,range_train_predictions)
+        predictions_test = model.predict_proba(X_TEST)
+        AUPRC_test = average_precision_score(Y_TEST,predictions_test[:,1])
+        results_test[name]=AUPRC_test,predictions_test
+        
+    all_classifiers_preds_test=[]
+    all_classifiers_scores_test=[]
+    for key in results_test:
+        all_classifiers_preds_test.append(results_test[key][1][:,1])
+        all_classifiers_scores_test.append(results_test[key][0])
+    
+    w_average=np.average(all_classifiers_preds_test,axis=0,weights=all_classifiers_scores_test)
+    w_av_AUPRC=average_precision_score(Y_TEST,w_average)
+    
+    #feature importance
+    rdf=RandomForestClassifier(n_estimators=1000)
+    rdf.fit(X,Y)
+    importance=rdf.feature_importances_
+    sorted_feature_importance = sorted(zip(list(dataset.columns)[1:-1], importance), key=lambda x: x[1], reverse=True)
+    with open(f'{out_dir}/feature_importance.csv','w',newline='') as f:
+        writer=csv.writer(f)
+        writer.writerow(['feature','importance'])
+        for feature in sorted_feature_importance:
+            writer.writerow(feature)
+    
+    predictions={}
+    algorithms_names = []
+    for name,model,X_TRAIN,X_TEST,Y_TRAIN,Y_TEST,all_X,all_data in updated_models:
+        if name in results_test:
+            model.fit(all_X,Y)
+            model_proba=model.predict_proba(all_data)
+            if max(model_proba[:,1])-min(model_proba[:,1]) >= 0.6:
+                predictions[name]={}
+                for i in range(len(model_proba)):
+                    predictions[name][array[i][0]]=model_proba[i][1]
+                algorithms_names.append(name)
+     
+    with open(f'{out_dir}/predictions.csv','w',newline='') as file:
+        f_writer = csv.writer(file)
+        header=['locus']
+        weights=[]
+        for name in algorithms_names:
+            header.append(f'{name} (AUPRC {"%.3f" % results_test[name][0]})')
+            weights.append(results_test[name][0])
+        header.append(f'wVote (AUPRC {"%.3f" % w_av_AUPRC})')
+        header.append('is_effector')
+        f_writer.writerow(header)
+        for locus in sorted(predictions[algorithms_names[0]],key=predictions[algorithms_names[0]].get,reverse=True):
+            l=[locus]
+            for name in algorithms_names:
+                l.append(predictions[name][locus])
+            l.append(np.average(l[1:len(algorithms_names)+1],weights=weights))
+            if locus in list(yes.locus):
+                l.append('yes')
+            elif locus in list(no.locus):
+                l.append('no')
+            else:
+                l.append('?')
+            f_writer.writerow(l)
+    
+    preds_df = pd.read_csv(f'{out_dir}/predictions.csv')
+    
+    classifiers_scores = {f'{name} (AUPRC {"%.3f" % results_test[name][0]})':results_test[name][0] for name in results_test}
+    classifiers_scores[f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'] = w_av_AUPRC
+        
+    best_classifier = max(classifiers_scores,key= lambda key: classifiers_scores[key])
+    if classifiers_scores[best_classifier]-w_av_AUPRC > 0.02: # if another classifier is significantly better than the vote, take it.
+        concensus_df = preds_df[['locus',f'{best_classifier}','is_effector']]
+        concensus_df.rename(columns = {best_classifier:f'score by {best_classifier}'},inplace=True)
+        sorted_concensus = concensus_df.sort_values(by=f'score by {best_classifier}',ascending=False)
+        #sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
+    else: # vote is the best classifier or very close to it, so take it
+        concensus_df = preds_df[['locus',f'wVote (AUPRC {"%.3f" % w_av_AUPRC})','is_effector']]
+        sorted_concensus = concensus_df.sort_values(by=f'wVote (AUPRC {"%.3f" % w_av_AUPRC})',ascending=False)
+        sorted_concensus.rename(columns = {f'wVote (AUPRC {"%.3f" % w_av_AUPRC})':f'score (AUPRC on test set: {"%.3f" % w_av_AUPRC})'},inplace=True)
+    sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
+    
+    # figures
+    
+    importance_f = f'{out_dir}/feature_importance.csv'
+    best_features =[]
+    with open(importance_f,'r') as in_f:
+        reader = csv.reader(in_f)
+        next(reader)
+        for i in range(10):
+            feature = next(reader)[0]
+            best_features.append(feature)
+    f = features_file
+    #f = r'C:\Users\TalPNB2\Naama\Naama\effectors\Citrobacter_rodentium\revision\Citrobacter_features_with_addition.csv'
+    data = pd.read_csv(f)
+    labeled=data[data.is_effector!='?']
+    f_names = labeled.columns[1:-1]
+    labeled[f_names] = labeled[f_names].astype(float)
+    for i in range(len(best_features)):
+        fig = plt.figure(figsize=(8,6))
+        ax = sns.violinplot(x="is_effector", y=best_features[i], data=labeled)
+        y_label = ' '.join(best_features[i].split('_'))
+        if len(y_label)>45:
+            y_lable_l = best_features[i].split('_')
+            y_label = ' '.join(y_lable_l[:len(y_lable_l)//2])+'\n'+' '.join(y_lable_l[len(y_lable_l)//2:])
+        ax.set(ylabel=y_label)
+        fig.savefig(f'{out_dir}/{str(i)}.png')
+    
+    
+    df=pd.read_csv(importance_f)
+    fig=plt.figure(figsize=(10,5))
+    ax=sns.barplot(x='importance',y='feature',data=df.head(n=10))
+    ax.set_xlabel('')
+    ax.set_ylabel('',fontsize=16)
+    #ax.set_xticklabels(ax.get_xticklabels(),rotation=90)
+    #fig.suptitle('Feature importance\n',y=1)
+    fig.subplots_adjust(left=0.5)
+    fig.tight_layout()
+    
+    fig.savefig(f'{out_dir}/feature_importance.png')
+    
