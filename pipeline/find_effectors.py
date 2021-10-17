@@ -28,14 +28,19 @@ def parse_blast_out(blast_out,e_val=10**(-10),min_identity=70):
             identity=float(row[2])
             if e_value<=e_val and identity>=min_identity:
                 if prot_id not in blast_out_dic:
-                    blast_out_dic[prot_id]=hit
+                    blast_out_dic[prot_id]=set([hit])
+                else:
+                    blast_out_dic[prot_id].add(hit)
     return blast_out_dic
 
 protein_blast_all_vs_all(effectors,bacterial_proteome,'blast_outputs/effectorsDB.blast')
 effectors_homologs = []
 k=70
 while len(effectors_homologs)<5 and k>30:
-    effectors_homologs = set(list(parse_blast_out('blast_outputs/effectorsDB.blast',min_identity=k).values()))
+    effectors_homologs = set()
+    homologs = list(parse_blast_out('blast_outputs/effectorsDB.blast',min_identity=k).values())
+    for h in homologs:
+        effectors_homologs = set.union(effectors_homologs,h)
     with open(log_file,'a') as log:
         log.write(f'k:{k},n:{len(effectors_homologs)}\n{effectors_homologs}\n\n')
     k -= 10
