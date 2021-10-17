@@ -84,8 +84,8 @@ mxiE_box = 'GTATCGT{7}A[ATGC]AG'
 mxiE_box_l = ['G','T','A','T','C','G']+['T']*7+['A','[ATGC]','A','G']
 mxiE_box_one_mismatch = create_box_one_mismatch(mxiE_box_l)  
 
-tts_box = 'GTCAG[ATCG]T[TCA][ATCG][TCA]CG[AT][AC]AGC[TAC][ATCG]{3}[CTG][CG][ATCG]{3}[TC]A'
-tts_box_l = ['G','T','C','A','G','[ATGC]','T','[TCA]','[ATGC]','[TCA]','C','G','[AT]','[AC]','A','G','C','[TAC]']+['[ATGC]']*3+['[CTG]','[CG]']+['[ATGC]']*3+['[CT]','A']
+tts_box = 'GTCAG[TCG]T[TCAG]{4}G[AT][AC]AG[CGT][TAC][ATCG]{3}[CTG]{2}[ATCG]{4}A'
+tts_box_l = ['G','T','C','A','G','[TGC]','T']+['[ATGC]']*4+['G','[AT]','[AC]','A','G','[CGT]','[TAC]']+['[ATGC]']*3+['[CTG]']*2+['[ATGC]']*4+['A']
 tts_box_one_mismatch = create_box_one_mismatch(tts_box_l)              
 
 def run_hmmer(hmm_profile_path,query,out):
@@ -143,7 +143,8 @@ def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False
         if exs:
             header += ['exs_box','exs_box_mismatch']
         if tts:
-            header += ['tts_box','tts_box_mismatch','tts_hmmer_e_val_log','tts_hmmer_score']
+            header += ['tts_box','tts_box_mismatch']
+            #header += ['tts_hmmer_e_val_log','tts_hmmer_score']
         csv_writer.writerow(header)
         for locus in locus_dic:
             l=[locus]
@@ -162,13 +163,13 @@ def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False
             if tts:
                 l.append(existence_upstream_to_AUG(locus,tts_box))
                 l.append(existence_upstream_to_AUG(locus,tts_box_one_mismatch))
-                hmm_profile_path = r'/groups/pupko/naamawagner/T3Es_webserver/tts.hmm'
-                query = f'{working_directory}/promoters/{locus}.fasta'
-                out_hmmer = f'{working_directory}/hmmer_out/{locus}.txt'
-                run_hmmer(hmm_profile_path,query,out_hmmer)
-                e_val , score = parse_hmmer(out_hmmer,locus)
-                l.append(e_val)
-                l.append(score)
+                #hmm_profile_path = r'/groups/pupko/naamawagner/T3Es_webserver/tts.hmm'
+                #query = f'{working_directory}/promoters/{locus}.fasta'
+                #out_hmmer = f'{working_directory}/hmmer_out/{locus}.txt'
+                #run_hmmer(hmm_profile_path,query,out_hmmer)
+                #e_val , score = parse_hmmer(out_hmmer,locus)
+                #l.append(e_val)
+                #l.append(score)
                 
             csv_writer.writerow(l)
     endfile = open('pip_box_features.done','w')
