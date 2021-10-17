@@ -42,7 +42,7 @@ def create_effectors_html(effectors_file,ORFs_file,out_dir):
     effectors_table = data.to_html(index=False,justify='left',escape=False)
     return effectors_table,None,None
             
-def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,CIS_elements=False,PIP=False,hrp=False,mxiE=False,exs=False,tts=False):
+def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,CIS_elements=False,PIP=False,hrp=False,mxiE=False,exs=False,tts=False,homology_search=False):
     import pandas as pd
     import subprocess
     import os
@@ -109,11 +109,19 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     subprocess.check_output(['python',f'{scripts_dir}/translate_fasta.py',ORFs_file,effectors_file,all_prots,effectors_prots])
     if not effectors_file:
         subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots,log_file])
-        # make sure effectors were found before proceeding!
-        eff_recs = list(SeqIO.parse(effectors_prots,'fasta'))
-        if len(eff_recs) == 0:
-            error_msg = 'No effectors were found in the data! Make sure you run the analysis on a bacterium with an active T3SS and try to run it again with an effectors file containing all the known effectors in the bacterium.'
-            fail(error_msg,error_path)
+    elif homology_search:
+        effectors_prots2 = 'homology_found_effectors.faa'
+        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots2,log_file])
+        eff1 = SeqIO.to_dict(SeqIO.parse(effectors_prots,'fasta'))
+        eff2 = SeqIO.to_dict(SeqIO.parse(effectors_prots2,'fasta'))
+        eff1.update(eff2)
+        SeqIO.write(eff1.values(),effectors_prots,'fasta')
+
+    # make sure effectors were found before proceeding!
+    eff_recs = list(SeqIO.parse(effectors_prots,'fasta'))
+    if len(eff_recs) == 0:
+        error_msg = 'No effectors were found in the data! Make sure you run the analysis on a bacterium with an active T3SS and try to run it again with an effectors file containing all the known effectors in the bacterium.'
+        fail(error_msg,error_path)
         #elif len(eff_recs) < 5:
         #    return create_effectors_html(effectors_prots,ORFs_file,working_directory)
             #error_msg = f'Not enough effectors were found in the data! Only {len(eff_recs)} were found in the initial homology serach. This is not enough to train a classifier.If you know more effectors are available in the bacterium, try to run it again with an effectors file containing all the known effectors in the bacterium.'

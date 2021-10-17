@@ -297,6 +297,7 @@ def run_cgi():
         write_to_debug_file(cgi_debug_path, f'9\n')
         genome_f_name = form['genome'].filename
         write_to_debug_file(cgi_debug_path, f'10\n')
+        effectors_homology = form['homology_search'].value.strip()
         if ORFs_name.endswith('zip'): #ZIP archive
             ORFs_path = os.path.join(wd, 'ORFs.zip')
         else: #FASTA
@@ -312,6 +313,9 @@ def run_cgi():
             write_to_debug_file(cgi_debug_path, f'effectors file was saved to disk successfully\n\n')
             
             parameters += f' --input_effectors_path {effectors_path}'
+            
+            if effectors_homology == 'yes':
+                parameters += f' --homology_search'
             
         if form['T3Es'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'12\n')
@@ -338,17 +342,23 @@ def run_cgi():
         
         if form['genome'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'15\n')
-            genome_path = os.path.join(wd, 'genome_sequence.zip')
+            if genome_f_name.endswith('.zip'):
+                genome_path = os.path.join(wd, 'genome_sequence.zip')
+            else:
+                genome_path = os.path.join(wd, 'genome.fasta')
             upload_file(form,'genome',genome_path,cgi_debug_path)
-            write_to_debug_file(cgi_debug_path,'genome archive was saved to disc successfully\n\n')
+            write_to_debug_file(cgi_debug_path,'genome file was saved to disc successfully\n\n')
             
             parameters += f' --genome_path {genome_path}'
             
         if form['gff'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'16\n')
-            gff_path = os.path.join(wd, 'genome_features.zip')
+            if gff_name.endswith('.zip'):
+                gff_path = os.path.join(wd, 'genome_features.zip')
+            else:
+                gff_path = os.path.join(wd, 'genome.gff3')
             upload_file(form,'gff',gff_path,cgi_debug_path)
-            write_to_debug_file(cgi_debug_path,'gff archive was saved to disc successfully\n\n')
+            write_to_debug_file(cgi_debug_path,'gff file was saved to disc successfully\n\n')
             
             parameters += f' --gff_path {gff_path}'
             

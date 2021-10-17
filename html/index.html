@@ -96,8 +96,18 @@
                                             <span class="glyphicon glyphicon-question-sign"></span>
                                         </button></label><br>
                 <label class="btn btn-default btn-file">
-                <input type="file" id="effectors" name="effectors">
+                <input type="file" id="effectors" name="effectors" onchange="openOption()">
                 </label>
+            </div>
+            <br>
+            <div class="form-group row" id="homology_effectors" style="display:none;">
+                <div class="col-md-8">
+                    <label for="homology_search">Do you want us to add putative effectors to your effectors data, that will be used together with your data as positive samples, based on homology to our effectors dataset? <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info8">
+                            <span class="glyphicon glyphicon-question-sign"></span>
+                    </button></label>
+                    <label class="radio-inline"><input type="radio" name="homology_search" id="homology_search_yes" value="yes">Yes</label>
+                <label class="radio-inline"><input type="radio" name="homology_search" id="homology_search_no" value="no" checked>No</label>
+                </div>
             </div>
             <br>
             <div class="form-group row">
@@ -325,6 +335,25 @@
                             These files will be used to serach for CIS-regulatory elements in the promoters of the genes, according to your selection.<br><br>
                             Note that the names of the GFF3 files and the names of the FASTA files should be matching. So if for example in your data there are a chromosome and a plasmid, and the names of the FASTA files are "chromosome.fasta" and "plasmid.fasta", the names of the corresponding GFF3 files should be "chromosome.gff3" and "plasmid.gff3".<br>
                             The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these keys at the beginning of your file names.
+                        </b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="modal fade" id="info8" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <div class="modal-title"><b>Input specification</b></div>
+                        </div>
+                        <div class="modal-body">
+                        <b>
+                            The previous effectors input is optional, and if not supplied we build the effectors set based on homology to an established effectors dataset.
+                            Since you supplied an effectors data, we can either use it as the only positive set, or we can add to it ORFs from your input that share high homology to our effectors dataset.
+                            Choose "yes" if you want us to search for additional effectors based on homology to use us for the training, and "no" if you want your input to be the only one used in the positive set.<br><br>
+                            Please note that homology to our effectors data is used as a feature in any case.
                         </b>
                         </div>
                     </div>
