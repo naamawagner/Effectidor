@@ -82,7 +82,7 @@
     </ol>
     <p>
     The graphical output shows analysis of the features. The 10 most contributing features will be compared between the two classes - effectors and non-effectors, in violin plots.
-    <br><br>You can see an example for the output in the running example <a href="/results/example/output.html" target="_blank">here</a>.
+    <br><br>You can see an example for the output in the running example <a href="/results/Example_run/output.html" target="_blank">here</a>.
     </p><br>
     </div>
     <h3 onclick="Open_interpretation()" style="cursor:pointer;">How do I interpret the results?</h3><br>
@@ -118,10 +118,10 @@
         <br>Against each of these proteomes a homology search will be performed. As these bacteria are closely related to the studied bacterium, the vast majority of the proteins in the studied bacterium are expected to have an ortholog in these proteomes. Nevertheless, since they do not encode a T3SS, effectors are not expected to have orthologs in these proteomes. Thus, these features are usually very informative for the machine-learning.
         </li>
         <li>
-        <b>Fully assembled genome</b> question box. By default this box is marked with "no". If the genome you are analyzing is composed of one circular contig, change it to "yes". It will allow calculating features of genome organization.
+        <b>Fully assembled genome</b> question box. By default this box is marked with "no". If the genome records of the bacterium that you are analyzing are of full circular contigs (one for the chromosome, and one for each plasmid if exist), change it to "yes". It will allow calculating features of genome organization.
         </li>
         <li>
-        <b><a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> and full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files</b>. These input files should be supplied together, and only if the genome is fully assembled (see previous input) and if the bacterium you study is a phytopathogenic bacteria. If this is the case and you supply these data, several known motifs that known TFs of T3Es bind to will be searched in the promoters of the genes.
+        <b><a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> and full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files</b>. These input files should be supplied together, and only if the genome is fully assembled (see previous input) and if the bacterium you study is a phytopathogenic bacteria. If this is the case and you supply these data, several known motifs that known TFs of T3Es bind to could be searched in the promoters of the genes.
         </li>
     </ol>
     </p>

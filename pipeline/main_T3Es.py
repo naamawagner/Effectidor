@@ -91,6 +91,7 @@ def verify_zip(file,name):
         return f'{name} not in zip format. Make sure to upload a zip archive and resubmit your job.'
     
 def validate_set(file,name):
+    # by IDs
     recs = [rec.id for rec in SeqIO.parse(file,'fasta')]
     if len(recs) > len(set(recs)):
         non_unique = []
@@ -98,7 +99,24 @@ def validate_set(file,name):
             if recs.count(rec_id) > 1:
                 non_unique.append(rec_id)
         non_unique_ids = '<br>'.join(non_unique)
-        return f'{name} contain non unique records. The following records appear more than once: {non_unique_ids}'  
+        return f'{name} contain non unique records. The following records appear more than once:<br><br>{non_unique_ids}'
+    # by locus_tags
+    recs = SeqIO.parse(file,'fasta')
+    locus_tags = []
+    for rec in recs:
+        header = rec.description
+        header_l = header.split()
+        for field in header_l:
+            if "locus_tag" in field:
+                locus = field.split('=')[1].strip(']')
+                locus_tags.append(locus)
+    if len(locus_tags) > len(set(locus_tags)):
+        non_unique = []
+        for rec_id in set(locus_tags):
+            if locus_tags.count(rec_id) > 1:
+                non_unique.append(rec_id)
+        non_unique_ids = '<br>'.join(non_unique)
+        return f'{name} contain non unique records. The following records appear more than once:<br><br>{non_unique_ids}'
     
 
 def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS_path, error_path):
@@ -261,7 +279,7 @@ def edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_
                 <h3><b>Positive samples that used to train the model</b></h3>
                 {positives_table}
                 <br>
-                <h3><b>Top 10 predictions, umong unlabeled samples</b></h3>
+                <h3><b>Top 10 predictions, among unlabeled samples</b></h3>
                 {predicted_table}
                 <br>
                 <h3><b>Type 3 secretion system proteins that were found in the genome:</b></h3>
