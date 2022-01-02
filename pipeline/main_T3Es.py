@@ -10,13 +10,14 @@ from auxiliaries import fail,update_html,append_to_html # from /effectidor/auxil
 from Bio import SeqIO
 from T3Es_wrapper import effectors_learn
 import shutil
+import re
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('main')
 
 
 def verify_fasta_format(fasta_path,Type,input_name):
-    logger.info('Validating FASTA format')
+    logger.info(f'Validating FASTA format:{fasta_path}')
     flag = False
     if Type == 'DNA':
         legal_chars = set(Bio.SeqUtils.IUPACData.ambiguous_dna_letters.lower() + Bio.SeqUtils.IUPACData.ambiguous_dna_letters)
@@ -118,6 +119,33 @@ def validate_set(file,name):
         non_unique_ids = '<br>'.join(non_unique)
         return f'{name} contain non unique records. The following records appear more than once:<br><br>{non_unique_ids}'
     
+def validate_gff(gff_dir,ORFs_f):
+    logger.info(f'Validating GFF coverage')
+    import fasta_parser
+    import pip_box_features
+    locus_dic = fasta_parser.parse_ORFs(ORFs_f)
+    CDS_set = set()
+    RNA_set = set()
+    for f in os.listdir(gff_dir):
+        CDS,RNA = pip_box_features.parse_gff(f'{gff_dir}/{f}')
+        CDS_set.update(CDS)
+        RNA_set.update(RNA)
+    not_in_gff = [locus for locus in locus_dic if (locus not in CDS_set and locus not in RNA_set)]
+    if len(not_in_gff)>0:
+        return f'''There are records in your ORFs input that are not available in the GFF file. Please revise your input and submit again.<br>
+                These records are:<br>{", ".join(not_in_gff)}'''
+    if len(RNA_set) > 0:
+        recs = SeqIO.parse(ORFs_f,'fasta')
+        cds_recs = []
+        for rec in recs:
+            if rec.id in RNA_set:
+                continue
+            elif re.search(r'locus_tag=(\w+)',rec.description):
+                if re.search(r'locus_tag=(\w+)',rec.description).group(1) in RNA_set:
+                    continue
+            cds_recs.append(rec) 
+        SeqIO.write(cds_recs,ORFs_f,'fasta')
+    
 
 def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS_path, error_path):
     logger.info('Validating input...')
@@ -166,40 +194,45 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         error_msg = verify_zip(host_proteome,'Host')
         if error_msg:
             fail(error_msg,error_path)
-    if genome_path and gff_path:
+    if genome_path:
         # genome
         os.makedirs(f'{output_dir_path}/full_genome')
         if gff_path.endswith('.zip'):
             shutil.unpack_archive(f'{output_dir_path}/genome_sequence.zip',f'{output_dir_path}/full_genome')
         else:
             shutil.move(f'{output_dir_path}/genome.fasta',f'{output_dir_path}/full_genome')
-        genome_files_names = []
+        #genome_files_names = []
         for file in os.listdir(f'{output_dir_path}/full_genome'):
             if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/full_genome/{file}'): # discard system files and directories
                 error_msg = verify_fasta_format(f'{output_dir_path}/full_genome/{file}','DNA', f'{file} in full genome archive')
                 if error_msg:
                     error_msg = f'Illegal fasta files in {file} in full genome archive: {error_msg}'
                     fail(error_msg,error_path)
+                '''
                 error_msg = verify_genome_one_contig(f'{output_dir_path}/full_genome/{file}',file)
                 if error_msg:
-                    fail(error_msg,error_path)
-                genome_files_names.append('.'.join(file.split('.')[:-1]))
+                    fail(error_msg,error_path)'''
+                #genome_files_names.append('.'.join(file.split('.')[:-1]))
+    if gff_path:
         # gff
         os.makedirs(f'{output_dir_path}/gff')
         if genome_path.endswith('.zip'):
             shutil.unpack_archive(f'{output_dir_path}/genome_features.zip',f'{output_dir_path}/gff')
         else:
             shutil.move(f'{output_dir_path}/genome.gff3',f'{output_dir_path}/gff')
-        gff_files_names = ['.'.join(file.split('.')[:-1]) for file in os.listdir(f'{output_dir_path}/gff') if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/gff/{file}')]
-        if set(gff_files_names) != set(genome_files_names):
-            in_gff_not_genome = set(gff_files_names).difference(set(genome_files_names))
-            in_genome_not_in_gff = set(genome_files_names).difference(set(gff_files_names))
-            error_msg = 'The names of the files in the gff archive are not matching the names of the files in the full genome archive!'
-            if len(in_gff_not_genome) > 0:
-                error_msg += f' The following file names are present in the GFF archive but not in the full genome archive: {in_gff_not_genome}'
-            if len(in_genome_not_in_gff) > 0:
-                error_msg += f' The following file names are present in the full genome archive but not in the GFF archive: {in_genome_not_in_gff}'
-            fail(error_msg,error_path)
+        #gff_files_names = ['.'.join(file.split('.')[:-1]) for file in os.listdir(f'{output_dir_path}/gff') if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/gff/{file}')]
+        #if set(gff_files_names) != set(genome_files_names):
+            #in_gff_not_genome = set(gff_files_names).difference(set(genome_files_names))
+            #in_genome_not_in_gff = set(genome_files_names).difference(set(gff_files_names))
+            #error_msg = 'The names of the files in the gff archive are not matching the names of the files in the full genome archive!'
+            #if len(in_gff_not_genome) > 0:
+            #    error_msg += f' The following file names are present in the GFF archive but not in the full genome archive: {in_gff_not_genome}'
+            #if len(in_genome_not_in_gff) > 0:
+            #    error_msg += f' The following file names are present in the full genome archive but not in the GFF archive: {in_genome_not_in_gff}'
+            #fail(error_msg,error_path)
+        error_msg = validate_gff(f'{output_dir_path}/gff',f'{output_dir_path}/ORFs.fasta')
+        if error_msg:
+            fail(error_msg,error_path)    
     if no_T3SS_path:
         error_msg = verify_zip(no_T3SS_path,'no_T3SS')
         if error_msg:

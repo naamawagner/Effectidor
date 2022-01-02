@@ -55,7 +55,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     from auxiliaries import fail
     low_quality_flag = False
     # vars
-    scripts_dir = '/groups/pupko/naamawagner/T3Es_webserver/scripts/'
+    scripts_dir = '/groups/pupko/naamawagner/T3Es_webserver/scripts'
     os.chdir(working_directory)
     log_file = f'{working_directory}/log.txt'
     # input files
@@ -135,9 +135,10 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         # homology (blast) features
         jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/homology.py {ORFs_file} {all_prots} {blast_datasets_dir} {effectors_prots} {working_directory}\thomology\n')
         if organization:
+            gff_dir = f'{working_directory}/gff'
             # genome organization features
             ORFs_dir = f'{working_directory}/contigs_ORFs'
-            jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/genome_organization.py {ORFs_dir} {effectors_prots} {working_directory}\tgenome_organization\n')
+            jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/genome_organization.py {ORFs_dir} {effectors_prots} {working_directory} {gff_dir}\tgenome_organization\n')
             if CIS_elements:
                 # PIP-box features
                 gff_dir = f'{working_directory}/gff'

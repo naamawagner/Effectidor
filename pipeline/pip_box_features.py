@@ -10,14 +10,53 @@ import fasta_parser
 #%%
 
 def parse_gff(gff_f):
+    CDS_l =[]
+    RNA = []
+    with open(gff_f) as in_f:
+        for line in in_f:
+            if line.startswith('#'): #header
+                continue
+            
+            line_l = line.strip().split('\t')
+            if len(line_l) > 2:
+                if line_l[2]=='CDS':
+                    features_l = line_l[-1].split(';')
+                    for feature in features_l:
+                        if feature.startswith('locus_tag='):
+                            locus_tag = feature.split('=')[1]
+                            CDS_l.append(locus_tag)
+                            break
+                elif 'RNA' in line_l[2]:
+                    features_l = line_l[-1].split(';')
+                    for feature in features_l:
+                        if feature.startswith('locus_tag='):
+                            locus_tag = feature.split('=')[1]
+                            RNA.append(locus_tag)
+                            break
+    return set(CDS_l),set(RNA)
+
+def parse_gff_to_CDS_loc(gff_f):
+    regions = []
+    circulars = []
+    linears = []
     locus_area_d ={}
     with open(gff_f) as in_f:
         for line in in_f:
-            if line.startswith('#'):
-                continue
+            if line.startswith('#'): #header
+                line_l = line.split()
+                if 'sequence-region' in line_l[0]:
+                    regions.append(line_l[1])
+                    locus_area_d[line_l[1]] = {}
+            
             line_l = line.strip().split('\t')
             if len(line_l) > 2:
-                if line_l[2]=='gene' or line_l[2]=='pseudogene':
+                if line_l[2] == 'region':
+                    if 'Is_circular=true' in line_l[-1]:
+                        circulars.append(line_l[0])
+                    else:
+                        linears.append(line_l[0])
+                if line_l[2]=='CDS':
+                    region = line_l[0]
                     area = [(int(line_l[3])-1,int(line_l[4]))]
                     if line_l[6]=='+':
                         area.append(1)
@@ -27,30 +66,37 @@ def parse_gff(gff_f):
                     for feature in features_l:
                         if feature.startswith('locus_tag='):
                             locus_tag = feature.split('=')[1]
-                            locus_area_d[locus_tag]=area
+                            locus_area_d[region][locus_tag]=area
                             break
-    return locus_area_d
+    return locus_area_d,circulars
 
-def get_promoters(gene_area_dic,genome_f):
+def get_promoters(gene_area_dic,circular_contigs,genome_f):
     promoters_d = {}
-    genome = next(SeqIO.parse(genome_f,'fasta')).seq
-    for gene in gene_area_dic:
-        if gene_area_dic[gene][1]==1:
-            start,end = gene_area_dic[gene][0][0],gene_area_dic[gene][0][1]
-            if start >= 350:
-                promoter = genome[start-350:start]
-            else:
-                to_add = 350-start
-                promoter = genome[-to_add:]+genome[:start]
-        else: #-1
-            start,end = gene_area_dic[gene][0][0],gene_area_dic[gene][0][1]
-            if len(genome)-end >=350:
-                promoter = genome[end:end+350].reverse_complement()
-            else:
-                to_add = 350 - (len(genome)-end)
-                promoter = genome[end:]+genome[:to_add]
-                promoter = promoter.reverse_complement()
-        promoters_d[gene] = promoter
+    genome = SeqIO.to_dict(SeqIO.parse(genome_f,'fasta'))
+    for region_dic in gene_area_dic:
+        for gene in gene_area_dic[region_dic]:
+            if gene_area_dic[region_dic][gene][1]==1: #forward
+                start,end = gene_area_dic[region_dic][gene][0][0],gene_area_dic[region_dic][gene][0][1]
+                if start >= 350:
+                    promoter = genome[region_dic].seq[start-350:start]
+                else:
+                    if region_dic in circular_contigs:
+                        to_add = 350-start
+                        promoter = genome[region_dic].seq[-to_add:]+genome[region_dic].seq[:start]
+                    else:
+                        promoter = genome[region_dic].seq[:start]
+            else: #-1 reverse
+                start,end = gene_area_dic[region_dic][gene][0][0],gene_area_dic[region_dic][gene][0][1]
+                if len(genome[region_dic].seq)-end >=350:
+                    promoter = genome[region_dic].seq[end:end+350].reverse_complement()
+                else:
+                    if region_dic in circular_contigs:
+                        to_add = 350 - (len(genome[region_dic].seq)-end)
+                        promoter = genome[region_dic].seq[end:]+genome[region_dic].seq[:to_add]
+                        promoter = promoter.reverse_complement()
+                    else:
+                        promoter = genome[region_dic].seq[end:].reverse_complement()
+            promoters_d[gene] = promoter
     return promoters_d
                        
 hrp_box = '[GT]GGA[AG]C[CT][ATGC]{15,16}CCAC[ATGC]{2}A'
@@ -106,31 +152,39 @@ def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False
     gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
     os.chdir(working_directory)
     locus_dic = fasta_parser.parse_ORFs(ORFs_file)
-    promoters_dicts = []
+    #promoters_dicts = []
+    locus_area_d,circulars = {},[]
     for gff_f in gff_files:
-        name = gff_f.split('/')[-1].split('.')[0]
-        genome_f = f'{genome_dir}/{name}.fasta'
-        locus_area_d = parse_gff(gff_f)
-        promoters_d = get_promoters(locus_area_d,genome_f)
-        promoters_dicts.append(promoters_d)
-        
+        #name = gff_f.split('/')[-1].split('.')[0]
+        #genome_f = f'{genome_dir}/{name}.fasta'
+        locus_area_d1,circulars1 = parse_gff_to_CDS_loc(gff_f)
+        locus_area_d.update(locus_area_d1)
+        circulars.extend(circulars1)
+    genome_recs = []
+    for genome_f in os.listdir(genome_dir):
+        if os.path.isfile(f'{genome_dir}/{genome_f}'):
+            recs = list(SeqIO.parse(f'{genome_dir}/{genome_f}','fasta'))
+            genome_recs.extend(recs)
+    SeqIO.write(genome_recs,'genome.fasta','fasta')
+    promoters_d = get_promoters(locus_area_d,circulars,'genome.fasta')
+        #promoters_dicts.append(promoters_d)
+     
+    '''
     if tts:
         os.makedirs(f'{working_directory}/promoters')
         os.makedirs(f'{working_directory}/hmmer_out')
         for promoters_d in promoters_dicts:
             for locus in promoters_d:
                 rec = SeqRecord(promoters_d[locus],id=locus)
-                SeqIO.write(rec,f'{working_directory}/promoters/{locus}.fasta','fasta')   
+                SeqIO.write(rec,f'{working_directory}/promoters/{locus}.fasta','fasta')   '''
         
     def existence_upstream_to_AUG(locus,pattern):
-        for promoters_d in promoters_dicts:
-            if locus in promoters_d:
-                promoter = promoters_d[locus]
-                break
+        promoter = promoters_d[locus]
         if re.search(pattern,str(promoter),re.I):
             return 1
         else:
             return 0
+        
     with open(f'pip_box_features.csv','w',newline='') as f:
         csv_writer = csv.writer(f)
         header=['locus']

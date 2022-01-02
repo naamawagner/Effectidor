@@ -94,7 +94,7 @@ def upload_file(form, form_key_name, file_path, cgi_debug_path):
         f.write(content)
 
 
-def write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, full, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts):
+def write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts):
     with open(output_path, 'a') as f:
         write_to_debug_file(cgi_debug_path, f'24\n') 
         # regular params row
@@ -144,14 +144,14 @@ def write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs
             f.write(f'<b>bacterial proteomes without T3SS archive: </b>{non_T3SS_name}')
             f.write('</div></div>')
             write_to_debug_file(cgi_debug_path, f'37\n')
-        
+        '''
         if full == 'yes':
             write_to_debug_file(cgi_debug_path, f'38\n')
             f.write('<div class="row" style="font-size: 20px;">')
             f.write('<div class="col-md-12">')
             f.write(f'<b>including genome organization features.</b>')
             f.write('</div></div>')
-            write_to_debug_file(cgi_debug_path, f'39\n')
+            write_to_debug_file(cgi_debug_path, f'39\n')'''
         
         if gff_name:
             write_to_debug_file(cgi_debug_path, f'40\n')
@@ -248,10 +248,10 @@ def run_cgi():
     send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
                receiver='naamawagner@mail.tau.ac.il', subject=f'Effectidor - A new job has been submitted: {run_number}',
                content=f"{os.path.join(CONSTS.WEBSERVER_URL, 'results', run_number, 'cgi_debug.txt')}\n{os.path.join(CONSTS.WEBSERVER_URL, 'results', run_number, 'output.html')}")
-    send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
+    '''send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
                receiver='naama100w@gmail.com', subject=f'Effectidor - A new job has been submitted: {run_number}',
                content=f"{os.path.join(CONSTS.WEBSERVER_URL, 'results', run_number, 'cgi_debug.txt')}\n{os.path.join(CONSTS.WEBSERVER_URL, 'results', run_number, 'output.html')}")
-
+    '''
     try:
         if form['email'].value != '':
             write_to_debug_file(cgi_debug_path, f"{form['email'].value.strip()}\n\n")
@@ -291,7 +291,7 @@ def run_cgi():
         write_to_debug_file(cgi_debug_path, f'6\n')
         non_T3SS_name = form['no_T3SS'].filename
         write_to_debug_file(cgi_debug_path, f'7\n')
-        full_genome = form['full_genome'].value.strip()
+        #full_genome = form['full_genome'].value.strip()
         write_to_debug_file(cgi_debug_path, f'8\n')
         gff_name = form['gff'].filename
         write_to_debug_file(cgi_debug_path, f'9\n')
@@ -340,17 +340,8 @@ def run_cgi():
             upload_file(form, 'no_T3SS', no_T3SS_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'no_T3SS file was saved to disk successfully\n\n')
         
-        if form['genome'].value: # not empty string / empy bytes - the file was supplied by the user
-            write_to_debug_file(cgi_debug_path, f'15\n')
-            if genome_f_name.endswith('.zip'):
-                genome_path = os.path.join(wd, 'genome_sequence.zip')
-            else:
-                genome_path = os.path.join(wd, 'genome.fasta')
-            upload_file(form,'genome',genome_path,cgi_debug_path)
-            write_to_debug_file(cgi_debug_path,'genome file was saved to disc successfully\n\n')
             
-            parameters += f' --genome_path {genome_path}'
-            
+        PIP, hrp, mxiE, exs, tts = False,False,False,False,False
         if form['gff'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'16\n')
             if gff_name.endswith('.zip'):
@@ -361,11 +352,20 @@ def run_cgi():
             write_to_debug_file(cgi_debug_path,'gff file was saved to disc successfully\n\n')
             
             parameters += f' --gff_path {gff_path}'
-            
-        PIP, hrp, mxiE, exs, tts = False,False,False,False,False
-        if full_genome == 'yes':
+        
             write_to_debug_file(cgi_debug_path, f'17\n')
             parameters += ' --full_genome'
+            
+        if form['genome'].value: # not empty string / empy bytes - the file was supplied by the user
+            write_to_debug_file(cgi_debug_path, f'15\n')
+            if genome_f_name.endswith('.zip'):
+                genome_path = os.path.join(wd, 'genome_sequence.zip')
+            else:
+                genome_path = os.path.join(wd, 'genome.fasta')
+            upload_file(form,'genome',genome_path,cgi_debug_path)
+            write_to_debug_file(cgi_debug_path,'genome file was saved to disc successfully\n\n')
+            
+            parameters += f' --genome_path {genome_path}'
             if 'PIP-box' in form:
                 write_to_debug_file(cgi_debug_path, f'18\n')
                 parameters += ' --PIP'
@@ -387,7 +387,7 @@ def run_cgi():
                 parameters += ' --tts'
                 tts = True
         write_to_debug_file(cgi_debug_path, f'23\n')   
-        write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, full_genome, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts)
+        write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts)
         write_to_debug_file(cgi_debug_path, f'{ctime()}: Running parameters were written to html successfully.\n')
 
         cmds_file = os.path.join(wd, 'qsub.cmds')
@@ -416,9 +416,8 @@ def run_cgi():
                                     f'type 3 effectors of other bacteria file: {T3Es_name}\n'\
                                     f'host proteome file: {host_name}\n'\
                                     f'proteomes with no T3SS archive: {non_T3SS_name}\n'\
-                                    f'full genome: {full_genome}\n'\
-                                    f'genome file: {genome_f_name}\n'\
                                     f'GFF file: {gff_name}\n'\
+                                    f'genome file: {genome_f_name}\n'\
                                     f'You can track the progress of your job at:\n{os.path.join(CONSTS.WEBSERVER_URL, "results", run_number, "output.html")}\n\n'
 
             # Send the user a notification email for their submission
