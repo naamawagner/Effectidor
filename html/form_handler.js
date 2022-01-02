@@ -34,9 +34,6 @@ function validate_read_files() {
     if (gff == '' && genome != '') {
         alert("GFF3 file is missing!");
         return false;
-    } else if (gff != '' && genome == '') {
-        alert("Full genome file is missing!");
-        return false;
     }
         
     return true;
@@ -64,9 +61,9 @@ function openCIS() {
 }
 
 function ShowHideDiv() {
-    var full_genome_yes = document.getElementById("full_genome_yes");
+    var gff = document.getElementById("gff").value;
     var promoters = document.getElementById("promoters");
-    promoters.style.display = full_genome_yes.checked ? "block" : "none";
+    promoters.style.display = gff != '' ? "block" : "none";
 }
 
 function openOption() {

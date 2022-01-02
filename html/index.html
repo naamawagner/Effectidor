@@ -156,32 +156,42 @@
                             </label>
                         </div>
                     </div>
-                    <div class="form-group row">
-                        <div class="col-md-8">
-                            <label for="full_genome">Is the genome fully assembled? (In one, circular, contig) <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info6">
-                                            <span class="glyphicon glyphicon-question-sign"></span>
-                                        </button></label>
-                            <label class="radio-inline"><input type="radio" name="full_genome" id="full_genome_yes" value="yes" onclick="ShowHideDiv()">Yes</label>
-                            <label class="radio-inline"><input type="radio" name="full_genome" id="full_genome_no" value="no" checked onclick="ShowHideDiv()">No</label>
-                        </div>
-                    </div>
+                    
+                    <!--<div class="form-group row">-->
+                    <!--    <div class="col-md-8">-->
+                    <!--        <label for="full_genome">Is the genome fully assembled? (In one, circular, contig) <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info6">-->
+                    <!--                        <span class="glyphicon glyphicon-question-sign"></span>-->
+                    <!--                    </button></label>-->
+                    <!--        <label class="radio-inline"><input type="radio" name="full_genome" id="full_genome_yes" value="yes" onclick="ShowHideDiv()">Yes</label>-->
+                    <!--        <label class="radio-inline"><input type="radio" name="full_genome" id="full_genome_no" value="no" checked onclick="ShowHideDiv()">No</label>-->
+                    <!--    </div>-->
+                    <!--</div>-->
                     <br>
                     
-                    <div id="promoters" style="display:none;">
+                    
                         <div>
-                            <label>To search for regulatory motifs in the promoters of the genes please supply the following data: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info7">
-                                                <span class="glyphicon glyphicon-question-sign"></span>
-                                            </button></label>
-                            <br><br>
+                            
                             <div class="form-group row">
-                                <div class="col-md-4">
-                                    <label for="gff">Choose a zip archive with <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> files:</label>
+                                <div class="col-md-8">
+                                    <label for="gff">Upload a <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file (if multiple files are needed - upload a zip archive): <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info6">
+                                    <span class="glyphicon glyphicon-question-sign"></span>
+                                        </button></label>
                                     <label class="btn btn-default btn-file">
-                                    <input type="file" id="gff" name="gff" onchange="openCIS()">
+                                    <input type="file" id="gff" name="gff" onchange="ShowHideDiv()">
                                     </label>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="genome">Choose a zip archive with full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files:</label>
+                            </div>
+                        </div>
+                        <br><br>
+                    <div id="promoters" style="display:none;">
+                            <label>To search for regulatory motifs in the promoters of the genes please supply the following data: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info7">
+                                            <span class="glyphicon glyphicon-question-sign"></span>
+                                        </button></label>
+                            <br><br>
+                        <div>
+                            <div class="form-group row">
+                                <div class="col-md-8">
+                                    <label for="genome">Upload a full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file (if multiple files are needed - upload a zip archive):</label>
                                     <label class="btn btn-default btn-file">
                                     <input type="file" id="genome" name="genome" onchange="openCIS()">
                                     </label>
@@ -225,11 +235,12 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            The input for the web server is a text file with all the ORFs sequences of the analyzed genome.
+                            The input for Effectidor is a text file with all the ORFs sequences of the analyzed genome.
                             The file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
                             <br>You can find instructions to download this file <a href="instructions.html" target="_blank">here</a>.
-                            <br>If the analyzed genome is composed of a chromosome and plasmids, the ORFs from each should be in seperate files, such that each file contains all the ORFs of a specific entity (chromosome or plasmid), and the files should be compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">ZIP</a> archive. 
-                            Otherwize, a FASTA file containing all the ORFs in the genome can be uploaded.
+                            <br>If the analyzed genome is composed of a chromosome and plasmids, the ORFs from each can be supplied in seperate files. In this case, the files should be compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">ZIP</a> archive. 
+                            <br><br> Note, only protein coding genes should be included in this input. Non-coding RNA genes, such as tRNA, should not be included. If you follow the instructions above, no such genes are expected in your input file. 
+                            Alternativelly, if such RNA genes do appear in your data and you supply a GFF3 file indicating it (in the advanced options), we will filter them out automatically.
                         </b>
                         </div>
                     </div>
@@ -315,8 +326,9 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            If you choose Yes, genome organization features would be extracted.<br>
-                            Do not choose this option if the genome is in several contigs.
+                            GFF3 files will use for extraction of genome organization features.<br>
+                            If you wish to upload more than one file (for example, if a plasmid is available), compress them in a single zip archive.<br>
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.
                         </b>
                         </div>
                     </div>
@@ -332,10 +344,10 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            If the bacterium you are analyzing is a phytopathogenic bacterium and the genome is fully assembled, add a zip archive with full genome sequence <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file(s) and a zip archive with corresponding <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file(s).
+                            If the bacterium you are analyzing is a phytopathogenic bacterium you can upload here full genome sequence <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file(s).
                             These files will be used to serach for CIS-regulatory elements in the promoters of the genes, according to your selection.<br><br>
-                            Note that the names of the GFF3 files and the names of the FASTA files should be matching. So if for example in your data there are a chromosome and a plasmid, and the names of the FASTA files are "chromosome.fasta" and "plasmid.fasta", the names of the corresponding GFF3 files should be "chromosome.gff3" and "plasmid.gff3".<br>
-                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these keys at the beginning of your file names.
+                            If you wish to upload more than one file (for example, if a plasmid is available), compress them in a single zip archive.<br>
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.
                         </b>
                         </div>
                     </div>
