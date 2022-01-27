@@ -197,7 +197,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
     if genome_path:
         # genome
         os.makedirs(f'{output_dir_path}/full_genome')
-        if gff_path.endswith('.zip'):
+        if genome_path.endswith('.zip'):
             shutil.unpack_archive(f'{output_dir_path}/genome_sequence.zip',f'{output_dir_path}/full_genome')
         else:
             shutil.move(f'{output_dir_path}/genome.fasta',f'{output_dir_path}/full_genome')
@@ -216,7 +216,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
     if gff_path:
         # gff
         os.makedirs(f'{output_dir_path}/gff')
-        if genome_path.endswith('.zip'):
+        if gff_path.endswith('.zip'):
             shutil.unpack_archive(f'{output_dir_path}/genome_features.zip',f'{output_dir_path}/gff')
         else:
             shutil.move(f'{output_dir_path}/genome.gff3',f'{output_dir_path}/gff')

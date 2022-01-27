@@ -10,7 +10,7 @@ gff_dir = argv[4]
 gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
 os.chdir(working_directory)
 locus_dics=[fasta_parser.parse_ORFs(f'{ORFs_dir}/{ORFs_file}') for ORFs_file in os.listdir(ORFs_dir)]
-effectors_dict = fasta_parser.parse_ORFs(effectors_file)
+effectors_dict = fasta_parser.parse_ORFs(effectors_file,DNA=False)
 #%%
 locus_area_d,circulars = {},[]
 for gff_f in gff_files:

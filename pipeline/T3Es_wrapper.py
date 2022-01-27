@@ -40,7 +40,7 @@ def create_effectors_html(effectors_file,ORFs_file,out_dir):
             writer.writerow([locus,locus_annotation[locus],protein_n])
     data = pd.read_csv(f'{out_dir}/effectors_for_html.csv')
     effectors_table = data.to_html(index=False,justify='left',escape=False)
-    return effectors_table,None,None
+    return effectors_table,None,None, False
             
 def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,CIS_elements=False,PIP=False,hrp=False,mxiE=False,exs=False,tts=False,homology_search=False):
     import pandas as pd
@@ -122,10 +122,10 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     if len(eff_recs) == 0:
         error_msg = 'No effectors were found in the data! Make sure you run the analysis on a bacterium with an active T3SS and try to run it again with an effectors file containing all the known effectors in the bacterium.'
         fail(error_msg,error_path)
-        #elif len(eff_recs) < 5:
-        #    return create_effectors_html(effectors_prots,ORFs_file,working_directory)
-            #error_msg = f'Not enough effectors were found in the data! Only {len(eff_recs)} were found in the initial homology serach. This is not enough to train a classifier.If you know more effectors are available in the bacterium, try to run it again with an effectors file containing all the known effectors in the bacterium.'
-            #fail(error_msg,error_path)
+    elif len(eff_recs) < 3:
+        return create_effectors_html(effectors_prots,ORFs_file,working_directory)
+        #error_msg = f'Not enough effectors were found in the data! Only {len(eff_recs)} were found in the initial homology serach. This is not enough to train a classifier.If you know more effectors are available in the bacterium, try to run it again with an effectors file containing all the known effectors in the bacterium.'
+        #fail(error_msg,error_path)
     # find and create non effectors fasta file
     subprocess.check_output(['python',f'{scripts_dir}/find_non_effectors.py',all_prots,effectors_prots])
     # creating the features extraction commands

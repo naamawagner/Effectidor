@@ -10,16 +10,17 @@ def translate_fasta(ORFs_fasta,prots_fasta):
     prots = []
     recs = SeqIO.parse(ORFs_fasta,'fasta')
     for rec in recs:
-        header = rec.description
-        if 'locus_tag' in header:
-            for field in header.split():
-                if 'locus_tag' in field:
-                    locus = field.split('=')[1].strip(']')
-                    break
-            rec.id = locus
-            rec.description = locus
-        rec.seq = rec.seq.translate(to_stop=True)
-        prots.append(rec)
+        if len(rec.seq.translate(to_stop=True)) > 10:
+            header = rec.description
+            if 'locus_tag' in header:
+                for field in header.split():
+                    if 'locus_tag' in field:
+                        locus = field.split('=')[1].strip(']')
+                        break
+                rec.id = locus
+                rec.description = locus
+            rec.seq = rec.seq.translate(to_stop=True)
+            prots.append(rec)
     SeqIO.write(prots,prots_fasta,'fasta')
 
 translate_fasta(ORFs_file,all_prots)
