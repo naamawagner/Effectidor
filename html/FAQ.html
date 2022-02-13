@@ -77,7 +77,7 @@
         <li>Pseudogenes file - an Excel file with all the predictions of ORFs that are annotated as pseudogenes.
         <br>Highly scored samples available in this file are potentially with effector origin that was lost in evolution.
         <br>This file will be empty if the input ORFs file did not contain annotations.</li>
-        <li>Feature importance table. This table shows the features by their contribution to the learning, and their relative importnce. It is available as a downloadable csv file.</li>
+        <li>Feature importance table. This table shows the features by their contribution to the learning, and their relative importance. It is available as a downloadable csv file.</li>
         <li>Raw features file. The features file, containing all the features that were extracted from the input data, that was used to train the machine learning algorithm, is also available as a downloadable csv file.</li>
     </ol>
     <p>
@@ -108,7 +108,7 @@
     <p>
     Effectidor has one obligatory input - <b>ORFs file</b>.<br> This file is a FASTA file with all the ORFs in the genome. See instructions on how to download this file <a href="instructions.html" target="_blank">here</a>.
     <br>Some of the ORFs in this file (effectors and non-effectors) will be used to train the machine-learning algorithms, and based on the trained classifier, the main output - prediction for each ORF - will be performed. 
-    <br>In addition, it is recommended to supply an <b>Effectors file</b>. This file should contain all the known effectors' rocords, as appear in the ORFs file. If you do not supply such a file, a homology search against an internal effectors dataset will be performed to constitute the "known effectors" ORFs for the learning process. 
+    <br>In addition, it is recommended to supply an <b>Effectors file</b>. This file should contain all the known effectors' records, as appear in the ORFs file. If you do not supply such a file, a homology search against an internal effectors dataset will be performed to constitute the "known effectors" ORFs for the learning process.
     <br><br> In the advanced options you can supply additional data that can improve the analysis. Each of these additional data will result in additional features that will feed the machine-learning.<br>These data include:</p>
     <ol>
         <li><b>Host proteome</b> archive. Protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files with the proteome of a known host of the studied bacterium. Multiple files can be included. All these files should be compressed together in a single <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip</a> archive.
@@ -118,10 +118,10 @@
         <br>Against each of these proteomes a homology search will be performed. As these bacteria are closely related to the studied bacterium, the vast majority of the proteins in the studied bacterium are expected to have an ortholog in these proteomes. Nevertheless, since they do not encode a T3SS, effectors are not expected to have orthologs in these proteomes. Thus, these features are usually very informative for the machine-learning.
         </li>
         <li>
-        <b>Fully assembled genome</b> question box. By default this box is marked with "no". If the genome records of the bacterium that you are analyzing are of full circular contigs (one for the chromosome, and one for each plasmid if exist), change it to "yes". It will allow calculating features of genome organization.
+        <b><a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file(s)</b>. These files will use to compute genome organization features.
         </li>
         <li>
-        <b><a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> and full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files</b>. These input files should be supplied together, and only if the genome is fully assembled (see previous input) and if the bacterium you study is a phytopathogenic bacteria. If this is the case and you supply these data, several known motifs that known TFs of T3Es bind to could be searched in the promoters of the genes.
+        <b>Full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files</b>. If you supply these data, several known motifs that known TFs of T3Es bind to could be searched in the promoters of the genes.
         </li>
     </ol>
     </p>
@@ -129,7 +129,7 @@
     <h3 onclick="Open_running_time()" style="cursor:pointer;">What is the expected running time of Effectidor?</h3><br>
     <div id="running_timeQ" style="display:none;">
     <p>The running time depends on many factors, among them the input you supply and the load in our servers.
-    <br>It can take a few minutes and up to several hours. We will send you an email with a link to the results upon submission, if you choose to supply your email address.
+    <br>It can take a few minutes and up to several hours. We will email you a link to the results upon submission, if you choose to supply your email address.
     </p><br>
     </div>
     <h3 onclick="Open_saving_time()" style="cursor:pointer;">For how long will my results be saved in the servers?</h3><br>

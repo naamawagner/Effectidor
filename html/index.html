@@ -71,7 +71,7 @@
         <div class="container" style="width: 100%">
         <br><br>
             <div class="form-group" id="short_description">
-                <p align="justify">Effectidor allows running a full classification pipline to find uncharacterized type 3 effectors in an input bacterium.
+                <p align="justify">Effectidor allows running a full classification pipeline to find uncharacterized type 3 effectors in an input bacterium.
                                     It produces both graphical and tabular analysis of the effectors repertoire in the input bacterium.
                                     Example output can be found <b><a href="/results/Example_run/output.html" target="_blank">here</a></b>.</p>
             </div>
@@ -184,14 +184,14 @@
                         </div>
                         <br><br>
                     <div id="promoters" style="display:none;">
-                            <label>To search for regulatory motifs in the promoters of the genes please supply the following data: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info7">
-                                            <span class="glyphicon glyphicon-question-sign"></span>
-                                        </button></label>
+                            <label>To search for regulatory motifs in the promoters of the genes please supply the following data:</label>
                             <br><br>
                         <div>
                             <div class="form-group row">
-                                <div class="col-md-8">
-                                    <label for="genome">Upload a full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file (if multiple files are needed - upload a zip archive):</label>
+                                <div class="col-md-10">
+                                    <label for="genome">Upload a full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file (if multiple files are needed - upload a zip archive): <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info7">
+                                            <span class="glyphicon glyphicon-question-sign"></span>
+                                        </button></label>
                                     <label class="btn btn-default btn-file">
                                     <input type="file" id="genome" name="genome" onchange="openCIS()">
                                     </label>
@@ -200,7 +200,9 @@
                         </div>
                         <br>
                         <div id="CIS" style="display:none;">
-                            <label>Select regulatory elements to be searched for in the promoters:</label><br><br>
+                            <label>Select regulatory elements to be searched for in the promoters: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info9">
+                                            <span class="glyphicon glyphicon-question-sign"></span>
+                                        </button></label><br><br>
                             <input type="checkbox" id="PIP-box" name="PIP-box" value="PIP-box">
                             <label for="PIP-box">PIP-box</label>
                             <br>
@@ -238,9 +240,9 @@
                             The input for Effectidor is a text file with all the ORFs sequences of the analyzed genome.
                             The file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
                             <br>You can find instructions to download this file <a href="instructions.html" target="_blank">here</a>.
-                            <br>If the analyzed genome is composed of a chromosome and plasmids, the ORFs from each can be supplied in seperate files. In this case, the files should be compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">ZIP</a> archive. 
+                            <br>If the analyzed genome is composed of a chromosome and plasmids, the ORFs from each can be supplied in separate files. In this case, the files should be compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">ZIP</a> archive.
                             <br><br> Note, only protein coding genes should be included in this input. Non-coding RNA genes, such as tRNA, should not be included. If you follow the instructions above, no such genes are expected in your input file. 
-                            Alternativelly, if such RNA genes do appear in your data and you supply a GFF3 file indicating it (in the advanced options), we will filter them out automatically.
+                            Alternatively, if such RNA genes do appear in your data and you supply a GFF3 file indicating it (in the advanced options), we will filter them out automatically.
                         </b>
                         </div>
                     </div>
@@ -257,7 +259,7 @@
                         <div class="modal-body">
                         <b>
                             This file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
-                            The records supplied in this file must be records from the main ORFs file and they will be treated as known effectors to train the machine-learning algorithm.
+                            The records supplied in this file must be records from the main ORFs file, and they will be treated as known effectors to train the machine-learning algorithm.
                             <br> This is an optional (and recommended) input. If you choose not to supply it, the records that show high sequence similarity to our effectors dataset will be used as the known effectors.
                         </b>
                         </div>
@@ -344,10 +346,10 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            If the bacterium you are analyzing is a phytopathogenic bacterium you can upload here full genome sequence <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file(s).
-                            These files will be used to serach for CIS-regulatory elements in the promoters of the genes, according to your selection.<br><br>
+                            These files will be used to search for CIS-regulatory elements in the promoters of the genes, according to your selection.<br><br>
                             If you wish to upload more than one file (for example, if a plasmid is available), compress them in a single zip archive.<br>
                             The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.
+                            <br><br>The regulatory elements available for search are PIP-box, hrp-box, mxiE-box, exs-box, and tts-box.
                         </b>
                         </div>
                     </div>
@@ -367,6 +369,28 @@
                             Since you supplied an effectors data, we can either use it as the only positive set, or we can add to it ORFs from your input that share high homology to our effectors dataset.
                             Choose "yes" if you want us to search for additional effectors based on homology to use us for the training, and "no" if you want your input to be the only one used in the positive set.<br><br>
                             Please note that homology to our effectors data is used as a feature in any case.
+                        </b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="info9" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <div class="modal-title"><b>Input specification</b></div>
+                        </div>
+                        <div class="modal-body">
+                        <b>
+                            PIP-box is relevant for <i>Xanthomonas</i>, <i>Ralstonia</i>, and <i>Acidovorax</i>.<br>
+                            hrp-box is relevant for <i>Pseudomonas syringae</i> and plant pathogens of the family of Enterobacteria.<br>
+                            mxiE-box is relevant for <i>Shigella</i>.<br>
+                            exs-box is relevant for <i>Pseudomonas aeruginosa</i>.<br>
+                            tts-box is relevant for rhizobia.
+                            <br><br>
+                            Make sure to choose only regulatory elements that are relevant for the bacterium you analyze. Non-relevant regulatory elements may hamper the classification results.
                         </b>
                         </div>
                     </div>

@@ -18,6 +18,10 @@ logger = logging.getLogger('main')
 
 def verify_fasta_format(fasta_path,Type,input_name):
     logger.info(f'Validating FASTA format:{fasta_path}')
+    file_size = os.path.getsize(fasta_path)
+    if int(float(file_size)) == 0:
+        return f'{input_name} is empty!'
+        
     flag = False
     if Type == 'DNA':
         legal_chars = set(Bio.SeqUtils.IUPACData.ambiguous_dna_letters.lower() + Bio.SeqUtils.IUPACData.ambiguous_dna_letters)
@@ -41,8 +45,8 @@ def verify_fasta_format(fasta_path,Type,input_name):
                     if not putative_end_of_file: # ignore trailing empty lines
                         putative_end_of_file = line_number
                     continue
-                if putative_end_of_file:  # non empty line after empty line
-                    return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. Line {putative_end_of_file} in fasta {input_name} is empty.'
+                #if putative_end_of_file:  # non empty line after empty line
+                #    return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. Line {putative_end_of_file} in fasta {input_name} is empty.'
                 if line.startswith('>'):
                     if previous_line_was_header:
                         return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. fasta {input_name} contains an empty record. Both lines {line_number-1} and {line_number} start with ">".'
@@ -70,6 +74,11 @@ def verify_fasta_format(fasta_path,Type,input_name):
     # override the old file with the curated content
     with open(fasta_path, 'w') as f:
         f.write(curated_content)
+
+def verify_ORFs(ORFs_path):
+    ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path,'fasta')])
+    if len(ORFs_recs) < 200:
+        return f'The ORFs file contains only {str(len(ORFs_recs))} records. Make sure this file contains ORFs and not full genome sequence! The full genome sequence can be uploaded in the advanced options.'
 
 def verify_effectors_f(effectors_path, ORFs_path):
     effectors_recs = [rec.id for rec in SeqIO.parse(effectors_path,'fasta')]
@@ -127,6 +136,10 @@ def validate_gff(gff_dir,ORFs_f):
     CDS_set = set()
     RNA_set = set()
     for f in os.listdir(gff_dir):
+        with open(f'{gff_dir}/{f}') as in_f:
+            content = in_f.read().replace('|','_')
+            with open(f'{gff_dir}/{f}','w') as out_f:
+                out_f.write(content)
         CDS,RNA = pip_box_features.parse_gff(f'{gff_dir}/{f}')
         CDS_set.update(CDS)
         RNA_set.update(RNA)
@@ -145,6 +158,29 @@ def validate_gff(gff_dir,ORFs_f):
                     continue
             cds_recs.append(rec) 
         SeqIO.write(cds_recs,ORFs_f,'fasta')
+        
+def validate_genome_and_gff(gff_dir,genome_dir):
+    gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
+    regions = []
+    for gff_f in gff_files:
+        with open(gff_f) as in_f:
+            for line in in_f:
+                if line.startswith('#'): #header
+                    line_l = line.split()
+                    if 'sequence-region' in line_l[0]:
+                        regions.append(line_l[1])
+    genome_recs = []
+    for genome_f in os.listdir(genome_dir):
+        if os.path.isfile(f'{genome_dir}/{genome_f}') and not genome_f.startswith('_') and not genome_f.startswith('.'):
+            recs_ids = [rec.id for rec in SeqIO.parse(f'{genome_dir}/{genome_f}','fasta')]
+            genome_recs.extend(recs_ids)
+    #return f'IDs: {str(genome_recs)}'
+    not_in_genome = []
+    for region in regions:
+        if region not in genome_recs:
+            not_in_genome.append(region)
+    if len(not_in_genome)>0:
+        return f'The following regions from the GFF file are not found in the full genome file:<br>{", ".join(not_in_genome)}.<br>Make sure the regions names are matching between the GFF and genome files and re-submit.'
     
 
 def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS_path, error_path):
@@ -174,6 +210,9 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         error_msg = validate_set(ORFs_path,'ORFs records')
         if error_msg:
             fail(error_msg,error_path)
+    error_msg = verify_ORFs(ORFs_path)
+    if error_msg:
+        fail(error_msg,error_path)
     if effectors_path:
         error_msg = verify_fasta_format(effectors_path,'DNA', 'input effectors')
         if error_msg:
@@ -232,7 +271,11 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
             #fail(error_msg,error_path)
         error_msg = validate_gff(f'{output_dir_path}/gff',f'{output_dir_path}/ORFs.fasta')
         if error_msg:
-            fail(error_msg,error_path)    
+            fail(error_msg,error_path)
+    if genome_path and gff_path:
+        error_msg = validate_genome_and_gff(f'{output_dir_path}/gff',f'{output_dir_path}/full_genome')
+        if error_msg:
+            fail(error_msg,error_path)
     if no_T3SS_path:
         error_msg = verify_zip(no_T3SS_path,'no_T3SS')
         if error_msg:
