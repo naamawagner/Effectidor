@@ -78,7 +78,7 @@ def verify_fasta_format(fasta_path,Type,input_name):
 def verify_ORFs(ORFs_path):
     ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path,'fasta')])
     if len(ORFs_recs) < 200:
-        return f'The ORFs file contains only {str(len(ORFs_recs))} records. Make sure this file contains ORFs and not full genome sequence! The full genome sequence can be uploaded in the advanced options.'
+        return f'The ORFs file contains only {str(len(ORFs_recs))} records. Make sure this file contains all the ORFs in the genome - Effectidor is designed to analyze full genomes and not a sample of genes. Also, make sure this file contains ORFs and not full genome sequence! The full genome sequence can be uploaded in the advanced options.'
 
 def verify_effectors_f(effectors_path, ORFs_path):
     effectors_recs = [rec.id for rec in SeqIO.parse(effectors_path,'fasta')]
