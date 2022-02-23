@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -22,7 +23,6 @@
     <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
 
     <link rel="stylesheet" href="css/general.css">
-    <script src="handle_FAQ.js"></script>
 </head>
 <body>
     <nav role="navigation" class="navbar navbar-fixed-top">
@@ -50,10 +50,10 @@
                             <li style="display:table-cell; padding: 0px 10px;">
                                 <a href="FAQ.html">FAQ</a>
                             </li>
-                            <li class="active" style="display:table-cell; padding: 0px 10px;">
+                            <li style="display:table-cell; padding: 0px 10px;">
                                 <a href="data.html">Data</a>
                             </li>
-                            <li style="display:table-cell; padding: 0px 10px;">
+                            <li class="active" style="display:table-cell; padding: 0px 10px;">
                                 <a href="credits.html">Credits</a>
                             </li>
                             <li style="float: right">
@@ -67,24 +67,32 @@
         </div>
     </nav>
     <div id="behind-nav-bar-results"></div>
-    <div class="container">
-    <div class="col-md-1"></div>
-    <div class="col-md-10">
-        <p align="justify">
-        Proteins that compose the Type-III Secretion System are excluded from the analysis of Effectidor, and are displayed separately on the output screen. They are found using a dataset we use, that contains System proteins of various species.<br>
-        This data is available for downloading:<br><br>
-        <b><a href="T3SS_proteins.faa">T3SS data</a></b><br><br></p>
-    </div></div>
-        <div class="container">
-        <div class="col-md-1"></div>
-    <div class="col-md-10">
-        <p align="justify">
-        Effectidor uses a type-III effectors dataset for homology search as well as for composing the positive group if no effectors file is supplied.<br>
-        The different versions of this dataset are available for downloading:<br><br>
-        <b><a href="T3Es_data/T3Es.faa">T3Es version 1.01</a></b> (October 2021)</p>
-    </div>
-    </div>
+    <div class="container" id="credits_container">
+    <div class="col-md-1">
+                </div>
+        <div class="col-md-10" align="justify">
+            <h2>When citing Effectidor please refer to:</h2>
+            <b>Effectidor: an automated machine-learning-based web server for the prediction of type-III secretion system effectors</b><br>
+            Wagner N., Avram O., Gold-Binshtok D., Zerah B., Teper D., & Pupko T. (2022)<br>
+            <i>Bioinformatics</i> | <a href="https://doi.org/10.1093/bioinformatics/btac087" target="_blank">https://doi.org/10.1093/bioinformatics/btac087</a><br>
+
+            <br>
+            <h2>The source code is available at:</h2>
+            <a href="https://github.com/naamawagner/Effectidor" target="_blank">https://github.com/naamawagner/Effectidor</a>
+
+            <br>
+            <br>
+            <h2>Acknowledgements:</h2>
+            This study was supported in part by a fellowship from the <a href="http://safrabio.cs.tau.ac.il/" target="_blank">Edmond J. Safra Center for Bioinformatics</a> at Tel Aviv University, a fellowship from the <a href="https://foodsecurity.tau.ac.il/" target="_blank">Manna Center Program for Food Safety and Security</a> at Tel Aviv University, and a fellowship from the <a href="https://hurvitz.org.il/" target="_blank">Dalia and Eli Hurvitz foundation</a>.
+            <a href="https://www.tau.ac.il/~naamawagner/" target="_blank">Naama Wagner</a>, Dafna Gold-Binshtok, Ben Zerah, Doron Teper, and <a href="https://www.tau.ac.il/~talp/">Tal Pupko</a> developed the algorithmic pipeline.
+            <a href="https://www.tau.ac.il/~naamawagner/" target="_blank">Naama Wagner</a> and Oren Avram developed the web server.
+            <br>
+            <br>
+            <br>
+
+        </div>
     <div id="behind-footer"></div>
+    <div>
     <nav role="navigation" class="navbar-inverse navbar-fixed-bottom ng-binding" style="color: #cccccc; text-align: center; font-family: Calibri;">
         <h4>
                 Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank">Pupko Group</a>

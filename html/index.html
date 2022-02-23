@@ -54,6 +54,9 @@
                             <li style="display:table-cell; padding: 0px 10px;">
                                 <a href="data.html">Data</a>
                             </li>
+                            <li style="display:table-cell; padding: 0px 10px;">
+                                <a href="credits.html">Credits</a>
+                            </li>
                             <li style="float: right">
                                 <a href="https://english.tau.ac.il/" id="tau-link" target="_blank">
                                     <img src=pics/TAU_LOGO.png id="tau-logo">
@@ -64,11 +67,11 @@
                 </div>
         </div>
     </nav>
-    <div id="behind-nav-bar-results">
-    </div>
+    <div id="behind-nav-bar-results"></div>
     <div class="container">
+    <div class="col-md-1"></div>
     <div class="col-md-10">
-        <div class="container" style="width: 100%">
+        <!--<div class="container" style="width: 100%">-->
         <br><br>
             <div class="form-group" id="short_description">
                 <p align="justify">Effectidor allows running a full classification pipeline to find uncharacterized type 3 effectors in an input bacterial genome.
@@ -77,10 +80,15 @@
             </div>
             <br>
         </div>
-        <div class="col-md-1">
+        <!--<div class="col-md-1">-->
         </div>
-    </div>
+    <!--</div>-->
     <div class="container">
+    <div class="col-md-1"></div>
+    <div class="col-md-11">
+    <!--<div class="container" style="width: 100%">-->
+        <!--<div class="col-md-1">-->
+
         <form ID="EFFECTIDOR_form" method="post" action="https://effectidor.tau.ac.il/cgi-bin/webserver_cgi.py" ENCTYPE="multipart/form-data" onsubmit="return validate_read_files()">
             <div>
                 <label for="ORFs">Select an input ORFs file: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info1">
@@ -101,7 +109,7 @@
             </div>
             <br>
             <div class="form-group row" id="homology_effectors" style="display:none;">
-                <div class="col-md-8">
+                <div class="col-md-10">
                     <label for="homology_search">Do you want us to add putative effectors to your effectors data, that will be used together with your data as positive samples, based on homology to our effectors dataset? <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info8">
                             <span class="glyphicon glyphicon-question-sign"></span>
                     </button></label>
@@ -127,7 +135,7 @@
             <button type="button" class="btn btn-warning" id="advanced_button" onclick="openAdvanced()"><span class="glyphicon glyphicon-cog"></span>&nbsp; Advanced options</button>
                 <div id="advanced" style="display:none;">
                     <div class="form-group row">
-                        <div class="col-md-8">
+                        <div class="col-md-10">
                             <label for="T3Es">Upload effectors file for homology search: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info3">
                                             <span class="glyphicon glyphicon-question-sign"></span>
                                         </button></label><br>
@@ -137,7 +145,7 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <div class="col-md-8">
+                        <div class="col-md-10">
                             <label for="host">Upload a host proteome archive: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info4">
                                             <span class="glyphicon glyphicon-question-sign"></span>
                                         </button></label><br>
@@ -147,7 +155,7 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <div class="col-md-8">
+                        <div class="col-md-10">
                             <label for="no_T3SS">Upload an archive with proteomes records of close bacteria without T3SS: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info5">
                                             <span class="glyphicon glyphicon-question-sign"></span>
                                         </button></label><br>
@@ -166,13 +174,11 @@
                     <!--        <label class="radio-inline"><input type="radio" name="full_genome" id="full_genome_no" value="no" checked onclick="ShowHideDiv()">No</label>-->
                     <!--    </div>-->
                     <!--</div>-->
-                    <br>
                     
                     
                         <div>
-                            
                             <div class="form-group row">
-                                <div class="col-md-8">
+                                <div class="col-md-10">
                                     <label for="gff">Upload a <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file (if multiple files are needed - upload a zip archive): <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info6">
                                     <span class="glyphicon glyphicon-question-sign"></span>
                                         </button></label>
@@ -397,6 +403,7 @@
                 </div>
             </div>
         </form>
+        </div>
         </div>
     <nav role="navigation" class="navbar-inverse navbar-fixed-bottom ng-binding" style="color: #cccccc; text-align: center; font-family: Calibri;">
         <h4>
