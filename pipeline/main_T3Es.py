@@ -76,11 +76,13 @@ def verify_fasta_format(fasta_path,Type,input_name):
         f.write(curated_content)
 
 def verify_ORFs(ORFs_path):
+    logger.info(f'Validating ORFs:{ORFs_path}')
     ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path,'fasta')])
     if len(ORFs_recs) < 200:
         return f'The ORFs file contains only {str(len(ORFs_recs))} records. Make sure this file contains all the ORFs in the genome - Effectidor is designed to analyze full genomes and not a sample of genes. Also, make sure this file contains ORFs and not full genome sequence! The full genome sequence can be uploaded in the advanced options.'
 
 def verify_effectors_f(effectors_path, ORFs_path):
+    logger.info(f'Validating effectors:{effectors_path}')
     effectors_recs = [rec.id for rec in SeqIO.parse(effectors_path,'fasta')]
     effectors_set = set([rec.id for rec in SeqIO.parse(effectors_path,'fasta')])
     ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path,'fasta')])
@@ -92,15 +94,18 @@ def verify_effectors_f(effectors_path, ORFs_path):
         return f'Illegal effectors records. The following records IDs appear more than once in the file:\n{more_than_once}.'
     
 def verify_genome_one_contig(genome_path, file_name):
+    logger.info(f'Validating one contig:{genome_path}')
     recs = list(SeqIO.parse(genome_path,'fasta'))
     if len(recs) > 1: # it must be one contig
         return f'Illegal genome file of {file_name}. The FASTA file contains more than one record (more than one contig).'
     
 def verify_zip(file,name):
+    logger.info(f'Validating zip:{file}')
     if not file.endswith('.zip'):
         return f'{name} not in zip format. Make sure to upload a zip archive and resubmit your job.'
     
 def validate_set(file,name):
+    logger.info(f'Validating set:{file}')
     # by IDs
     recs = [rec.id for rec in SeqIO.parse(file,'fasta')]
     if len(recs) > len(set(recs)):
@@ -160,6 +165,7 @@ def validate_gff(gff_dir,ORFs_f):
         SeqIO.write(cds_recs,ORFs_f,'fasta')
         
 def validate_genome_and_gff(gff_dir,genome_dir):
+    logger.info(f'Validating genome and gff')
     gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
     regions = []
     for gff_f in gff_files:
@@ -210,7 +216,8 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         error_msg = validate_set(ORFs_path,'ORFs records')
         if error_msg:
             fail(error_msg,error_path)
-    error_msg = verify_ORFs(ORFs_path)
+    ORFs_f = f'{output_dir_path}/ORFs.fasta'
+    error_msg = verify_ORFs(ORFs_f)
     if error_msg:
         fail(error_msg,error_path)
     if effectors_path:
