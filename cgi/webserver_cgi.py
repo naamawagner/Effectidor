@@ -246,12 +246,9 @@ def run_cgi():
 
     # uncomment to send the admin a notification email EVERY time there's a new request
     send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
-               receiver='naamawagner@mail.tau.ac.il', subject=f'Effectidor - A new job has been submitted: {run_number}',
+               receiver=CONSTS.OWNER_EMAIL, subject=f'Effectidor - A new job has been submitted: {run_number}',
                content=f"{os.path.join(CONSTS.WEBSERVER_URL, 'results', run_number, 'cgi_debug.txt')}\n{os.path.join(CONSTS.WEBSERVER_URL, 'results', run_number, 'output.html')}")
-    '''send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
-               receiver='naama100w@gmail.com', subject=f'Effectidor - A new job has been submitted: {run_number}',
-               content=f"{os.path.join(CONSTS.WEBSERVER_URL, 'results', run_number, 'cgi_debug.txt')}\n{os.path.join(CONSTS.WEBSERVER_URL, 'results', run_number, 'output.html')}")
-    '''
+
     try:
         if form['email'].value != '':
             write_to_debug_file(cgi_debug_path, f"{form['email'].value.strip()}\n\n")
@@ -452,6 +449,10 @@ def run_cgi():
         html_content = html_content.replace(CONSTS.RELOAD_TAGS, '')
         with open(output_path, 'w') as f:
             f.write(html_content)
+
+    # logging submission
+    with open(CONSTS.SUBMISSIONS_LOG, 'a') as f:
+        f.write(f'{user_email}\t{run_number}\t{ctime()}\n')
 
 if __name__ == '__main__':
     run_cgi()
