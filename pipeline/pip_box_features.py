@@ -26,7 +26,7 @@ def parse_gff(gff_f):
                             locus_tag = feature.split('=')[1]
                             CDS_l.append(locus_tag)
                             break
-                elif 'RNA' in line_l[2]:
+                elif 'RNA' in line_l[2] and 'mRNA' != line_l[2]:
                     features_l = line_l[-1].split(';')
                     for feature in features_l:
                         if feature.startswith('locus_tag='):

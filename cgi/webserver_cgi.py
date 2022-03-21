@@ -252,6 +252,8 @@ def run_cgi():
     try:
         if form['email'].value != '':
             write_to_debug_file(cgi_debug_path, f"{form['email'].value.strip()}\n\n")
+        if len(form['ORFs'].value) < 100:
+            raise ValueError('ORFs file is too small')
 
         with open(cgi_debug_path, 'a') as f:
             # for debugging
