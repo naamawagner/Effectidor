@@ -50,7 +50,7 @@ prots_dict=SeqIO.to_dict(SeqIO.parse(all_prots,'fasta'))
 effectors_dict = SeqIO.to_dict(SeqIO.parse(effectors_prots,'fasta'))
 
 protein_blast_all_vs_all(all_prots,k12_dataset,k12_out_file)
-k12_dict = parse_blast_out(k12_out_file,e_val=0.0001)
+k12_dict = parse_blast_out(k12_out_file,e_val=10**(-6))
 k12_out_list=sorted(k12_dict.keys())
 
 protein_blast_all_vs_all(all_prots,T3SS_dataset,T3SS_out_file)
