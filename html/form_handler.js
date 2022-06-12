@@ -27,7 +27,7 @@ function validate_read_files() {
         alert("GFF3 file must be gff file or a zip archive! Only gff/txt/zip file types are acceptable.");
         return false;
     }
-    if (genome != '' && (!genome.endsWith(".zip")) && (!genome.endsWith(".txt")) && (!genome.endsWith(".fasta")) && (!genome.endsWith(".fna")) && (!genome.endsWith(".fsa"))) {
+    if (genome != '' && (!genome.endsWith(".zip")) && (!genome.endsWith(".txt")) && (!genome.endsWith(".fasta")) && (!genome.endsWith(".fna")) && (!genome.endsWith(".fsa")) && (!genome.endsWith(".fa"))) {
         alert("Full genome file must be a fasta file or a zip archive! Only fasta/fna/txt/zip file types are acceptable.");
         return false;
     }

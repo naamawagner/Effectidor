@@ -20,19 +20,36 @@ def parse_gff(gff_f):
             line_l = line.strip().split('\t')
             if len(line_l) > 2:
                 if line_l[2]=='CDS':
+                    is_locus_tag = False
                     features_l = line_l[-1].split(';')
                     for feature in features_l:
                         if feature.startswith('locus_tag='):
                             locus_tag = feature.split('=')[1]
                             CDS_l.append(locus_tag)
+                            is_locus_tag = True
                             break
+                    if not is_locus_tag:
+                        for feature in features_l:
+                            if feature.startswith('ID=CDS:'):
+                                locus_tag = feature.split(':')[1]
+                                CDS_l.append(locus_tag)
+                                break
                 elif 'RNA' in line_l[2] and 'mRNA' != line_l[2]:
                     features_l = line_l[-1].split(';')
+                    is_locus_tag = False
                     for feature in features_l:
                         if feature.startswith('locus_tag='):
                             locus_tag = feature.split('=')[1]
                             RNA.append(locus_tag)
+                            is_locus_tag = True
                             break
+                    if not is_locus_tag:
+                        for feature in features_l:
+                            if feature.startswith('ID=transcript:'):
+                                locus_tag = feature.split(':')[1]
+                                RNA.append(locus_tag)
+                                is_locus_tag = True
+                                break
     return set(CDS_l),set(RNA)
 
 def parse_gff_to_CDS_loc(gff_f):
@@ -50,7 +67,7 @@ def parse_gff_to_CDS_loc(gff_f):
             
             line_l = line.strip().split('\t')
             if len(line_l) > 2:
-                if line_l[2] == 'region':
+                if line_l[2] == 'region' or line_l[2] == "chromosome" or line_l[2] == "plasmid":
                     if 'Is_circular=true' in line_l[-1]:
                         circulars.append(line_l[0])
                     else:
@@ -63,11 +80,19 @@ def parse_gff_to_CDS_loc(gff_f):
                     elif line_l[6]=='-':
                         area.append(-1)
                     features_l = line_l[-1].split(';')
+                    is_locus_tag = False
                     for feature in features_l:
                         if feature.startswith('locus_tag='):
+                            is_locus_tag = True
                             locus_tag = feature.split('=')[1]
                             locus_area_d[region][locus_tag]=area
                             break
+                    if not is_locus_tag:
+                        for feature in features_l:
+                            if feature.startswith('ID=CDS:'):
+                                locus_tag = feature.split(':')[1]
+                                locus_area_d[region][locus_tag]=area
+                                break
     return locus_area_d,circulars
 
 def get_promoters(gene_area_dic,circular_contigs,genome_f):

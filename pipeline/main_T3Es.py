@@ -180,13 +180,20 @@ def validate_genome_and_gff(gff_dir,genome_dir):
         if os.path.isfile(f'{genome_dir}/{genome_f}') and not genome_f.startswith('_') and not genome_f.startswith('.'):
             recs_ids = [rec.id for rec in SeqIO.parse(f'{genome_dir}/{genome_f}','fasta')]
             genome_recs.extend(recs_ids)
+    if len(genome_recs) > len(set(genome_recs)):
+        non_unique = []
+        for ID in genome_recs:
+            if genome_recs.count(ID) > 1:
+                non_unique.append(ID)
+        non_unique = set(non_unique)
+        return f'Several contigs appear more than once within the genomic sequences data. These contigs IDs are:<br>{", ".join(non_unique)}<br>Please make sure to upload the genomic sequences such that each sequence will apear only once. These sequences can be uploaded in different FASTA files or in one FASTA file.'
     #return f'IDs: {str(genome_recs)}'
     not_in_genome = []
     for region in regions:
         if region not in genome_recs:
             not_in_genome.append(region)
     if len(not_in_genome)>0:
-        return f'The following regions from the GFF file are not found in the full genome file:<br>{", ".join(not_in_genome)}.<br>Make sure the regions names are matching between the GFF and genome files and re-submit.'
+        return f'The following regions from the GFF file are not found in the full genome file:<br>{", ".join(not_in_genome)}.<br>Make sure the regions names are matching between the GFF and genome files and re-submit the job.'
     
 
 def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS_path, error_path):
