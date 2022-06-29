@@ -80,6 +80,8 @@ def verify_ORFs(ORFs_path):
     ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path,'fasta')])
     if len(ORFs_recs) < 200:
         return f'The ORFs file contains only {str(len(ORFs_recs))} records. Make sure this file contains all the ORFs in the genome - Effectidor is designed to analyze full genomes and not a sample of genes. Also, make sure this file contains ORFs and not full genome sequence! The full genome sequence can be uploaded in the advanced options.'
+    elif len(ORFs_recs) > 10000:
+        return f'The ORFs file contains {str(len(ORFs_recs))} records! Effectidor is designed to analyze only one bacterial genome at a time. Make sure your ORFs file contains all the ORFs in the genome, and only the ORFs of one genome. This number cannot exceed 10,000 ORFs.'
 
 def verify_effectors_f(effectors_path, ORFs_path):
     logger.info(f'Validating effectors:{effectors_path}')
