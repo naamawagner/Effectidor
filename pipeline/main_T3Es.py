@@ -11,6 +11,7 @@ from Bio import SeqIO
 from T3Es_wrapper import effectors_learn
 import shutil
 import re
+import subprocess
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('main')
@@ -105,6 +106,21 @@ def verify_zip(file,name):
     logger.info(f'Validating zip:{file}')
     if not file.endswith('.zip'):
         return f'{name} not in zip format. Make sure to upload a zip archive and resubmit your job.'
+    #unzip it to a tmp_dir
+    if not os.path.exists(f'{"/".join(file.split("/")[:-1])}/zip_tmp'):
+        os.makedirs(f'{"/".join(file.split("/")[:-1])}/zip_tmp')
+    shutil.unpack_archive(file,'/'.join(file.split('/')[:-1])+'/zip_tmp')
+    flag = False
+    for f in os.listdir(f'{"/".join(file.split("/")[:-1])}/zip_tmp'):
+        if not f.startswith('_') and not f.startswith('.') and os.path.isfile(f'{"/".join(file.split("/")[:-1])}/zip_tmp/{f}'):
+            error_msg = verify_fasta_format(f'{"/".join(file.split("/")[:-1])}/zip_tmp/{f}','protein',f)
+            if error_msg:
+                return f'In {name}:\n{error_msg}'
+            flag = True
+            subprocess.check_output(f'rm {"/".join(file.split("/")[:-1])}/zip_tmp/{f}',shell=True)
+    if flag == False:
+        return f'{name} contains no valid files. Make sure to include protein fasta files in this archive!' 
+            
     
 def validate_set(file,name):
     logger.info(f'Validating set:{file}')
@@ -246,7 +262,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         if error_msg:
             fail(error_msg,error_path)
     if host_proteome:
-        error_msg = verify_zip(host_proteome,'Host')
+        error_msg = verify_zip(host_proteome,'Host data')
         if error_msg:
             fail(error_msg,error_path)
     if genome_path:
@@ -293,9 +309,10 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         if error_msg:
             fail(error_msg,error_path)
     if no_T3SS_path:
-        error_msg = verify_zip(no_T3SS_path,'no_T3SS')
+        error_msg = verify_zip(host_proteome,'Close bacteria without T3SS data')
         if error_msg:
             fail(error_msg,error_path)
+
 
 
 def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False):

@@ -300,6 +300,7 @@
                         <b>
                             In this input you may upload host proteome(s).
                             You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip file</a>.<br>
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br><br>
                             If you upload this archive, a BLAST will be ran against all the protein sequences in the fasta files compressed in it. Sequence similarity to the host proteins is potentially a very important feature for the classification.
                         </b>
                         </div>
@@ -318,7 +319,8 @@
                         <b>
                             In this input you may upload proteomes records of closely related bacteria without a T3SS.<br>
                             You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip file</a>.<br>
-                            Sequence similarity to proteins of closely related bacteria without a T3SS is a strong negative feature for T3Es classification.
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br><br>
+                            These data will be used for sequence similarity search - sequence similarity to proteins of closely related bacteria without a T3SS is a strong negative feature for T3Es classification.
                         </b>
                         </div>
                     </div>
