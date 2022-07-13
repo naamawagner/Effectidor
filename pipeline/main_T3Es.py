@@ -221,13 +221,14 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         shutil.unpack_archive(f'{output_dir_path}/ORFs.zip',f'{output_dir_path}/contigs_ORFs')
         ORFs=[]
         for file in os.listdir(f'{output_dir_path}/contigs_ORFs'):
-            error_msg = verify_fasta_format(f'{output_dir_path}/contigs_ORFs/{file}','DNA',f'{file} in ORFs archive')
-            if error_msg:
-                error_msg = f'Illegal fasta files in {file} in ORFs archive: {error_msg}'
-                fail(error_msg,error_path)
-            recs = SeqIO.parse(f'{output_dir_path}/contigs_ORFs/{file}','fasta')
-            for rec in recs:
-                ORFs.append(rec)
+            if os.path.isfile(f'{output_dir_path}/contigs_ORFs/{file}'):
+                error_msg = verify_fasta_format(f'{output_dir_path}/contigs_ORFs/{file}','DNA',f'{file} in ORFs archive')
+                if error_msg:
+                    error_msg = f'Illegal fasta files in {file} in ORFs archive: {error_msg}<br>This archive is expected to contain only DNA FASTA files. Make sure the input is valid and submit again.'
+                    fail(error_msg,error_path)
+                recs = SeqIO.parse(f'{output_dir_path}/contigs_ORFs/{file}','fasta')
+                for rec in recs:
+                    ORFs.append(rec)
         SeqIO.write(ORFs,f'{output_dir_path}/ORFs.fasta','fasta')
         error_msg = validate_set(f'{output_dir_path}/ORFs.fasta','ORFs records')
         if error_msg:
@@ -236,7 +237,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         shutil.copy(ORFs_path,f'{output_dir_path}/contigs_ORFs')
         error_msg = verify_fasta_format(ORFs_path,'DNA','input ORFs')
         if error_msg:
-            error_msg = f'Illegal fasta file in ORFs file: {error_msg}'
+            error_msg = f'Illegal fasta file in ORFs file: {error_msg}<br>This input is expected to be a DNA FASTA file. Make sure the input is valid and submit again.'
             fail(error_msg,error_path)
         error_msg = validate_set(ORFs_path,'ORFs records')
         if error_msg:
@@ -258,6 +259,8 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
             fail(error_msg,error_path)
     if input_T3Es_path:
         error_msg = verify_fasta_format(input_T3Es_path,'protein', 'effectors for homology search')
+        if error_msg:
+            fail(error_msg,error_path)
         error_msg = validate_set(input_T3Es_path,'effectors records for homology search')
         if error_msg:
             fail(error_msg,error_path)

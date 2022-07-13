@@ -247,6 +247,7 @@
                             The file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
                             <br>You can find instructions to download this file <a href="instructions.html" target="_blank">here</a>.
                             <br>If the analyzed genome is composed of a chromosome and plasmids, the ORFs from each can be supplied in separate files. In this case, the files should be compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">ZIP</a> archive.
+                            <br>Please make sure all the files packed in your input zip archive are in the right format, and that they are not packed inside directories - Directories within the zip archive are ignored.
                             <br><br> Note, only protein coding genes should be included in this input. Non-coding RNA genes, such as tRNA, should not be included. If you follow the instructions above, no such genes are expected in your input file. 
                             Alternatively, if such RNA genes do appear in your data and you supply a GFF3 file indicating it (in the advanced options), we will filter them out automatically.
                         </b>
@@ -266,7 +267,7 @@
                         <b>
                             This file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
                             The records supplied in this file must be records from the main ORFs file, and they will be treated as known effectors to train the machine-learning algorithm.
-                            <br> This is an optional (and recommended) input. If you choose not to supply it, the records that show high sequence similarity to our effectors dataset will be used as the known effectors.
+                            <br>This is an optional (and recommended) input. If you choose not to supply it, the records that show high sequence similarity to our effectors dataset will be used as the known effectors.
                         </b>
                         </div>
                     </div>
@@ -300,7 +301,8 @@
                         <b>
                             In this input you may upload host proteome(s).
                             You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip file</a>.<br>
-                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br><br>
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br>
+                            Please make sure all the files packed in your input zip archive are in the right format.<br><br>
                             If you upload this archive, a BLAST will be ran against all the protein sequences in the fasta files compressed in it. Sequence similarity to the host proteins is potentially a very important feature for the classification.
                         </b>
                         </div>
@@ -319,7 +321,8 @@
                         <b>
                             In this input you may upload proteomes records of closely related bacteria without a T3SS.<br>
                             You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip file</a>.<br>
-                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br><br>
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br>
+                            Please make sure all the files packed in your input zip archive are in the right format.<br><br>
                             These data will be used for sequence similarity search - sequence similarity to proteins of closely related bacteria without a T3SS is a strong negative feature for T3Es classification.
                         </b>
                         </div>
@@ -338,7 +341,8 @@
                         <b>
                             GFF3 files will use for extraction of genome organization features.<br>
                             If you wish to upload more than one file (for example, if a plasmid is available), compress them in a single zip archive.<br>
-                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br>
+                            Please make sure all the files packed in your input zip archive are in the right format.
                         </b>
                         </div>
                     </div>
@@ -356,7 +360,8 @@
                         <b>
                             These files will be used to search for CIS-regulatory elements in the promoters of the genes, according to your selection.<br><br>
                             If you wish to upload more than one file (for example, if a plasmid is available), compress them in a single zip archive.<br>
-                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br>
+                            Please make sure all the files packed in your input zip archive are in the right format.
                             <br><br>The regulatory elements available for search are PIP-box, hrp-box, mxiE-box, exs-box, and tts-box.
                         </b>
                         </div>
