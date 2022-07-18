@@ -89,8 +89,8 @@ models = []
 models.append(('LDA', LinearDiscriminantAnalysis()))
 models.append(('NB',GaussianNB()))
 #models.append(('KNN', KNeighborsClassifier(weights='distance')))
-models.append(('SVM', SVC(probability=True)))
-models.append(('LR', LogisticRegression(penalty='l1',solver='liblinear')))
+models.append(('SVM', SVC(probability=True, random_state=seed)))
+models.append(('LR', LogisticRegression(penalty='l1',solver='liblinear', random_state=seed)))
 x_y_options={'untouched':(X_train,X_test,y_train,y_test,features,X,Y),'normalized':(X_train_norm, X_test_norm,y_train_norm, y_test_norm,norm_features,X_norm,Y_norm),'standardized':(X_train_stand, X_test_stand,y_train_stand, y_test_stand,stand_features,X_stand,Y_stand)}
 new_models=[]
 for name,model in models:
