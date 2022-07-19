@@ -410,14 +410,20 @@ def run_cgi():
             notification_content = f"Your submission configuration is:\n\n"
             if job_title:
                 notification_content += f'Job title: {job_title}\n'
-            notification_content += f'ORFs file: {ORFs_name}\n' \
-                                    f'known effectors file: {effectors_name}\n' \
-                                    f'type 3 effectors of other bacteria file: {T3Es_name}\n'\
-                                    f'host proteome file: {host_name}\n'\
-                                    f'proteomes with no T3SS archive: {non_T3SS_name}\n'\
-                                    f'GFF file: {gff_name}\n'\
-                                    f'genome file: {genome_f_name}\n'\
-                                    f'You can track the progress of your job at:\n{os.path.join(CONSTS.WEBSERVER_URL, "results", run_number, "output.html")}\n\n'
+            notification_content += f'ORFs file: {ORFs_name}\n' 
+            if effectors_name:
+                notification_content += f'known effectors file: {effectors_name}\n'
+            if T3Es_name:
+                notification_content += f'type 3 effectors of other bacteria file: {T3Es_name}\n'
+            if host_name:
+                notification_content += f'host proteome file: {host_name}\n'
+            if non_T3SS_name:
+                notification_content += f'proteomes with no T3SS archive: {non_T3SS_name}\n'
+            if gff_name:
+                notification_content += f'GFF file: {gff_name}\n'
+            if genome_f_name:
+                notification_content += f'genome file: {genome_f_name}\n'
+            notification_content += f'\nYou can track the progress of your job at:\n{os.path.join(CONSTS.WEBSERVER_URL, "results", run_number, "output.html")}\n\n'
 
             # Send the user a notification email for their submission
             send_email(smtp_server=CONSTS.SMTP_SERVER,
