@@ -65,9 +65,10 @@ def verify_fasta_format(fasta_path,Type,input_name):
                 recs = SeqIO.parse(fasta_path,'fasta')
                 for rec in recs:
                     seq = str(rec.seq)
-                    AGCT_count = seq.count('A')+seq.count('G')+seq.count('T')+seq.count('C')
-                    if AGCT_count >= 0.5*len(seq):
-                        return f'Protein fasta {input_name} seems to contain DNA records. Make sure all samples in the file are protein sequences and re-submit.'
+                    AGCT_count = seq.count('A')+seq.count('G')+seq.count('T')+seq.count('C')+seq.count('N')
+                    if AGCT_count >= 0.95*len(seq):
+                        f = AGCT_count*100/len(seq)
+                        return f'Protein fasta {input_name} seems to contain DNA records (record {rec.id} contains {float("%.2f" % (f))}% DNA characters). Make sure all samples in the file are protein sequences and re-submit.'
         except UnicodeDecodeError as e:
             logger.info(e.args)
             line_number += 1  # the line that was failed to be read
@@ -90,7 +91,7 @@ def verify_effectors_f(effectors_path, ORFs_path):
     effectors_set = set([rec.id for rec in SeqIO.parse(effectors_path,'fasta')])
     ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path,'fasta')])
     if not effectors_set.issubset(ORFs_recs):
-        not_in_ORFs = ','.join([rec for rec in effectors_set.difference(ORFs_recs)])
+        not_in_ORFs = ', '.join([rec for rec in effectors_set.difference(ORFs_recs)])
         return f'Illegal effectors records. The following records IDs are in the effectors file and not in the ORFs file:\n{not_in_ORFs}.'
     if len(effectors_set) != len(effectors_recs):
         more_than_once = ','.join([effector for effector in effectors_set if effectors_recs.count(effector)>1])
@@ -224,7 +225,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
             if os.path.isfile(f'{output_dir_path}/contigs_ORFs/{file}'):
                 error_msg = verify_fasta_format(f'{output_dir_path}/contigs_ORFs/{file}','DNA',f'{file} in ORFs archive')
                 if error_msg:
-                    error_msg = f'Illegal fasta files in {file} in ORFs archive: {error_msg}<br>This archive is expected to contain only DNA FASTA files. Make sure the input is valid and submit again.'
+                    error_msg = f'Illegal fasta files in {file} in ORFs archive: {error_msg}<br>This archive is expected to contain only <b>DNA</b> FASTA files.'
                     fail(error_msg,error_path)
                 recs = SeqIO.parse(f'{output_dir_path}/contigs_ORFs/{file}','fasta')
                 for rec in recs:
@@ -237,7 +238,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         shutil.copy(ORFs_path,f'{output_dir_path}/contigs_ORFs')
         error_msg = verify_fasta_format(ORFs_path,'DNA','input ORFs')
         if error_msg:
-            error_msg = f'Illegal fasta file in ORFs file: {error_msg}<br>This input is expected to be a DNA FASTA file. Make sure the input is valid and submit again.'
+            error_msg = f'Illegal fasta file in ORFs input: {error_msg}<br>This input is expected to hold a <b>DNA</b> FASTA file.'
             fail(error_msg,error_path)
         error_msg = validate_set(ORFs_path,'ORFs records')
         if error_msg:
