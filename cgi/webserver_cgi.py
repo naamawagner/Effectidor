@@ -297,6 +297,7 @@ def run_cgi():
         genome_f_name = form['genome'].filename
         write_to_debug_file(cgi_debug_path, f'10\n')
         effectors_homology = form['homology_search'].value.strip()
+        translocation_signal = form['translocation_signal'].value.strip()
         if ORFs_name.endswith('zip'): #ZIP archive
             ORFs_path = os.path.join(wd, 'ORFs.zip')
         else: #FASTA
@@ -315,6 +316,9 @@ def run_cgi():
             
             if effectors_homology == 'yes':
                 parameters += f' --homology_search'
+        if translocation_signal == 'yes':
+            write_to_debug_file(cgi_debug_path,'include translocation signal')
+            parameters += ' --translocation_signal'
             
         if form['T3Es'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'12\n')

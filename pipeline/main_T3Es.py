@@ -27,7 +27,7 @@ def verify_fasta_format(fasta_path,Type,input_name):
     if Type == 'DNA':
         legal_chars = set(Bio.SeqUtils.IUPACData.ambiguous_dna_letters.lower() + Bio.SeqUtils.IUPACData.ambiguous_dna_letters)
     else: #Type == 'protein'
-        legal_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        legal_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ*')
         flag = True
     with open(fasta_path) as f:
         line_number = 0
@@ -185,15 +185,19 @@ def validate_gff(gff_dir,ORFs_f):
         
 def validate_genome_and_gff(gff_dir,genome_dir):
     logger.info(f'Validating genome and gff')
-    gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
+    import pip_box_features
+    gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]    
     regions = []
     for gff_f in gff_files:
-        with open(gff_f) as in_f:
-            for line in in_f:
-                if line.startswith('#'): #header
-                    line_l = line.split()
-                    if 'sequence-region' in line_l[0]:
-                        regions.append(line_l[1])
+        locus_area_d,circulars = pip_box_features.parse_gff_to_CDS_loc(gff_f)
+        for region in locus_area_d:
+            regions.append(region)
+        #with open(gff_f) as in_f:
+        #    for line in in_f:
+        #        if line.startswith('#'): #header
+        #            line_l = line.split()
+        #            if 'sequence-region' in line_l[0]:
+        #                regions.append(line_l[1])
     genome_recs = []
     for genome_f in os.listdir(genome_dir):
         if os.path.isfile(f'{genome_dir}/{genome_f}') and not genome_f.startswith('_') and not genome_f.startswith('.'):
@@ -212,7 +216,7 @@ def validate_genome_and_gff(gff_dir,genome_dir):
         if region not in genome_recs:
             not_in_genome.append(region)
     if len(not_in_genome)>0:
-        return f'The following regions from the GFF file are not found in the full genome file:<br>{", ".join(not_in_genome)}.<br>Make sure the regions names are matching between the GFF and genome files and re-submit the job.'
+        return f'The following regions from the GFF file are not found in the full genome file:<br>{", ".join(not_in_genome)}.<br>Make sure the regions names are matching between the GFF and genome files and re-submit the job, or contact us for more information.'
     
 
 def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS_path, error_path):
@@ -319,7 +323,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
 
 
 
-def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False):
+def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False, signal=False):
 
     error_path = f'{output_dir_path}/error.txt'
     try:
@@ -333,13 +337,23 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         os.makedirs(tmp_dir, exist_ok=True)
         
         validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS, error_path)
-        if full_genome:
-            if genome_path and gff_path:
-                predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, CIS_elements=True, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts, homology_search=homology_search)
-            else:
-                predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, homology_search=homology_search)
+        if genome_path and gff_path:
+            CIS_elements = True
         else:
-            predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, homology_search=homology_search)
+            CIS_elements = False
+        if gff_path:
+            organization = True
+        else:
+            organization = False
+        predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=organization, CIS_elements=CIS_elements, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts, homology_search=homology_search, signal=signal)
+        
+        #if full_genome:
+        #    if genome_path and gff_path:
+        #        predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, CIS_elements=True, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts, homology_search=homology_search)
+        #    else:
+        #        predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, homology_search=homology_search)
+        #else:
+        #    predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, homology_search=homology_search)
     
         if html_path:
             #shutil.make_archive(final_zip_path, 'zip', output_dir_path)
@@ -511,6 +525,7 @@ if __name__ == '__main__':
         parser.add_argument('-v', '--verbose', help='Increase output verbosity', action='store_true')
         
         parser.add_argument('--homology_search', help='search additional effectors based on homology to internal dataset', action='store_true')
+        parser.add_argument('--translocation_signal',help='extract translocation signal feature', action='store_true')
 
         parser.add_argument('--full_genome', help='to extract genome organization features', action='store_true')
         parser.add_argument('--PIP', help='look for PIP-box in promoters', action='store_true')
@@ -526,18 +541,21 @@ if __name__ == '__main__':
             logging.basicConfig(level=logging.DEBUG)
         else:
             logging.basicConfig(level=logging.INFO)
-        if args.full_genome:
-            PIP_flag = args.PIP
-            hrp_flag = args.hrp
-            mxiE_flag = args.mxiE
-            exs_flag = args.exs
-            tts_flag = args.tts
-            if args.homology_search:
-                main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=True)
-            else:
-                main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag)
-        else:
-            if args.homology_search:
-                main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, homology_search=True)
-            else:
-                main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS)
+        #if args.full_genome:
+        PIP_flag = args.PIP
+        hrp_flag = args.hrp
+        mxiE_flag = args.mxiE
+        exs_flag = args.exs
+        tts_flag = args.tts
+        
+        main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=args.full_genome, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=args.homology_search, signal=args.translocation_signal)
+        
+       #     if args.homology_search:
+       #         main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=True)
+       #     else:
+       #         main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag)
+       # else:
+       #     if args.homology_search:
+       #         main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, homology_search=True)
+       #     else:
+       #         main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS)

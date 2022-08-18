@@ -42,7 +42,12 @@ def create_effectors_html(effectors_file,ORFs_file,out_dir):
     effectors_table = data.to_html(index=False,justify='left',escape=False)
     return effectors_table,None,None, False
             
-def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,CIS_elements=False,PIP=False,hrp=False,mxiE=False,exs=False,tts=False,homology_search=False):
+def write_sh_file(tmp_dir,path_to_dir_with_fastas,path_for_embedding_files,path_for_output_csv):
+    content = f'''#!/bin/bash\n\n#PBS -S /bin/bash\n#PBS -r y\n#PBS -q pupkoweb@power9\n#PBS -l ncpus=10\n#PBS -v PBS_O_SHELL=bash,PBS_ENVIRONMENT=PBS_BATCH\n#PBS -N Effectidor_embedding\n#PBS -e {tmp_dir}\n#PBS -o {tmp_dir}\n\nsource /groups/pupko/alburquerque/miniconda3/etc/profile.d/conda.sh\nconda activate MsaEmbedding\ncd /groups/pupko/alburquerque/MsaTransformerEffectidor/\nPYTHONPATH=$(pwd)\npython extract.py --model_location "/groups/pupko/alburquerque/MsaTransformerEffectidor/esm1_t34_670M_UR50S.pt" --input_dir "{path_to_dir_with_fastas}" --output_dir "{path_for_embedding_files}" --repr_layers 34 --include mean\npython create_effectidor_feats.py --path_to_embedding_files "{path_for_embedding_files}" --path_to_fasta_files "{path_to_dir_with_fastas}" --output_file_path "{path_for_output_csv}"'''
+    with open(f'{tmp_dir}/Embedding.sh','w') as out:
+        out.write(content)
+
+def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,CIS_elements=False,PIP=False,hrp=False,mxiE=False,exs=False,tts=False,homology_search=False,signal=False):
     import pandas as pd
     import subprocess
     import os
@@ -62,6 +67,8 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     #ORFs_file = 'ORFs.fasta'
     #effectors_file = 'effectors.fasta'
     all_prots = 'translated_ORFs.faa'
+    signal_prot_dir = f'{working_directory}/NTerminal_prots'
+    signal_embed_dir = f'{working_directory}/NTerminal_embedding'
     effectors_prots = 'translated_effectors.faa'
     blast_datasets_dir = '/groups/pupko/naamawagner/T3Es_webserver/blast_data'
     
@@ -107,6 +114,19 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     
     # translate the input fasta files
     subprocess.check_output(['python',f'{scripts_dir}/translate_fasta.py',ORFs_file,effectors_file,all_prots,effectors_prots])
+    #make N-terminal sequences for Signal search
+    if signal:
+        os.makedirs(signal_prot_dir)
+        recs = SeqIO.parse(all_prots,'fasta')
+        for rec in recs:
+            ID = rec.id
+            N_seq = rec.seq[:100]
+            rec.seq = N_seq
+            file_path = f'{signal_prot_dir}/{ID}.faa'
+            SeqIO.write(rec,file_path,'fasta')
+        os.makedirs(signal_embed_dir)
+        write_sh_file(tmp_dir,signal_prot_dir,signal_embed_dir,f'{working_directory}/Embedding_pred.csv')
+    
     if not effectors_file:
         subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots,log_file])
     elif homology_search:
@@ -161,9 +181,13 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         sig_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/signal_peptide_features.py {ORFs_file} {all_prots} {working_directory}\tsignalP\n')
     subprocess.call(f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py {working_directory}/features_jobs.cmds {tmp_dir} -q {queue}',shell=True)
     subprocess.call(f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py --cpu 3 {working_directory}/signalp.cmds {tmp_dir} -q {queue}',shell=True)
+    if signal:
+        subprocess.call(f'/opt/pbs/bin/qsub {tmp_dir}/Embedding.sh',shell=True)
     
     x = sum([item.endswith('done') for item in os.listdir(working_directory)])
     amount_of_expected_results = 3
+    if signal:
+        amount_of_expected_results += 1
     if organization:
         amount_of_expected_results += 1
         if CIS_elements:
@@ -192,16 +216,19 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     
     files_to_merge =['physical_features.csv','homology_features.csv','signal_p_features.csv']
     done_files = ['physical_features.done','homology_features.done','signal_p_features.done']
+    if signal:
+        files_to_merge.append('Embedding_pred.csv')
+        done_files.append('Embedding_pred.csv.done')
     if organization:
         files_to_merge.append('genome_organization_features.csv')
         done_files.append('genome_organization_features.done')
         if CIS_elements:
             files_to_merge.append('pip_box_features.csv')
             done_files.append('pip_box_features.done')
-    failed_jobs = [done_job[:-5] for done_job in done_files if not os.path.exists(done_job)]
+    failed_jobs = [done_job.split('.')[0] for done_job in done_files if not os.path.exists(done_job)]
     if len(failed_jobs) > 0:
         failed_str = ', '.join(failed_jobs)
-        error_msg = f'The following jobs failed:\n{failed_str}'
+        error_msg = f'Oups :(\nThe following jobs failed:\n\n{failed_str}'
         fail(error_msg,error_path)
     merged_df = pd.read_csv(files_to_merge[0])
     for f in files_to_merge[1:]:

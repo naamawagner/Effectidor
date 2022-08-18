@@ -23,7 +23,7 @@ def parse_gff(gff_f):
                     is_locus_tag = False
                     features_l = line_l[-1].split(';')
                     for feature in features_l:
-                        if feature.startswith('locus_tag='):
+                        if feature.startswith('locus'):
                             locus_tag = feature.split('=')[1]
                             CDS_l.append(locus_tag)
                             is_locus_tag = True
@@ -38,7 +38,7 @@ def parse_gff(gff_f):
                     features_l = line_l[-1].split(';')
                     is_locus_tag = False
                     for feature in features_l:
-                        if feature.startswith('locus_tag='):
+                        if feature.startswith('locus'):
                             locus_tag = feature.split('=')[1]
                             RNA.append(locus_tag)
                             is_locus_tag = True
@@ -82,15 +82,19 @@ def parse_gff_to_CDS_loc(gff_f):
                     features_l = line_l[-1].split(';')
                     is_locus_tag = False
                     for feature in features_l:
-                        if feature.startswith('locus_tag='):
+                        if feature.startswith('locus'):
                             is_locus_tag = True
                             locus_tag = feature.split('=')[1]
+                            if not region in locus_area_d:
+                                locus_area_d[region] = {}
                             locus_area_d[region][locus_tag]=area
                             break
                     if not is_locus_tag:
                         for feature in features_l:
                             if feature.startswith('ID=CDS:'):
                                 locus_tag = feature.split(':')[1]
+                                if not region in locus_area_d:
+                                    locus_area_d[region] = {}
                                 locus_area_d[region][locus_tag]=area
                                 break
     return locus_area_d,circulars

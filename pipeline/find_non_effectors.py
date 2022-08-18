@@ -3,6 +3,7 @@ from sys import argv
 from Bio import SeqIO
 import os
 import subprocess
+import csv
 
 all_prots = argv[1]
 effectors_prots = argv[2]
@@ -40,9 +41,10 @@ def parse_blast_out(blast_out,e_val=0.01,min_coverage=0):
             coverage=float(row[2])
             if e_value<=e_val and coverage>=min_coverage:
                 if prot_id not in blast_out_dic:
-                    blast_out_dic[prot_id]=[1,float(row[-1])]
+                    blast_out_dic[prot_id]=[[row[1]],row[-1]]
                 else:
-                    blast_out_dic[prot_id][0]+=1
+                    if row[1] not in blast_out_dic[prot_id][0]:
+                        blast_out_dic[prot_id][0].append(row[1])
     return blast_out_dic
     
 
@@ -51,7 +53,7 @@ effectors_dict = SeqIO.to_dict(SeqIO.parse(effectors_prots,'fasta'))
 
 protein_blast_all_vs_all(all_prots,k12_dataset,k12_out_file)
 k12_dict = parse_blast_out(k12_out_file,e_val=10**(-6))
-k12_out_list=sorted(k12_dict.keys())
+k12_out_list=list(k12_dict.keys())
 
 protein_blast_all_vs_all(all_prots,T3SS_dataset,T3SS_out_file)
 T3SS_dict = parse_blast_out(T3SS_out_file,e_val=10**(-10))
@@ -79,3 +81,8 @@ for prot in prots_dict:
     '''
 SeqIO.write(non_effectors_recs,'non_effectors.faa','fasta')
 SeqIO.write(T3SS_recs,'T3SS_proteins.faa','fasta')
+with open('T3SS_hits.csv','w',newline='') as out_T3SS:
+    writer = csv.writer(out_T3SS)
+    for T3 in T3SS_recs:
+        hits = '\t'.join(T3SS_dict[T3.id][0])
+        writer.writerow([T3.id,hits])

@@ -5,6 +5,12 @@ import pandas as pd
 def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS,line_end='\n'):
     recs = SeqIO.parse(annotations,'fasta')
     T3SS_recs = SeqIO.to_dict(SeqIO.parse('T3SS_proteins.faa','fasta'))
+    T3_hits_f = 'T3SS_hits.csv'
+    T3_d = {}
+    with open(T3_hits_f) as f:
+        reader = csv.reader(f)
+        for row in reader:
+            T3_d[row[0]]=row[1].replace('\t',', ')
     locus_annotation={}
     locus_prot = {}
     for rec in recs:
@@ -19,22 +25,26 @@ def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,ou
         header = rec.description
         if 'pseudo=true' in header:
             annotation = 'pseudogene'
-        header_l = header.split('[')
-        for a in header_l:
+        header_l_for_prot = header.split('[')
+        header_l_for_locus = header.split()
+        for a in header_l_for_locus:
             if 'locus_tag=' in a:
-                locus = a.split('=')[1].strip().strip(']')
+                locus = a.split('=')[1].strip(']')
                 is_locus = True
-            elif 'protein=' in a:
+        for a in header_l_for_prot:
+            if 'protein=' in a:
                 if annotation == 'pseudogene':
                     annotation += ' '+a.split('=')[1].strip().strip(']')
                 else:
                     annotation = a.split('=')[1].strip().strip(']')
+
         if is_locus:
             locus_annotation[locus] = annotation
             locus_prot[locus] = protein_n
         else:
             locus_annotation[rec.id] = annotation
             locus_prot[rec.id] = protein_n
+    #print(locus_annotation)
     with open(in_f) as f:
         reader = csv.reader(f)
         with open(out_f_normal,'w',newline='') as out_normal:
@@ -48,12 +58,12 @@ def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,ou
                     header.append('Protein sequence')
                     writer_normal.writerow(header)
                     writer_pseudo.writerow(header)
-                    writer_T3SS.writerow([header[0]]+header[-2:])
+                    writer_T3SS.writerow(['Locus tag']+header[-2:]+['Hits to T3SS proteins (see Data)'])
                     for row in reader:
                         row.append(locus_annotation[row[0]])
                         row.append(locus_prot[row[0]])
                         if row[0] in T3SS_recs:
-                            writer_T3SS.writerow([row[0]]+row[-2:])
+                            writer_T3SS.writerow([row[0]]+row[-2:]+[T3_d[row[0]]])
                         elif 'pseudogene' in row[-2]:
                             writer_pseudo.writerow(row)
                         else:

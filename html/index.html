@@ -100,7 +100,7 @@
             </div>
             <br>
             <div>
-                <label for="effectors">Select an input effectors file: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info2">
+                <label for="effectors">Select an input effectors file (optional): <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info2">
                                             <span class="glyphicon glyphicon-question-sign"></span>
                                         </button></label><br>
                 <label class="btn btn-default btn-file">
@@ -120,11 +120,11 @@
             <br>
             <div class="form-group row">
             <div class="col-md-3">
-                <label for="email">E-mail (optional):</label><br>
+                <label for="email">E-mail:</label><br>
                 <input type="email" id="email" name="email" class="form-control">
             </div>
             <div class="col-md-3">
-                <label for="job_title">Job title (optional):</label><br>
+                <label for="job_title">Job title:</label>
                 <input type="text" id="job_title" name="job_title" class="form-control">
             </div>
             </div>
@@ -134,6 +134,14 @@
             </div>
             <button type="button" class="btn btn-warning" id="advanced_button" onclick="openAdvanced()"><span class="glyphicon glyphicon-cog"></span>&nbsp; Advanced options</button>
                 <div id="advanced" style="display:none;">
+                    <div>
+                        <label for="translocation_signal">Would you like to include a prediction of the translocation signal in your analysis? <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info11">
+                                    <span class="glyphicon glyphicon-question-sign"></span>
+                            </button></label><br>
+                            <label class="radio-inline"><input type="radio" name="translocation_signal" id="translocation_signal_yes" value="yes">Yes</label>
+                        <label class="radio-inline"><input type="radio" name="translocation_signal" id="translocation_signal_no" value="no" checked>No</label>
+                    </div>
+                    <br>
                     <div class="form-group row">
                         <div class="col-md-10">
                             <label for="T3Es">Upload effectors file for homology search: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info3">
@@ -156,7 +164,7 @@
                     </div>
                     <div class="form-group row">
                         <div class="col-md-10">
-                            <label for="no_T3SS">Upload an archive with proteomes records of closely related bacteria without T3SS: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info5">
+                            <label for="no_T3SS">Upload an archive with proteome records of closely related bacteria without T3SS: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info5">
                                             <span class="glyphicon glyphicon-question-sign"></span>
                                         </button></label><br>
                             <label class="btn btn-default btn-file">
@@ -179,9 +187,9 @@
                         <div>
                             <div class="form-group row">
                                 <div class="col-md-10">
-                                    <label for="gff">Upload a <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file (if multiple files are needed - upload a zip archive): <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info6">
+                                    <label for="gff">Upload a <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info6">
                                     <span class="glyphicon glyphicon-question-sign"></span>
-                                        </button></label>
+                                        </button></label><br>
                                     <label class="btn btn-default btn-file">
                                     <input type="file" id="gff" name="gff" onchange="ShowHideDiv()">
                                     </label>
@@ -195,9 +203,9 @@
                         <div>
                             <div class="form-group row">
                                 <div class="col-md-10">
-                                    <label for="genome">Upload a full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file (if multiple files are needed - upload a zip archive): <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info7">
+                                    <label for="genome">Upload a full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file: <button type="button" class="btn btn-lg" data-toggle="modal" data-target="#info7">
                                             <span class="glyphicon glyphicon-question-sign"></span>
-                                        </button></label>
+                                        </button></label><br>
                                     <label class="btn btn-default btn-file">
                                     <input type="file" id="genome" name="genome" onchange="openCIS()">
                                     </label>
@@ -243,11 +251,11 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            The input for Effectidor is a text file with all the ORFs sequences of the analyzed genome.
+                            The input for Effectidor is a text file with all the Open Reading Frames (ORFs) sequences of the analyzed genome.
                             The file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
                             <br>You can find instructions to download this file <a href="instructions.html" target="_blank">here</a>.
                             <br>If the analyzed genome is composed of a chromosome and plasmids, the ORFs from each can be supplied in separate files. In this case, the files should be compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">ZIP</a> archive.
-                            <br>Please make sure all the files packed in your input zip archive are in the right format, and that they are not packed inside directories - Directories within the zip archive are ignored.
+                            <br>Please make sure all the files packed in your input zip archive are in DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>, and are <u>not</u> packed in directories - Directories within the zip archive are ignored.
                             <br><br> Note, only protein coding genes should be included in this input. Non-coding RNA genes, such as tRNA, should not be included. If you follow the instructions above, no such genes are expected in your input file. 
                             Alternatively, if such RNA genes do appear in your data and you supply a GFF3 file indicating it (in the advanced options), we will filter them out automatically.
                         </b>
@@ -266,8 +274,8 @@
                         <div class="modal-body">
                         <b>
                             This file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
-                            The records supplied in this file must be records from the main ORFs file, and they will be treated as known effectors to train the machine-learning algorithm.
-                            <br>This is an optional (and recommended) input. If you choose not to supply it, the records that show high sequence similarity to our effectors dataset will be used as the known effectors.
+                            The records supplied in this file must be copied from the main ORFs file, and will be treated as "known effectors" to train the machine-learning algorithm.
+                            <br>This is an optional (and recommended) input. If you choose not to supply it, the records that show high sequence similarity to our effectors dataset (see "Data") will be used as the "known effectors".
                         </b>
                         </div>
                     </div>
@@ -300,10 +308,10 @@
                         <div class="modal-body">
                         <b>
                             In this input you may upload host proteome(s).
-                            You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip file</a>.<br>
-                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br>
-                            Please make sure all the files packed in your input zip archive are in the right format.<br><br>
-                            If you upload this archive, a BLAST will be ran against all the protein sequences in the fasta files compressed in it. Sequence similarity to the host proteins is potentially a very important feature for the classification.
+                            You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip archive</a>.<br>
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored.<br>
+                            <br><br>
+                            If you upload this archive, a BLAST will be run against all the protein sequences in the compressed FASTA files. Sequence similarity of the bacterial proteins to host proteins is potentially a very important feature for the classification as it captures Eukaryotic domains within the bacterial proteins.
                         </b>
                         </div>
                     </div>
@@ -319,10 +327,9 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            In this input you may upload proteomes records of closely related bacteria without a T3SS.<br>
-                            You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip file</a>.<br>
-                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br>
-                            Please make sure all the files packed in your input zip archive are in the right format.<br><br>
+                            You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip archive</a>.<br>
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored.<br>
+                            <br><br>
                             These data will be used for sequence similarity search - sequence similarity to proteins of closely related bacteria without a T3SS is a strong negative feature for T3Es classification.
                         </b>
                         </div>
@@ -339,10 +346,10 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            GFF3 files will use for extraction of genome organization features.<br>
+                            GFF3 files will be used for extraction of genome organization features.<br>
                             If you wish to upload more than one file (for example, if a plasmid is available), compress them in a single zip archive.<br>
-                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br>
-                            Please make sure all the files packed in your input zip archive are in the right format.
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored.<br>
+                            
                         </b>
                         </div>
                     </div>
@@ -358,11 +365,11 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            These files will be used to search for CIS-regulatory elements in the promoters of the genes, according to your selection.<br><br>
+                            These files will be used to search for cis-regulatory elements in the promoters of the genes, according to your selection.<br>
+                            The regulatory elements available for search are PIP-box, hrp-box, mxiE-box, exs-box, and tts-box.<br><br>
                             If you wish to upload more than one file (for example, if a plasmid is available), compress them in a single zip archive.<br>
-                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored, so make sure not to use these characters at the beginning of your file names.<br>
-                            Please make sure all the files packed in your input zip archive are in the right format.
-                            <br><br>The regulatory elements available for search are PIP-box, hrp-box, mxiE-box, exs-box, and tts-box.
+                            The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored.<br>
+                            
                         </b>
                         </div>
                     </div>
@@ -403,7 +410,39 @@
                             exs-box is relevant for <i>Pseudomonas aeruginosa</i>.<br>
                             tts-box is relevant for rhizobia.
                             <br><br>
-                            Make sure to choose only regulatory elements that are relevant for the bacterium you analyze. Non-relevant regulatory elements may hamper the classification results.
+                            Make sure to choose only regulatory elements that are relevant for the bacterium you analyze. Non-relevant regulatory elements may hamper the classification accuracy.
+                        </b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="info10" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <div class="modal-title"><b>Input specification</b></div>
+                        </div>
+                        <div class="modal-body">
+                        <b>
+                            For explanation regarding our use of your E-mail: see FAQ
+                        </b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="info11" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <div class="modal-title"><b>Input specification</b></div>
+                        </div>
+                        <div class="modal-body">
+                        <b>
+                            This feature can help us find potential T3Es. The disadvantage of this inclusion: longer running time of Effectidor.
                         </b>
                         </div>
                     </div>
