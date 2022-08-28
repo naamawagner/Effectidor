@@ -14,7 +14,7 @@ effectors_dict = fasta_parser.parse_ORFs(effectors_file,DNA=False)
 #%%
 locus_area_d,circulars = {},[]
 for gff_f in gff_files:
-    locus_area_d1,circulars1 = parse_gff_to_CDS_loc(gff_f)
+    locus_area_d1,circulars1 = parse_gff_to_CDS_loc(gff_f,{k: v for d in locus_dics for k, v in d.items()})
     locus_area_d.update(locus_area_d1)
     circulars.extend(circulars1)
     

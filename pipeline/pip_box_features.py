@@ -9,7 +9,7 @@ import fasta_parser
 
 #%%
 
-def parse_gff(gff_f):
+def parse_gff(gff_f,locus_dic):
     CDS_l =[]
     RNA = []
     with open(gff_f) as in_f:
@@ -33,6 +33,13 @@ def parse_gff(gff_f):
                             if feature.startswith('ID=CDS:'):
                                 locus_tag = feature.split(':')[1]
                                 CDS_l.append(locus_tag)
+                                is_locus_tag = True
+                                break
+                    if not is_locus_tag:
+                        for locus in locus_dic:
+                            if locus in line_l[-1]:
+                                locus_tag = locus
+                                CDS_l.append(locus_tag)
                                 break
                 elif 'RNA' in line_l[2] and 'mRNA' != line_l[2]:
                     features_l = line_l[-1].split(';')
@@ -50,9 +57,15 @@ def parse_gff(gff_f):
                                 RNA.append(locus_tag)
                                 is_locus_tag = True
                                 break
+                    if not is_locus_tag:
+                        for locus in locus_dic:
+                            if locus in line_l[-1]:
+                                locus_tag = locus
+                                RNA.append(locus_tag)
+                                break
     return set(CDS_l),set(RNA)
 
-def parse_gff_to_CDS_loc(gff_f):
+def parse_gff_to_CDS_loc(gff_f,locus_dic):
     regions = []
     circulars = []
     linears = []
@@ -63,8 +76,7 @@ def parse_gff_to_CDS_loc(gff_f):
                 line_l = line.split()
                 if 'sequence-region' in line_l[0]:
                     regions.append(line_l[1])
-                    locus_area_d[line_l[1]] = {}
-            
+                    locus_area_d[line_l[1]] = {}            
             line_l = line.strip().split('\t')
             if len(line_l) > 2:
                 if line_l[2] == 'region' or line_l[2] == "chromosome" or line_l[2] == "plasmid":
@@ -93,6 +105,15 @@ def parse_gff_to_CDS_loc(gff_f):
                         for feature in features_l:
                             if feature.startswith('ID=CDS:'):
                                 locus_tag = feature.split(':')[1]
+                                if not region in locus_area_d:
+                                    locus_area_d[region] = {}
+                                locus_area_d[region][locus_tag]=area
+                                is_locus_tag = True
+                                break
+                    if not is_locus_tag:
+                        for locus in locus_dic:
+                            if locus in line_l[-1]:
+                                locus_tag = locus
                                 if not region in locus_area_d:
                                     locus_area_d[region] = {}
                                 locus_area_d[region][locus_tag]=area
@@ -186,7 +207,7 @@ def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False
     for gff_f in gff_files:
         #name = gff_f.split('/')[-1].split('.')[0]
         #genome_f = f'{genome_dir}/{name}.fasta'
-        locus_area_d1,circulars1 = parse_gff_to_CDS_loc(gff_f)
+        locus_area_d1,circulars1 = parse_gff_to_CDS_loc(gff_f,locus_dic)
         locus_area_d.update(locus_area_d1)
         circulars.extend(circulars1)
     genome_recs = []

@@ -164,7 +164,7 @@ def validate_gff(gff_dir,ORFs_f):
             content = in_f.read().replace('|','_')
             with open(f'{gff_dir}/{f}','w') as out_f:
                 out_f.write(content)
-        CDS,RNA = pip_box_features.parse_gff(f'{gff_dir}/{f}')
+        CDS,RNA = pip_box_features.parse_gff(f'{gff_dir}/{f}',locus_dic)
         CDS_set.update(CDS)
         RNA_set.update(RNA)
     not_in_gff = [locus for locus in locus_dic if (locus not in CDS_set and locus not in RNA_set)]
@@ -183,13 +183,15 @@ def validate_gff(gff_dir,ORFs_f):
             cds_recs.append(rec) 
         SeqIO.write(cds_recs,ORFs_f,'fasta')
         
-def validate_genome_and_gff(gff_dir,genome_dir):
+def validate_genome_and_gff(gff_dir,genome_dir,ORFs_f):
     logger.info(f'Validating genome and gff')
+    import fasta_parser
     import pip_box_features
+    locus_dic = fasta_parser.parse_ORFs(ORFs_f)
     gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]    
     regions = []
     for gff_f in gff_files:
-        locus_area_d,circulars = pip_box_features.parse_gff_to_CDS_loc(gff_f)
+        locus_area_d,circulars = pip_box_features.parse_gff_to_CDS_loc(gff_f,locus_dic)
         for region in locus_area_d:
             regions.append(region)
         #with open(gff_f) as in_f:
@@ -313,7 +315,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         if error_msg:
             fail(error_msg,error_path)
     if genome_path and gff_path:
-        error_msg = validate_genome_and_gff(f'{output_dir_path}/gff',f'{output_dir_path}/full_genome')
+        error_msg = validate_genome_and_gff(f'{output_dir_path}/gff',f'{output_dir_path}/full_genome',f'{output_dir_path}/ORFs.fasta')
         if error_msg:
             fail(error_msg,error_path)
     if no_T3SS_path:
