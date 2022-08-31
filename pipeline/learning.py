@@ -193,7 +193,7 @@ for name,model,best,X_TRAIN,X_TEST,Y_TRAIN,Y_TEST,full_features,full_X,full_Y in
     best_features = full_features_l[i]
     all_data_best=all_data_features[i]
     updated_models.append((name,model,best_features_train,best_features_test,Y_TRAIN,Y_TEST,best_features,all_data_best))
-updated_models.append(('RDF', RandomForestClassifier(n_estimators=500,max_depth=10,random_state=seed),X_train,X_test,Y_train,Y_test,X,features))
+updated_models.append(('RDF', RandomForestClassifier(n_estimators=500,max_depth=10,random_state=seed),X_train,X_test,y_train,y_test,X,features))
 #%%
 #comparing the algorithms after their preprocessing
 results_train={}
