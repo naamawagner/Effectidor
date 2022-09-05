@@ -113,6 +113,9 @@ def verify_zip(file,name):
     shutil.unpack_archive(file,'/'.join(file.split('/')[:-1])+'/zip_tmp')
     flag = False
     for f in os.listdir(f'{"/".join(file.split("/")[:-1])}/zip_tmp'):
+        new_name = f.replace(' ','_')
+        os.rename(f'{"/".join(file.split("/")[:-1])}/zip_tmp/{f}',f'{"/".join(file.split("/")[:-1])}/zip_tmp/{new_name}')
+        f = new_name
         if not f.startswith('_') and not f.startswith('.') and os.path.isfile(f'{"/".join(file.split("/")[:-1])}/zip_tmp/{f}'):
             error_msg = verify_fasta_format(f'{"/".join(file.split("/")[:-1])}/zip_tmp/{f}','protein',f)
             if error_msg:
@@ -319,7 +322,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         if error_msg:
             fail(error_msg,error_path)
     if no_T3SS_path:
-        error_msg = verify_zip(host_proteome,'Close bacteria without T3SS data')
+        error_msg = verify_zip(no_T3SS_path,'Close bacteria without T3SS data')
         if error_msg:
             fail(error_msg,error_path)
 
