@@ -276,6 +276,7 @@
                             This file should be in a DNA <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>.
                             The records supplied in this file must be copied from the main ORFs file, and will be treated as "known effectors" to train the machine-learning algorithm.
                             <br>This is an optional (and recommended) input. If you choose not to supply it, the records that show high sequence similarity to our effectors dataset (see "Data") will be used as the "known effectors".
+                            <br>Please note that the predictions are conducted after training the machine-learning algorithm on these "known effectors" of the given genome, and no exterior effectors data are used for training. Thus, it is most recommended to add these records to achieve better predictions of potential novel T3Es. This is especially important when not many effectors are known in the bacterial genome you are analyzing.
                         </b>
                         </div>
                     </div>
@@ -307,8 +308,8 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            In this input you may upload host proteome(s).
-                            You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip archive</a>.<br>
+                            In this input you may upload host proteome(s).<br>
+                            You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file(s), compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip archive</a>.<br>
                             The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored.<br>
                             <br><br>
                             If you upload this archive, a BLAST will be run against all the protein sequences in the compressed FASTA files. Sequence similarity of the bacterial proteins to host proteins is potentially a very important feature for the classification as it captures Eukaryotic domains within the bacterial proteins.
@@ -327,10 +328,11 @@
                         </div>
                         <div class="modal-body">
                         <b>
-                            You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip archive</a>.<br>
+                            In this input you may upload proteome(s) of closely related bacteria that do not encode a T3SS.<br>
+                            You should upload protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files, such that each FASTA file contains all the protein sequences of a single bacterium, compressed together in a <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip archive</a>.<br>
                             The files should not be packed inside directories - directories packed in the zip archive will be ignored. Also files with names starting with a dot (.) or an underscore (_) will be ignored.<br>
                             <br><br>
-                            These data will be used for sequence similarity search - sequence similarity to proteins of closely related bacteria without a T3SS is a strong negative feature for T3Es classification.
+                            These data will be used for sequence similarity search. Each FASTA file within the zip archive will be used for a different search. Sequence similarity to proteins of closely related bacteria without a T3SS is a strong negative feature for T3Es classification.
                         </b>
                         </div>
                     </div>
