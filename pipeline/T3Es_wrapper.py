@@ -42,8 +42,8 @@ def create_effectors_html(effectors_file,ORFs_file,out_dir):
     effectors_table = data.to_html(index=False,justify='left',escape=False)
     return effectors_table,None,None, False
             
-def write_sh_file(tmp_dir,path_to_dir_with_fastas,path_for_embedding_files,path_for_output_csv):
-    content = f'''#!/bin/bash\n\n#PBS -S /bin/bash\n#PBS -r y\n#PBS -q pupkoweb@power9\n#PBS -l ncpus=10\n#PBS -v PBS_O_SHELL=bash,PBS_ENVIRONMENT=PBS_BATCH\n#PBS -N Effectidor_embedding\n#PBS -e {tmp_dir}\n#PBS -o {tmp_dir}\n\nsource /groups/pupko/alburquerque/miniconda3/etc/profile.d/conda.sh\nconda activate MsaEmbedding\ncd /groups/pupko/alburquerque/MsaTransformerEffectidor/\nPYTHONPATH=$(pwd)\npython extract.py --model_location "/groups/pupko/alburquerque/MsaTransformerEffectidor/esm1_t34_670M_UR50S.pt" --input_dir "{path_to_dir_with_fastas}" --output_dir "{path_for_embedding_files}" --repr_layers 34 --include mean\npython create_effectidor_feats.py --path_to_embedding_files "{path_for_embedding_files}" --path_to_fasta_files "{path_to_dir_with_fastas}" --output_file_path "{path_for_output_csv}"'''
+def write_sh_file(tmp_dir,path_to_dir_with_fastas,path_for_embedding_files,path_for_output_csv,queue):
+    content = f'''#!/bin/bash\n\n#PBS -S /bin/bash\n#PBS -r y\n#PBS -q {queue}@power9\n#PBS -l ncpus=10,mem=15gb\n#PBS -v PBS_O_SHELL=bash,PBS_ENVIRONMENT=PBS_BATCH\n#PBS -N Effectidor_embedding\n#PBS -e {tmp_dir}\n#PBS -o {tmp_dir}\n\nsource /groups/pupko/alburquerque/miniconda3/etc/profile.d/conda.sh\nconda activate MsaEmbedding\ncd /groups/pupko/alburquerque/MsaTransformerEffectidor/\nPYTHONPATH=$(pwd)\npython extract.py --model_location "/groups/pupko/alburquerque/MsaTransformerEffectidor/esm1_t34_670M_UR50S.pt" --input_dir "{path_to_dir_with_fastas}" --output_dir "{path_for_embedding_files}" --repr_layers 34 --include mean\npython create_effectidor_feats.py --path_to_embedding_files "{path_for_embedding_files}" --path_to_fasta_files "{path_to_dir_with_fastas}" --output_file_path "{path_for_output_csv}"'''
     with open(f'{tmp_dir}/Embedding.sh','w') as out:
         out.write(content)
 
@@ -116,7 +116,8 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     subprocess.check_output(['python',f'{scripts_dir}/translate_fasta.py',ORFs_file,effectors_file,all_prots,effectors_prots])
     #make N-terminal sequences for Signal search
     if signal:
-        os.makedirs(signal_prot_dir)
+        if not os.path.exists(signal_prot_dir):
+            os.makedirs(signal_prot_dir)
         recs = SeqIO.parse(all_prots,'fasta')
         for rec in recs:
             ID = rec.id
@@ -124,8 +125,9 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
             rec.seq = N_seq
             file_path = f'{signal_prot_dir}/{ID}.faa'
             SeqIO.write(rec,file_path,'fasta')
-        os.makedirs(signal_embed_dir)
-        write_sh_file(tmp_dir,signal_prot_dir,signal_embed_dir,f'{working_directory}/Embedding_pred.csv')
+        if not os.path.exists(signal_embed_dir):
+            os.makedirs(signal_embed_dir)
+        write_sh_file(tmp_dir,signal_prot_dir,signal_embed_dir,f'{working_directory}/Embedding_pred.csv',queue)
     
     if not effectors_file:
         subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots,log_file])
@@ -179,10 +181,13 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         # signal peptide
     with open(f'{working_directory}/signalp.cmds','w') as sig_f:
         sig_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/signal_peptide_features.py {ORFs_file} {all_prots} {working_directory}\tsignalP\n')
-    subprocess.call(f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py {working_directory}/features_jobs.cmds {tmp_dir} -q {queue}',shell=True)
-    subprocess.call(f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py --cpu 3 {working_directory}/signalp.cmds {tmp_dir} -q {queue}',shell=True)
+    if not os.path.exists(f'{working_directory}/physical_features.done'):
+        subprocess.call(f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py {working_directory}/features_jobs.cmds {tmp_dir} -q {queue}',shell=True)
+    if not os.path.exists(f'{working_directory}/signal_p_features.done'):
+        subprocess.call(f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py --cpu 3 {working_directory}/signalp.cmds {tmp_dir} -q {queue}',shell=True)
     if signal:
-        subprocess.call(f'/opt/pbs/bin/qsub {tmp_dir}/Embedding.sh',shell=True)
+        if not os.path.exists(f'{working_directory}/Embedding_pred.csv.done'):
+            subprocess.call(f'/opt/pbs/bin/qsub {tmp_dir}/Embedding.sh',shell=True)
     
     x = sum([item.endswith('done') for item in os.listdir(working_directory)])
     amount_of_expected_results = 3
@@ -271,16 +276,28 @@ if __name__ == '__main__':
 
         import argparse
         parser = argparse.ArgumentParser()
+        parser.add_argument('error_path',
+                            help='A path to the error file.',
+                            type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
         parser.add_argument('input_ORFs_path',
                             help='A path to a DNA ORFs file.',
                             type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
-        parser.add_argument('input_effectors_path',
+        parser.add_argument('--input_effectors_path',
                             help='A path to a DNA fasta with positive samples. '
                                  'All samples in this file should be in the input ORFs file as well.',
-                            type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
+                            default = '')
         parser.add_argument('output_dir_path',
                             help='A path to a folder in which the output files will be created.',
                             type=lambda path: path.rstrip('/'))
+        parser.add_argument('--queue',default='pupkoweb')
+        parser.add_argument('--organization', action='store_true',help='calculate organization features')
+        parser.add_argument('--CIS_elements',action='store_true',help='extract regulatory elements features')
+        parser.add_argument('--PIP', help='look for PIP-box in promoters', action='store_true')
+        parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
+        parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
+        parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
+        parser.add_argument('--tts', help='look for tts-box in promoters', action='store_true')
+        parser.add_argument('--translocation_signal',help='extract translocation signal feature', action='store_true')
         parser.add_argument('--html_path', default=None,
                             help='A path to an html file that will be updated during the run.',
                             type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
@@ -294,4 +311,4 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(level=logging.INFO)
 
-        effectors_learn(args.input_ORFs_path, args.input_effectors_path, args.output_dir_path, f'{args.output_dir_path}/tmp')
+        effectors_learn(args.error_path,args.input_ORFs_path, args.input_effectors_path, args.output_dir_path, f'{args.output_dir_path}/tmp',args.queue,organization=args.organization,CIS_elements=args.CIS_elements,PIP=args.PIP,hrp=args.hrp,mxiE=args.mxiE,exs=args.exs,tts=args.tts,signal=args.translocation_signal)
