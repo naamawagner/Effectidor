@@ -136,7 +136,7 @@ def validate_set(file,name):
             if recs.count(rec_id) > 1:
                 non_unique.append(rec_id)
         non_unique_ids = '<br>'.join(non_unique)
-        return f'{name} contain non unique records. The following records appear more than once:<br><br>{non_unique_ids}'
+        return f'{name} contains non unique records. The following records appear more than once:<br><br>{non_unique_ids}'
     # by locus_tags
     recs = SeqIO.parse(file,'fasta')
     locus_tags = []
@@ -153,7 +153,7 @@ def validate_set(file,name):
             if locus_tags.count(rec_id) > 1:
                 non_unique.append(rec_id)
         non_unique_ids = '<br>'.join(non_unique)
-        return f'{name} contain non unique records. The following records appear more than once:<br><br>{non_unique_ids}'
+        return f'{name} contains non unique records. The following records appear more than once:<br><br>{non_unique_ids}'
     
 def validate_gff(gff_dir,ORFs_f):
     logger.info(f'Validating GFF coverage')
@@ -240,7 +240,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                 for rec in recs:
                     ORFs.append(rec)
         SeqIO.write(ORFs,f'{output_dir_path}/ORFs.fasta','fasta')
-        error_msg = validate_set(f'{output_dir_path}/ORFs.fasta','ORFs records')
+        error_msg = validate_set(f'{output_dir_path}/ORFs.fasta','Your ORFs file')
         if error_msg:
             fail(error_msg,error_path)
     else:
@@ -249,7 +249,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         if error_msg:
             error_msg = f'Illegal fasta file in ORFs input: {error_msg}<br>This input is expected to hold a <b>DNA</b> FASTA file.'
             fail(error_msg,error_path)
-        error_msg = validate_set(ORFs_path,'ORFs records')
+        error_msg = validate_set(ORFs_path,'Your ORFs file')
         if error_msg:
             fail(error_msg,error_path)
     ORFs_f = f'{output_dir_path}/ORFs.fasta'
@@ -264,14 +264,14 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         error_msg = verify_effectors_f(effectors_path,f'{output_dir_path}/ORFs.fasta')
         if error_msg:
             fail(error_msg, error_path)
-        error_msg = validate_set(effectors_path,'effectors records')
+        error_msg = validate_set(effectors_path,'Your effectors file')
         if error_msg:
             fail(error_msg,error_path)
     if input_T3Es_path:
         error_msg = verify_fasta_format(input_T3Es_path,'protein', 'effectors for homology search')
         if error_msg:
             fail(error_msg,error_path)
-        error_msg = validate_set(input_T3Es_path,'effectors records for homology search')
+        error_msg = validate_set(input_T3Es_path,'Your effectors file for homology search')
         if error_msg:
             fail(error_msg,error_path)
     if host_proteome:
