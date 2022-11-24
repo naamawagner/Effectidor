@@ -154,8 +154,18 @@ def validate_set(file,name):
                 non_unique.append(rec_id)
         non_unique_ids = '<br>'.join(non_unique)
         return f'{name} contains non unique records. The following records appear more than once:<br><br>{non_unique_ids}'
-    
+
+def validate_gff_format(gff_dir):
+    for f in os.listdir(gff_dir):
+        with open(f'{gff_dir}/{f}') as in_f:
+            first_line= in_f.readline()
+            if not first_line.startswith("##gff-version"):
+                return f'''Illegal GFF format! The file {f} in your GFF input is not in <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> format!'''
+            
 def validate_gff(gff_dir,ORFs_f):
+    logger.info(f'Validating GFF')
+    if validate_gff_format(gff_dir):
+        return validate_gff_format(gff_dir)
     logger.info(f'Validating GFF coverage')
     import fasta_parser
     import pip_box_features
