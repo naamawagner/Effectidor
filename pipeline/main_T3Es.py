@@ -408,7 +408,7 @@ def edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_
                 <br>
                 <a href='features.csv' target='_blank'>Download raw features file</a>
                 <br><br>
-                <h3><b>Positive samples that used to train the model</b></h3>
+                <h3><b>Positive samples that were used to train the model</b></h3>
                 {positives_table}
                 <br>
                 <h3><b>Top 10 predictions, among unlabeled samples</b></h3>
