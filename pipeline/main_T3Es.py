@@ -159,8 +159,9 @@ def validate_gff_format(gff_dir):
     for f in os.listdir(gff_dir):
         with open(f'{gff_dir}/{f}') as in_f:
             first_line= in_f.readline()
-            if not first_line.startswith("##gff-version"):
-                return f'''Illegal GFF format! The file {f} in your GFF input is not in <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> format!'''
+            if not (first_line.startswith("##gff-version") or first_line.startswith("##sequence-region")):
+                return f'''Illegal GFF format! The file {f} in your GFF input is not in <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> format!<br>
+            The content in the file does not start with a line of ##gff-version as must be'''
             
 def validate_gff(gff_dir,ORFs_f):
     logger.info(f'Validating GFF')
