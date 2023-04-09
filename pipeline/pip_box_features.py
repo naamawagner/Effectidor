@@ -61,7 +61,7 @@ def parse_gff(gff_f,locus_dic):
                         for locus in locus_dic:
                             if locus in line_l[-1]:
                                 locus_tag = locus
-                                RNA.append(locus_tag)
+                                CDS_l.append(locus_tag)
                                 break
     return set(CDS_l),set(RNA)
 
