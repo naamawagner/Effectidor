@@ -61,6 +61,7 @@ def verify_fasta_format(fasta_path,Type,input_name):
                         if c not in legal_chars:
                             return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. Line {line_number} in fasta {input_name} contains illegal {Type} character "{c}".'
                     curated_content += f'{line}\n'
+                    curated_content = curated_content.replace('.','_')
             if flag: # protein
                 recs = SeqIO.parse(fasta_path,'fasta')
                 for rec in recs:
@@ -176,9 +177,12 @@ def validate_gff(gff_dir,ORFs_f):
     for f in os.listdir(gff_dir):
         with open(f'{gff_dir}/{f}') as in_f:
             content = in_f.read().replace('|','_')
+            content = content.replace('.','_')
             with open(f'{gff_dir}/{f}','w') as out_f:
                 out_f.write(content)
         CDS,RNA = pip_box_features.parse_gff(f'{gff_dir}/{f}',locus_dic)
+        logger.info(f'{locus_dic.keys()}')
+        logger.info(f'CDS:{CDS}\nRNA:{RNA}')
         CDS_set.update(CDS)
         RNA_set.update(RNA)
     not_in_gff = [locus for locus in locus_dic if (locus not in CDS_set and locus not in RNA_set)]
@@ -255,8 +259,8 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         if error_msg:
             fail(error_msg,error_path)
     else:
-        shutil.copy(ORFs_path,f'{output_dir_path}/contigs_ORFs')
         error_msg = verify_fasta_format(ORFs_path,'DNA','input ORFs')
+        shutil.copy(ORFs_path,f'{output_dir_path}/contigs_ORFs')
         if error_msg:
             error_msg = f'Illegal fasta file in ORFs input: {error_msg}<br>This input is expected to hold a <b>DNA</b> FASTA file.'
             fail(error_msg,error_path)

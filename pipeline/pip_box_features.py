@@ -37,11 +37,11 @@ def parse_gff(gff_f,locus_dic):
                                 break
                     if not is_locus_tag:
                         for locus in locus_dic:
-                            if locus in line_l[-1]:
+                            if f'{locus};' in line_l[-1]:
                                 locus_tag = locus
                                 CDS_l.append(locus_tag)
                                 break
-                elif 'RNA' in line_l[2] and 'mRNA' != line_l[2]:
+                else:
                     features_l = line_l[-1].split(';')
                     is_locus_tag = False
                     for feature in features_l:
@@ -59,11 +59,12 @@ def parse_gff(gff_f,locus_dic):
                                 break
                     if not is_locus_tag:
                         for locus in locus_dic:
-                            if locus in line_l[-1]:
+                            if f'{locus};' in line_l[-1]:
                                 locus_tag = locus
-                                CDS_l.append(locus_tag)
+                                RNA.append(locus_tag)
                                 break
-    return set(CDS_l),set(RNA)
+    RNA_set = set(RNA).difference(set(CDS_l))
+    return set(CDS_l),RNA_set
 
 def parse_gff_to_CDS_loc(gff_f,locus_dic):
     regions = []
@@ -112,7 +113,7 @@ def parse_gff_to_CDS_loc(gff_f,locus_dic):
                                 break
                     if not is_locus_tag:
                         for locus in locus_dic:
-                            if locus in line_l[-1]:
+                            if f'{locus};' in line_l[-1]:
                                 locus_tag = locus
                                 if not region in locus_area_d:
                                     locus_area_d[region] = {}
