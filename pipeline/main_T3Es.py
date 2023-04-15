@@ -93,7 +93,7 @@ def verify_effectors_f(effectors_path, ORFs_path):
     ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path,'fasta')])
     if not effectors_set.issubset(ORFs_recs):
         not_in_ORFs = ', '.join([rec for rec in effectors_set.difference(ORFs_recs)])
-        return f'Illegal effectors records. The following records IDs are in the effectors file and not in the ORFs file:\n{not_in_ORFs}.'
+        return f'Illegal effectors records. The following records IDs are in the effectors file and not in the ORFs file:\n{not_in_ORFs}.\n\nIf these effectors are from other bacterial genomes, they can be supplied (in <b>protein</b> FASTA file) in the advanced options.\nIf these are effectors from the analyzed bacterial genome, they should be identical to the records available in the input ORFs file.'
     if len(effectors_set) != len(effectors_recs):
         more_than_once = ','.join([effector for effector in effectors_set if effectors_recs.count(effector)>1])
         return f'Illegal effectors records. The following records IDs appear more than once in the file:\n{more_than_once}.'
