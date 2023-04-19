@@ -430,11 +430,14 @@ def run_cgi():
             notification_content += f'\nYou can track the progress of your job at:\n{os.path.join(CONSTS.WEBSERVER_URL, "results", run_number, "output.html")}\n\n'
 
             # Send the user a notification email for their submission
-            send_email(smtp_server=CONSTS.SMTP_SERVER,
-                       sender=CONSTS.ADMIN_EMAIL,
-                       receiver=f'{user_email}',
-                       subject=f'Effectidor - Your job has been submitted!{" (Job name: "+str(job_title) if job_title else ""})',
-                       content=notification_content)
+            try:
+                send_email(smtp_server=CONSTS.SMTP_SERVER,
+                           sender=CONSTS.ADMIN_EMAIL,
+                           receiver=f'{user_email}',
+                           subject=f'Effectidor - Your job has been submitted!{" (Job name: "+str(job_title) if job_title else ""})',
+                           content=notification_content)
+            except:
+                write_to_debug_file(cgi_debug_path,'\nInvalid Email - Email was not sent to the user\n\n')
 
         write_to_debug_file(cgi_debug_path, f'\n\n{"#"*50}\nCGI finished running!\n{"#"*50}\n')
 

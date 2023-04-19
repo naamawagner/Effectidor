@@ -5,7 +5,7 @@ import logging
 #import shutil
 import Bio.SeqUtils
 import effectidor_CONSTANTS as CONSTS  # from /effectidor/auxiliaries
-from time import sleep
+from time import sleep,time
 from auxiliaries import fail,update_html,append_to_html # from /effectidor/auxiliaries
 from Bio import SeqIO
 from T3Es_wrapper import effectors_learn
@@ -66,6 +66,8 @@ def verify_fasta_format(fasta_path,Type,input_name):
                 recs = SeqIO.parse(fasta_path,'fasta')
                 for rec in recs:
                     seq = str(rec.seq)
+                    if len(seq)==0:
+                        return f'FASTA file {os.path.basename(fasta_path)} in {input_name} input contains empty records!'
                     AGCT_count = seq.count('A')+seq.count('G')+seq.count('T')+seq.count('C')+seq.count('N')
                     if AGCT_count >= 0.95*len(seq):
                         f = AGCT_count*100/len(seq)
@@ -341,10 +343,33 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         if error_msg:
             fail(error_msg,error_path)
 
+def cleanup_is_running(queues=('pupkolab','pupkoweb')):
+    for q in queues:
+        try:
+            if subprocess.check_output(f'qstat {q} | grep cleanup_effec',shell=True):
+            # a cleanup is currently running.
+                return True
+        except:
+            pass
+    # none of the queues is running cleanup (none of them returned True)
+    return False
 
+def cleanup_ran_today(path=r'/bioseq/data/results/effectidor/'):
+    for f in os.listdir(path):
+        if f.endswith('.ER'):
+            f_path = os.path.join(path,f)
+            ctime = os.stat(f_path).st_ctime
+            if time.time() - ctime < 60*60*24:
+                return True
+    # cleanup did not run today
+    return False
 
 def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False, signal=False):
-
+    try:
+        if not cleanup_is_running() and not cleanup_ran_today():
+            subprocess.call(f'/opt/pbs/bin/qsub /bioseq/effectidor/auxiliaries/remove_old_files.pbs',shell=True)
+    except:
+        pass
     error_path = f'{output_dir_path}/error.txt'
     try:
         if html_path:
@@ -408,7 +433,7 @@ def edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_
     if low_confidence_flag:
         append_to_html(html_path, f'''
                        <div class="container" style="{CONSTS.CONTAINER_STYLE}" align="justify"><h3>
-                       <font color="red">WARNING: Due to small positive set to train the classifier on, the predictions are of low quality.
+                       <font color="red">WARNING: The predictions might be of low quality due to small positive set to train the classifier, or for other reasons.
                        </font></h3><br>
                        </div>
                        ''')
