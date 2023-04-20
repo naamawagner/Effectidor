@@ -4,11 +4,15 @@ from Bio import SeqIO
 import os
 import subprocess
 import csv
+import sys
+sys.path.append('/bioseq/effectidor/auxiliaries')
+import effectidor_CONSTANTS
 
 all_prots = argv[1]
 effectors_prots = argv[2]
-k12_dataset= r'/groups/pupko/naamawagner/TF/Genomes/e.coli_k-12_substr.MG1655/e.coli_k-12_substr.MG1655.proteins.faa'
-T3SS_dataset = r'/groups/pupko/naamawagner/T3Es_webserver/T3SS_proteins.faa'
+data_dir = effectidor_CONSTANTS.EFFECTIDOR_DATA
+k12_dataset= f'{data_dir}/e.coli_k-12_substr.MG1655.proteins.faa'
+T3SS_dataset = f'{data_dir}/T3SS_proteins.faa'
 if not os.path.exists('blast_outputs'):
     os.makedirs('blast_outputs')
 if not os.path.exists('blast_data/non_effectors'):
@@ -73,12 +77,7 @@ for prot in prots_dict:
                 non_effectors_recs.append(prots_dict[prot])
             else:
                 T3SS_recs.append(prots_dict[prot])
-    '''            
-    if prot in k12_out_list and prot not in effectors_dict:
-        non_effectors_recs.append(prots_dict[prot])
-    elif prot in T3SS_out_list and prot not in effectors_dict:
-        T3SS_recs.append(prots_dict[prot])
-    '''
+
 SeqIO.write(non_effectors_recs,'non_effectors.faa','fasta')
 SeqIO.write(T3SS_recs,'T3SS_proteins.faa','fasta')
 with open('T3SS_hits.csv','w',newline='') as out_T3SS:

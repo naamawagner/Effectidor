@@ -3,11 +3,12 @@
 import os
 
 # constants to use when sending e-mails using the server admin's email address.
-ADMIN_EMAIL = 'naamawagner@mail.tau.ac.il' #'orenavram@gmail.com' #'shiranos@gmail.com' 'evolseq@mail.tau.ac.il'
+ADMIN_EMAIL = 'TAU BioSequence <bioSequence@tauex.tau.ac.il>' #'naamawagner@mail.tau.ac.il'
 SMTP_SERVER = 'mxout.tau.ac.il'
+OWNER_EMAIL = 'naamawagner@mail.tau.ac.il'
 
 QUEUE_NAME = 'pupkoweb'
-#PIPELINE_NAME = 'ModelTeller'
+PIPELINE_NAME = 'Effectidor'
 
 # general paths
 SERVERS_RESULTS_DIR = '/bioseq/data/results'
@@ -27,12 +28,14 @@ EFFECTIROT_RESULTS_DIR = os.path.join(SERVERS_RESULTS_DIR, 'effectidor')
 EFFECTIDOR_LOGS_DIR = os.path.join(SERVERS_LOGS_DIR, 'effectidor')
 EFFECTIDOR_RESULTS_URL = os.path.join(WEBSERVER_URL, 'results')
 EFFECTIDOR_HTML_DIR = '/data/www/html/effectidor'
-EFFECTIDOR_EXEC = '/groups/pupko/naamawagner/T3Es_webserver/scripts/debug'
+EFFECTIDOR_EXEC = '/bioseq/effectidor/pipeline/'
+EFFECTIDOR_DATA = '/bioseq/effectidor/data/'
 
 MAIN_SCRIPT = os.path.join(EFFECTIDOR_EXEC, 'main_T3Es.py')
 
-RESULT_MSG = 'Unresolved error'
+SUBMISSIONS_LOG = '/bioseq/effectidor/submissions_log.txt'
 
+RESULT_MSG = 'Unresolved error'
 
 CONTAINER_WIDTH = 'width: 80%'
 CONTAINER_NO_MARGIN = 'margin: 0 auto'

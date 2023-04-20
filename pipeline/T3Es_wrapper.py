@@ -58,9 +58,11 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     import sys
     sys.path.append('/bioseq/effectidor/auxiliaries')
     from auxiliaries import fail
+    import effectidor_CONSTANTS
     low_quality_flag = False
     # vars
-    scripts_dir = '/groups/pupko/naamawagner/T3Es_webserver/scripts'
+    scripts_dir = effectidor_CONSTANTS.EFFECTIDOR_EXEC
+    data_dir = effectidor_CONSTANTS.EFFECTIDOR_DATA
     os.chdir(working_directory)
     log_file = f'{working_directory}/log.txt'
     # input files
@@ -70,7 +72,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     signal_prot_dir = f'{working_directory}/NTerminal_prots'
     signal_embed_dir = f'{working_directory}/NTerminal_embedding'
     effectors_prots = 'translated_effectors.faa'
-    blast_datasets_dir = '/groups/pupko/naamawagner/T3Es_webserver/blast_data'
+    blast_datasets_dir = f'{data_dir}/blast_data'
     
     if not os.path.exists('blast_data'):
         os.makedirs('blast_data')

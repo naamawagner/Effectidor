@@ -205,7 +205,8 @@ def write_cmds_file(cmds_file, run_number, parameters):
     with open(cmds_file, 'w') as f:
         f.write(f'module load {required_modules}')
         f.write(new_line_delimiter)
-        f.write(f'{" ".join(["python", "/groups/pupko/naamawagner/T3Es_webserver/scripts/main_T3Es.py", parameters])}\teffectidor{run_number}\n')
+        cmd = " ".join(["python",f"{CONSTS.MAIN_SCRIPT}",parameters])+f'\teffectidor{run_number}\n'
+        f.write(cmd)
 
 def run_cgi():
 
