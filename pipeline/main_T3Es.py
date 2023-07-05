@@ -359,7 +359,7 @@ def cleanup_ran_today(path=r'/bioseq/data/results/effectidor/'):
         if f.endswith('.ER'):
             f_path = os.path.join(path,f)
             ctime = os.stat(f_path).st_ctime
-            if time.time() - ctime < 60*60*24:
+            if time() - ctime < 60*60*24:
                 return True
     # cleanup did not run today
     return False
