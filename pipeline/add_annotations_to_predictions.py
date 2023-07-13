@@ -1,9 +1,29 @@
 from Bio import SeqIO
 import csv
 import pandas as pd
+import os
 
-def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS,line_end='\n'):
-    recs = SeqIO.parse(annotations,'fasta')
+def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations_fasta,out_f_T3SS,gff_d='',line_end='\n'):
+    locus_annotation={}
+    if gff_d:
+        for f in os.listdir(gff_d):
+            gff_f = os.path.join(gff_d,f)
+            with open(gff_f) as gff:
+                for line in gff:
+                    if not line.startswith('#'):
+                        locus,annot = '',''
+                        row = line.strip().split('\t')
+                        if len(row) == 9:
+                            if row[2] == 'CDS':
+                                features = row[-1].split(';')
+                                for fe in features:
+                                    if 'locus_tag=' in fe:
+                                        locus = fe.split('=')[1]
+                                    elif 'product=' in fe:
+                                        annot = fe.split('=')[1]
+                                locus_annotation[locus] = annot
+                        
+    recs = SeqIO.parse(annotations_fasta,'fasta')
     T3SS_recs = SeqIO.to_dict(SeqIO.parse('T3SS_proteins.faa','fasta'))
     T3_hits_f = 'T3SS_hits.csv'
     T3_d = {}
@@ -11,7 +31,6 @@ def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,ou
         reader = csv.reader(f)
         for row in reader:
             T3_d[row[0]]=row[1].replace('\t',', ')
-    locus_annotation={}
     locus_prot = {}
     for rec in recs:
         dna_seq = rec.seq
@@ -37,12 +56,13 @@ def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,ou
                     annotation += ' '+a.split('=')[1].strip().strip(']')
                 else:
                     annotation = a.split('=')[1].strip().strip(']')
-
         if is_locus:
-            locus_annotation[locus] = annotation
+            if locus not in locus_annotation:
+                locus_annotation[locus] = annotation
             locus_prot[locus] = protein_n
         else:
-            locus_annotation[rec.id] = annotation
+            if rec.id not in locus_annotation:
+                locus_annotation[rec.id] = annotation
             locus_prot[rec.id] = protein_n
     #print(locus_annotation)
     with open(in_f) as f:

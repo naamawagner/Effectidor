@@ -262,11 +262,19 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     out_for_html_normal = r'out_learning/concensus_predictions_with_annotation_for_html.csv'
     out_for_html_pseudo = r'out_learning/pseudogenes_predictions_with_annotation_for_html.csv'
     out_T3SS_for_html = r'out_learning/T3SS_for_html.csv'
-    add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS)
+    if organization:
+        gff_dir = f'{working_directory}/gff'
+        add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS,gff_dir)
+    else:
+        add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS)
     from csv_to_colored_xlsx_converter import convert_csv_to_colored_xlsx
     convert_csv_to_colored_xlsx(out_f_normal)
     convert_csv_to_colored_xlsx(out_f_pseudo)
-    add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,line_end='<br>')
+    if organization:
+        gff_dir = f'{working_directory}/gff'
+        add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,gff_dir,line_end='<br>')
+    else:
+        add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,line_end='<br>')
     predicted_table, positives_table, T3SS_table = make_html_tables(out_for_html_normal,out_T3SS_for_html)
     return predicted_table, positives_table, T3SS_table, low_quality_flag
 
