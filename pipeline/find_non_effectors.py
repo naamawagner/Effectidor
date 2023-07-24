@@ -45,24 +45,39 @@ def parse_blast_out(blast_out,e_val=0.01,min_coverage=0):
             coverage=float(row[2])
             if e_value<=e_val and coverage>=min_coverage:
                 if prot_id not in blast_out_dic:
-                    blast_out_dic[prot_id]=[[row[1]],row[-1]]
+                    blast_out_dic[prot_id]=[[row[1]],float(row[-1])]
                 else:
                     if row[1] not in blast_out_dic[prot_id][0]:
                         blast_out_dic[prot_id][0].append(row[1])
     return blast_out_dic
-    
+
+effectors = {}
+with open('blast_outputs/effectors_hits.csv') as in_f:
+    reader = csv.reader(in_f)
+    for row in reader:
+        effectors[row[0]]=float(row[1])
 
 prots_dict=SeqIO.to_dict(SeqIO.parse(all_prots,'fasta'))
-effectors_dict = SeqIO.to_dict(SeqIO.parse(effectors_prots,'fasta'))
 
 protein_blast_all_vs_all(all_prots,k12_dataset,k12_out_file)
 k12_dict = parse_blast_out(k12_out_file,e_val=10**(-6))
+effectors_to_keep = []
+for effector in effectors:
+    if effector not in k12_dict:
+        effectors_to_keep.append(effector)
+    elif effectors[effector] > k12_dict[effector][1]:
+        effectors_to_keep.append(effector)
+if len(effectors_to_keep) < len(effectors.keys()):
+    old_effectors = SeqIO.parse(effectors_prots,'fasta')
+    new_effectors = [effector for effector in old_effectors if effector.id in effectors_to_keep]
+    SeqIO.write(new_effectors,effectors_prots,'fasta')
+        
 k12_out_list=list(k12_dict.keys())
 
 protein_blast_all_vs_all(all_prots,T3SS_dataset,T3SS_out_file)
 T3SS_dict = parse_blast_out(T3SS_out_file,e_val=10**(-10))
 T3SS_out_list=sorted(T3SS_dict.keys())
-
+effectors_dict = SeqIO.to_dict(SeqIO.parse(effectors_prots,'fasta'))
 non_effectors_recs=[]
 T3SS_recs = []
 for prot in prots_dict:

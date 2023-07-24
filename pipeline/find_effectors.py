@@ -20,6 +20,7 @@ def protein_blast_all_vs_all(query, dataset, out, e_val='0.0001'):
 def parse_blast_out(blast_out,e_val=10**(-10),min_identity=70):
     blast_out_dic={}
     with open(blast_out,'r') as in_f:
+        best_hits={}
         for row in in_f:
             row=row.split('\t')
             prot_id=row[0]
@@ -31,6 +32,14 @@ def parse_blast_out(blast_out,e_val=10**(-10),min_identity=70):
                     blast_out_dic[prot_id]=set([hit])
                 else:
                     blast_out_dic[prot_id].add(hit)
+                if hit not in best_hits:
+                    best_hits[hit]=float(row[-1])
+                else:
+                    if float(row[-1]) > best_hits[hit]:
+                        best_hits[hit]=float(row[-1])
+        with open('blast_outputs/effectors_hits.csv','w') as out_f:
+            for hit in best_hits:
+                out_f.write(f'{hit},{best_hits[hit]}\n')
     return blast_out_dic
 
 protein_blast_all_vs_all(effectors,bacterial_proteome,'blast_outputs/effectorsDB.blast')
