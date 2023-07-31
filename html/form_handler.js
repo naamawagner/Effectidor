@@ -13,6 +13,12 @@ function validate_read_files() {
     var genome = document.getElementById("genome").value;
     var host = document.getElementById("host").value;
     var no_T3SS = document.getElementById("no_T3SS").value;
+    var job_title = document.getElementById("job_title").value;
+    
+    if (job_title != '' && (!/^[\x00-\x7F]*$/.test(job_title))) {
+        alert("Job title contains non ASCII characters!")
+        return false;
+    }
     
     if (host != '' && (!host.endsWith('.zip'))) {
         alert("Host proteome must be given as a zip archive!");
