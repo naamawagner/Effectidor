@@ -344,6 +344,7 @@ def run_cgi():
             upload_file(form, 'no_T3SS', no_T3SS_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'no_T3SS file was saved to disk successfully\n\n')
         
+            parameters += f' --no_T3SS {no_T3SS_path}'
             
         PIP, hrp, mxiE, exs, tts = False,False,False,False,False
         if form['gff'].value: # not empty string / empy bytes - the file was supplied by the user
