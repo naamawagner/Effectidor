@@ -14,6 +14,44 @@ function validate_read_files() {
     var host = document.getElementById("host").value;
     var no_T3SS = document.getElementById("no_T3SS").value;
     var job_title = document.getElementById("job_title").value;
+    var ORFs = document.getElementById("ORFs").value;
+    var effectors = document.getElementById("effectors").value;
+    var T3Es = document.getElementById("T3Es").value;
+    
+    if (gff != '' && (!/^[\x00-\x7F]*$/.test(gff))) {
+        alert("GFF3 file name contains non ASCII characters!")
+        return false;
+    }
+    
+    if (genome != '' && (!/^[\x00-\x7F]*$/.test(genome))) {
+        alert("Full genome file name contains non ASCII characters!")
+        return false;
+    }
+    
+    if (host != '' && (!/^[\x00-\x7F]*$/.test(host))) {
+        alert("Host proteome file name contains non ASCII characters!")
+        return false;
+    }
+    
+    if (no_T3SS != '' && (!/^[\x00-\x7F]*$/.test(no_T3SS))) {
+        alert("Proteomes of closely related bacteria without T3SS file name contains non ASCII characters!")
+        return false;
+    }
+    
+    if (ORFs != '' && (!/^[\x00-\x7F]*$/.test(ORFs))) {
+        alert("ORFs file name contains non ASCII characters!")
+        return false;
+    }
+    
+    if (effectors != '' && (!/^[\x00-\x7F]*$/.test(effectors))) {
+        alert("effectors file name contains non ASCII characters!")
+        return false;
+    }
+    
+    if (T3Es != '' && (!/^[\x00-\x7F]*$/.test(T3Es))) {
+        alert("Effectors for homology search file name contains non ASCII characters!")
+        return false;
+    }
     
     if (job_title != '' && (!/^[\x00-\x7F]*$/.test(job_title))) {
         alert("Job title contains non ASCII characters!")
