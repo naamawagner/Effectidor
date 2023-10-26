@@ -27,7 +27,7 @@ def verify_fasta_format(fasta_path,Type,input_name):
     if Type == 'DNA':
         legal_chars = set(Bio.SeqUtils.IUPACData.ambiguous_dna_letters.lower() + Bio.SeqUtils.IUPACData.ambiguous_dna_letters)
     else: #Type == 'protein'
-        legal_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ*')
+        legal_chars = set(Bio.SeqUtils.IUPACData.extended_protein_letters+'*-')
         flag = True
     with open(fasta_path) as f:
         line_number = 0
