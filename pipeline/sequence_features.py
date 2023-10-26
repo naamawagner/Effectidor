@@ -1,10 +1,9 @@
-import numpy as np
-import math
 import fasta_parser
 import csv
-from Bio import SeqIO
 from sys import argv
 import os
+import scipy.stats as stats
+import pandas as pd
 
 ORFs_fasta = argv[1]
 effectors_f = argv[2] #fasta protein
@@ -37,50 +36,6 @@ def interaction_value(interaction, peptide):
         value += peptide.count(aa)*interaction[aa]
     return value/len(peptide)
 
-def aa_profile(peptide):
-    ''' returns a vector with a sum of 1 that represents the aa profile of the peptide '''
-    amino_acids = 'ACDEFGHIKLMNPQRSTVWY'
-    aa_array = np.zeros(20)
-    for i in range(20):
-        aa_array[i] = abundance_(amino_acids[i], peptide)
-    return aa_array
-
-def distance(v1, v2):
-    ''' returns the euclidean distance between two vectors '''
-    return math.sqrt(sum([(a-b)**2 for a,b in zip(v1,v2)]))
-
-effectors=SeqIO.parse(effectors_f,'fasta')
-effectors_profiles = {}
-for effector in effectors:
-    locus = effector.id
-    seq = effector.seq
-    effectors_profiles[locus] = aa_profile(seq)
-
-effectors_aa_profile_array = np.array(list(effectors_profiles.values()))
-effectors_average_aa_profile = np.average(effectors_aa_profile_array,axis=0)
-
-non_effectors=SeqIO.parse(non_effectors_f,'fasta')
-non_effectors_profiles=[]
-for non_effector in non_effectors:
-    seq=non_effector.seq
-    non_effectors_profiles.append(aa_profile(seq))
-
-non_effectors_profile_array = np.array(non_effectors_profiles)
-non_effectors_average_profile=np.average(non_effectors_profile_array,axis=0)
-    
-def similarity_to_effectors_vs_non_effectors(locus):
-    peptide = locus_dic[locus].translate(to_stop=True)
-    aa_profile_pep = aa_profile(peptide)
-    if locus in effectors_profiles:
-        effectors_profiles_copy = effectors_profiles.copy()
-        effectors_profiles_copy.pop(locus)
-        effectors_aa_profile_array_ = np.array(list(effectors_profiles_copy.values()))
-        effectors_average_aa_profile_ = np.average(effectors_aa_profile_array_,axis=0)
-        dis_from_effectots=distance(aa_profile_pep,effectors_average_aa_profile_)
-    else:
-        dis_from_effectots=distance(aa_profile_pep,effectors_average_aa_profile)
-    dis_from_non_effectors=distance(aa_profile_pep,non_effectors_average_profile)
-    return dis_from_effectots-dis_from_non_effectors
 
 ## hydrophilicity/ amphiphilicity/ hydrophobicity indexes, for interaction_value     
 BLAS910101 = {'A':0.616, 'L':0.943, 'R':0, 'K':0.283, 'N':0.236, 'M':0.738,\
@@ -102,9 +57,9 @@ CIDH920105 = {'A':0.02, 'L':1.14, 'R':-0.42, 'K':-0.41, 'N':-0.77, 'M':1.00,\
 
 amino_acids = 'ACDEFGHIKLMNPQRSTVWY'
 
-with open(f'physical_features.csv','w',newline='') as file:
+with open(f'physical_features1.csv','w',newline='') as file:
     file_writer = csv.writer(file)
-    header=['locus','GC_content','protein_length','similarity_to_effectors_vs_non_effectors']
+    header=['locus','GC_content','protein_length']
     for aa in amino_acids:
         header.append(f'{aa}_full_protein')
         header.append(f'{aa}_N-terminus')
@@ -117,7 +72,7 @@ with open(f'physical_features.csv','w',newline='') as file:
         l=[locus]
         l.append(GC_content(locus_dic[locus]))
         l.append(len(locus_dic[locus].translate(to_stop=True)))
-        l.append(similarity_to_effectors_vs_non_effectors(locus))
+        #l.append(similarity_to_effectors_vs_non_effectors(locus))
         for aa in amino_acids:
             l.append(abundance_(aa, locus_dic[locus].translate(to_stop=True)))
             l.append(abundance_(aa, locus_dic[locus].translate(to_stop=True)[:25]))
@@ -126,6 +81,11 @@ with open(f'physical_features.csv','w',newline='') as file:
         l.append(interaction_value(KUHL950101, locus_dic[locus].translate(to_stop=True)[:25]))
         l.append(interaction_value(CIDH920105, locus_dic[locus].translate(to_stop=True)[:25]))
         file_writer.writerow(l)
+        
+features = pd.read_csv('physical_features1.csv')
+features['GC_content(z_score)'] = stats.zscore(features['GC_content'])
+features.drop(columns='GC_content')
+features.to_csv('physical_features.csv',index=False)
         
 endfile = open(f'physical_features.done','w')
 endfile.close()
