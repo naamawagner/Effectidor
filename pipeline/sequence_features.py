@@ -84,7 +84,7 @@ with open(f'physical_features1.csv','w',newline='') as file:
         
 features = pd.read_csv('physical_features1.csv')
 features['GC_content(z_score)'] = stats.zscore(features['GC_content'])
-features.drop(columns='GC_content')
+features.drop(columns='GC_content',inplace=True)
 features.to_csv('physical_features.csv',index=False)
         
 endfile = open(f'physical_features.done','w')
