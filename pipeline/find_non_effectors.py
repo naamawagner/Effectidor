@@ -7,6 +7,7 @@ import csv
 import sys
 sys.path.append('/bioseq/effectidor/auxiliaries')
 import effectidor_CONSTANTS
+from protein_mmseq import protein_mmseqs_all_vs_all
 
 all_prots = argv[1]
 effectors_prots = argv[2]
@@ -26,14 +27,6 @@ k12_dataset = './blast_data/non_effectors/e.coli_k-12_substr.MG1655.proteins.faa
 k12_out_file=r'blast_outputs/e_coli.blast'
 T3SS_dataset = './blast_data/non_effectors/T3SS_proteins.faa'
 T3SS_out_file = r'blast_outputs/T3SS_prots.blast'
-
-
-def protein_blast_all_vs_all(query,dataset,out,e_val='0.01'):
-    import subprocess
-    make_data_cmd=f"makeblastdb -in {dataset} -dbtype prot -out {dataset[:-4]}db"
-    make_blast_cmd=f'blastp -db {dataset[:-4]}db -query {query} -outfmt 6 -out {out} -evalue {e_val}'
-    subprocess.check_output(make_data_cmd,shell=True)
-    subprocess.check_output(make_blast_cmd,shell=True)
     
 def parse_blast_out(blast_out,e_val=0.01,min_coverage=0):
     blast_out_dic={}
@@ -59,8 +52,9 @@ if os.path.exists('blast_outputs/effectors_hits.csv'):
             effectors[row[0]]=float(row[1])
 
 prots_dict=SeqIO.to_dict(SeqIO.parse(all_prots,'fasta'))
-
-protein_blast_all_vs_all(all_prots,k12_dataset,k12_out_file)
+if not os.path.exists('tmp_mmseq'):
+    os.makedirs('tmp_mmseq')
+protein_mmseqs_all_vs_all(all_prots,k12_dataset,k12_out_file,'tmp_mmseq')
 k12_dict = parse_blast_out(k12_out_file,e_val=10**(-6))
 if os.path.exists('blast_outputs/effectors_hits.csv'):
     effectors_to_keep = []
@@ -76,7 +70,7 @@ if os.path.exists('blast_outputs/effectors_hits.csv'):
         
 k12_out_list=list(k12_dict.keys())
 
-protein_blast_all_vs_all(all_prots,T3SS_dataset,T3SS_out_file)
+protein_mmseqs_all_vs_all(all_prots,T3SS_dataset,T3SS_out_file,'tmp_mmseq')
 T3SS_dict = parse_blast_out(T3SS_out_file,e_val=10**(-10))
 T3SS_out_list=sorted(T3SS_dict.keys())
 effectors_dict = SeqIO.to_dict(SeqIO.parse(effectors_prots,'fasta'))

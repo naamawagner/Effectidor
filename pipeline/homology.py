@@ -2,6 +2,7 @@ import fasta_parser
 import csv
 from sys import argv
 import os
+from protein_mmseq import protein_mmseqs_all_vs_all
 ORFs_f = argv[1]
 blast_query = argv[2]
 blast_dataset_dir = argv[3]
@@ -11,13 +12,6 @@ blast_out = 'blast_outputs'
 os.chdir(working_directory)
 locus_dic=fasta_parser.parse_ORFs(ORFs_f)
 #%%
-
-def protein_blast_all_vs_all(query,dataset,out,e_val='0.01'):
-    import subprocess
-    make_data_cmd=f"makeblastdb -in {dataset} -dbtype prot -out {dataset[:-4]}db"
-    make_blast_cmd=f'blastp -db {dataset[:-4]}db -query {query} -outfmt 6 -out {out} -evalue {e_val}'
-    subprocess.check_output(make_data_cmd,shell=True)
-    subprocess.check_output(make_blast_cmd,shell=True)
 
 def parse_blast_out(blast_out,e_val=0.01):
     blast_out_dic={}
@@ -53,8 +47,11 @@ datasets['effectors'] = effectors_prots
 datasets_l=sorted(datasets.keys())
 if not os.path.exists(blast_out):
     os.makedirs(blast_out)
+tmp_mmseq = os.path.join(blast_dataset_dir,'tmp_mmseq')
+if not os.path.exists(tmp_mmseq):
+    os.makedirs(tmp_mmseq)
 for dataset in datasets_l:
-    protein_blast_all_vs_all(blast_query,datasets[dataset],f'{blast_out}/{dataset}.blast')
+    protein_mmseqs_all_vs_all(blast_query,datasets[dataset],f'{blast_out}/{dataset}.blast',tmp_mmseq)
     blast_out_dics.append(parse_blast_out(f'{blast_out}/{dataset}.blast'))
 with open(f'homology_features.csv','w',newline='') as out_f:
     writer=csv.writer(out_f)
