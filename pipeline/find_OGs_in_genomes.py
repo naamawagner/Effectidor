@@ -4,6 +4,7 @@ import os
 from Bio import SeqIO,SeqRecord
 import subprocess
 import csv
+import shutil
 
 working_directory = argv[1]
 os.chdir(working_directory)
@@ -22,10 +23,8 @@ for genome in os.listdir(Effectidor_features_d):
 
 # move Microbializer output to the working directory for future use
 Microbializer_output_f = 'M1CR0B1AL1Z3R_output_OGs/06e_final_table/final_orthologs_table.csv'
-with open(Microbializer_output_f) as f:
-    content = f.read()
-    with open('final_orthologs_table.csv','w') as out:
-        out.write(content)
+shutil.copy(Microbializer_output_f,working_directory)
+
 #subprocess.call("rm -r M1CR0B1AL1Z3R_output_OGs",shell=True)
 #subprocess.call("rm -r output_OGs",shell=True)
 
@@ -37,5 +36,5 @@ with open(os.path.join(working_directory,'final_orthologs_table.csv')) as ortho_
         writer.writerow(header)
         for row in ortho_reader:
             for i in range(1,len(header)):
-                row[i]=row[i].replace(f'{header[i]}_','')
+                row[i]=row[i].replace(f'{header[i]}:','')
             writer.writerow(row)
