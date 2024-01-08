@@ -20,6 +20,7 @@ if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 features_file=r'features.csv'
 dataset=pd.read_csv(features_file)
+ID_name = dataset.columns[0]
 dataset.is_effector.replace(['no','effector'],[0,1],inplace=True)
 array = dataset.values
 features = array[:,1:-1]
@@ -261,7 +262,7 @@ try:
      
     with open(f'{out_dir}/predictions.csv','w',newline='') as file:
         f_writer = csv.writer(file)
-        header=['locus']
+        header=[ID_name]
         weights=[]
         for name in algorithms_names:
             header.append(f'{name} (AUPRC {"%.3f" % results_test[name][0]})')
@@ -274,9 +275,9 @@ try:
             for name in algorithms_names:
                 l.append(predictions[name][locus])
             l.append(np.average(l[1:len(algorithms_names)+1],weights=weights))
-            if locus in list(yes.locus):
+            if locus in list(yes[ID_name]):
                 l.append('yes')
-            elif locus in list(no.locus):
+            elif locus in list(no[ID_name]):
                 l.append('no')
             else:
                 l.append('?')
@@ -289,12 +290,12 @@ try:
         
     best_classifier = max(classifiers_scores,key= lambda key: classifiers_scores[key])
     #if classifiers_scores[best_classifier]-w_av_AUPRC > 0.02: # if another classifier is significantly better than the vote, take it.
-    #    concensus_df = preds_df[['locus',f'{best_classifier}','is_effector']]
+    #    concensus_df = preds_df[[ID_name,f'{best_classifier}','is_effector']]
     #    concensus_df.rename(columns = {best_classifier:f'likelihood to be effector by {best_classifier}'},inplace=True)
     #    sorted_concensus = concensus_df.sort_values(by=f'likelihood to be effector by {best_classifier}',ascending=False)
     #    sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
     #else: # vote is the best classifier or very close to it, so take it
-    concensus_df = preds_df[['locus',f'wVote (AUPRC {"%.3f" % w_av_AUPRC})','is_effector']]
+    concensus_df = preds_df[[ID_name,f'wVote (AUPRC {"%.3f" % w_av_AUPRC})','is_effector']]
     sorted_concensus = concensus_df.sort_values(by=f'wVote (AUPRC {"%.3f" % w_av_AUPRC})',ascending=False)
     sorted_concensus.rename(columns = {f'wVote (AUPRC {"%.3f" % w_av_AUPRC})':f'score (AUPRC on test set: {"%.3f" % w_av_AUPRC})'},inplace=True)
     sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
@@ -314,7 +315,7 @@ try:
     data = pd.read_csv(f)
     labeled=data[data.is_effector!='?']
     f_names = labeled.columns[1:-1]
-    labeled[f_names] = labeled[f_names].astype(float)
+    labeled.loc[:,f_names] = labeled[f_names].astype(float)
     for i in range(len(best_features)):
         fig = plt.figure(figsize=(8,6))
         ax = sns.violinplot(x="is_effector", y=best_features[i], data=labeled)
@@ -389,7 +390,7 @@ except:
      
     with open(f'{out_dir}/predictions.csv','w',newline='') as file:
         f_writer = csv.writer(file)
-        header=['locus']
+        header=[ID_name]
         weights=[]
         for name in algorithms_names:
             header.append(f'{name} (AUPRC {"%.3f" % results_test[name][0]})')
@@ -402,9 +403,9 @@ except:
             for name in algorithms_names:
                 l.append(predictions[name][locus])
             l.append(np.average(l[1:len(algorithms_names)+1],weights=weights))
-            if locus in list(yes.locus):
+            if locus in list(yes[ID_name]):
                 l.append('yes')
-            elif locus in list(no.locus):
+            elif locus in list(no[ID_name]):
                 l.append('no')
             else:
                 l.append('?')
@@ -417,12 +418,12 @@ except:
         
     best_classifier = max(classifiers_scores,key= lambda key: classifiers_scores[key])
     if classifiers_scores[best_classifier]-w_av_AUPRC > 0.02: # if another classifier is significantly better than the vote, take it.
-        concensus_df = preds_df[['locus',f'{best_classifier}','is_effector']]
+        concensus_df = preds_df[[ID_name,f'{best_classifier}','is_effector']]
         concensus_df.rename(columns = {best_classifier:f'score by {best_classifier}'},inplace=True)
         sorted_concensus = concensus_df.sort_values(by=f'score by {best_classifier}',ascending=False)
         #sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
     else: # vote is the best classifier or very close to it, so take it
-        concensus_df = preds_df[['locus',f'wVote (AUPRC {"%.3f" % w_av_AUPRC})','is_effector']]
+        concensus_df = preds_df[[ID_name,f'wVote (AUPRC {"%.3f" % w_av_AUPRC})','is_effector']]
         sorted_concensus = concensus_df.sort_values(by=f'wVote (AUPRC {"%.3f" % w_av_AUPRC})',ascending=False)
         sorted_concensus.rename(columns = {f'wVote (AUPRC {"%.3f" % w_av_AUPRC})':f'score (AUPRC on test set: {"%.3f" % w_av_AUPRC})'},inplace=True)
     sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
