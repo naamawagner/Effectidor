@@ -125,6 +125,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
             ID = rec.id
             N_seq = rec.seq[:100]
             rec.seq = N_seq
+            rec.description = ID
             file_path = f'{signal_prot_dir}/{ID}.faa'
             SeqIO.write(rec,file_path,'fasta')
         if not os.path.exists(signal_embed_dir):
