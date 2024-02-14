@@ -199,35 +199,12 @@ def parse_hmmer(hmmer_out,locus):
     return 0,0
                 
     
-def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False, mxiE=False, exs=False, tts=False):
-    gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
+def main(ORFs_file, working_directory, gff_f, genome_f, PIP=False, hrp=False, mxiE=False, exs=False, tts=False):
     os.chdir(working_directory)
     locus_dic = fasta_parser.parse_ORFs(ORFs_file)
-    #promoters_dicts = []
-    locus_area_d,circulars = {},[]
-    for gff_f in gff_files:
-        #name = gff_f.split('/')[-1].split('.')[0]
-        #genome_f = f'{genome_dir}/{name}.fasta'
-        locus_area_d1,circulars1 = parse_gff_to_CDS_loc(gff_f,locus_dic)
-        locus_area_d.update(locus_area_d1)
-        circulars.extend(circulars1)
-    genome_recs = []
-    for genome_f in os.listdir(genome_dir):
-        if os.path.isfile(f'{genome_dir}/{genome_f}'):
-            recs = list(SeqIO.parse(f'{genome_dir}/{genome_f}','fasta'))
-            genome_recs.extend(recs)
-    SeqIO.write(genome_recs,'genome.fasta','fasta')
-    promoters_d = get_promoters(locus_area_d,circulars,'genome.fasta')
-        #promoters_dicts.append(promoters_d)
-     
-    '''
-    if tts:
-        os.makedirs(f'{working_directory}/promoters')
-        os.makedirs(f'{working_directory}/hmmer_out')
-        for promoters_d in promoters_dicts:
-            for locus in promoters_d:
-                rec = SeqRecord(promoters_d[locus],id=locus)
-                SeqIO.write(rec,f'{working_directory}/promoters/{locus}.fasta','fasta')   '''
+    locus_area_d,circulars = parse_gff_to_CDS_loc(gff_f,locus_dic)
+    promoters_d = get_promoters(locus_area_d,circulars,genome_f)
+
         
     def existence_upstream_to_AUG(locus,pattern):
         promoter = promoters_d[locus]
@@ -268,13 +245,6 @@ def main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=False, hrp=False
             if tts:
                 l.append(existence_upstream_to_AUG(locus,tts_box))
                 l.append(existence_upstream_to_AUG(locus,tts_box_one_mismatch))
-                #hmm_profile_path = r'/groups/pupko/naamawagner/T3Es_webserver/tts.hmm'
-                #query = f'{working_directory}/promoters/{locus}.fasta'
-                #out_hmmer = f'{working_directory}/hmmer_out/{locus}.txt'
-                #run_hmmer(hmm_profile_path,query,out_hmmer)
-                #e_val , score = parse_hmmer(out_hmmer,locus)
-                #l.append(e_val)
-                #l.append(score)
                 
             csv_writer.writerow(l)
     endfile = open('pip_box_features.done','w')
@@ -292,10 +262,10 @@ if __name__ == '__main__':
                             type=lambda path: path.rstrip('/'))
         parser.add_argument('gff_path',
                             type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'),
-                            help='A path to GFF files archive.')
+                            help='A path to GFF file.')
         parser.add_argument('genome_path',
                             type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'),
-                            help='A path to fasta files archive with full genome records.')
+                            help='A path to fasta file with full genome records.')
         parser.add_argument('--PIP', help='look for PIP-box in promoters', action='store_true')
         parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
         parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
@@ -305,11 +275,11 @@ if __name__ == '__main__':
         args = parser.parse_args()
         ORFs_file = args.input_ORFs_path
         working_directory = args.output_dir_path
-        gff_dir = args.gff_path
-        genome_dir = args.genome_path
+        gff_f = args.gff_path
+        genome_f = args.genome_path
         PIP_flag = args.PIP
         hrp_flag = args.hrp
         mxiE_flag = args.mxiE
         exs_flag = args.exs
         tts_flag = args.tts
-        main(ORFs_file, working_directory, gff_dir, genome_dir, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag)
+        main(ORFs_file, working_directory, gff_f, genome_f, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag)
