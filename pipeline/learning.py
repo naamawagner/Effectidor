@@ -14,11 +14,14 @@ from sklearn.feature_selection import SelectFromModel, RFECV
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import os
 import seaborn as sns
+from sys import argv
 #%%
+wd = argv[1]
+features_file = argv[2]
+os.chdir(wd)
 out_dir='out_learning'
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
-features_file=r'features.csv'
 dataset=pd.read_csv(features_file)
 ID_name = dataset.columns[0]
 dataset.is_effector.replace(['no','effector'],[0,1],inplace=True)

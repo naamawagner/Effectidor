@@ -9,7 +9,7 @@ os.chdir(working_directory)
 
 Effectidor_features_d = os.path.join(working_directory,'Effectidor_runs')
 
-def get_ortho_dict(wd,ortho_f='final_orthologs_table.csv'):
+def get_ortho_dict(wd,ortho_f='clean_orthologs_table.csv'):
     '''from the output file of Microbializer, present in the working directory,
     this function creates a dictionary that maps in every genome the locuses to OGs'''
     genomes_orthogroup_dict = {}
@@ -22,8 +22,8 @@ def get_ortho_dict(wd,ortho_f='final_orthologs_table.csv'):
                 genome = header[i]
                 if genome not in genomes_orthogroup_dict:
                     genomes_orthogroup_dict[genome]={}
-                for locus in row[i].replace(f'{header[i]}_','').split(';'):
-                    genomes_orthogroup_dict[genome][locus]=OG           
+                for locus in row[i].split(';'):
+                    genomes_orthogroup_dict[genome][locus]=OG
     return genomes_orthogroup_dict
    
 genomes_orthogroup_dict = get_ortho_dict(working_directory)
@@ -31,21 +31,30 @@ genomes_orthogroup_dict = get_ortho_dict(working_directory)
 
 with open('full_data.csv','w',newline='') as out_f:
     writer = csv.writer(out_f)
-    genomes = os.listdir(Effectidor_features_d)
-    first_genome = genomes[0]
-    with open(os.path.join(Effectidor_features_d,first_genome,'features.csv')) as in_f:
-        reader = csv.reader(in_f)
-        header = ['OG']+next(reader)
-        writer.writerow(header)
-        for row in reader:
-            row = [genomes_orthogroup_dict[first_genome][row[0]]]+row
-            writer.writerow(row)
-    for genome in genomes[1:]:
-        with open(os.path.join(Effectidor_features_d,genome,'features.csv')) as in_f:
+    if os.path.exists(Effectidor_features_d):
+        genomes = os.listdir(Effectidor_features_d)
+        first_genome = genomes[0]
+        with open(os.path.join(Effectidor_features_d,first_genome,'features.csv')) as in_f:
             reader = csv.reader(in_f)
-            next(reader)
+            header = ['OG']+next(reader)
+            writer.writerow(header)
             for row in reader:
-                row = [genomes_orthogroup_dict[genome][row[0]]]+row
+                row = [genomes_orthogroup_dict[first_genome][row[0]]]+row
+                writer.writerow(row)
+        for genome in genomes[1:]:
+            with open(os.path.join(Effectidor_features_d,genome,'features.csv')) as in_f:
+                reader = csv.reader(in_f)
+                next(reader)
+                for row in reader:
+                    row = [genomes_orthogroup_dict[genome][row[0]]]+row
+                    writer.writerow(row)
+    else:
+        with open('features.csv') as in_f:
+            reader = csv.reader(in_f)
+            header = ['OG']+next(reader)
+            writer.writerow(header)
+            for row in reader:
+                row = [genomes_orthogroup_dict['genome_ORFs'][row[0]]]+row
                 writer.writerow(row)
 
 def label(iterable_arg):
@@ -70,7 +79,7 @@ for feature in minimum:
 
 #%% transformation to OGs
 grouped = df.groupby('OG').agg({**{feature:['mean'] for feature in features},\
-                    **{feature:['mean','min'] for feature in minimum},\
+                    **{feature:['mean','min','median'] for feature in minimum},\
                     **{feature:['max'] for feature in maximum},\
                     **{'is_effector':label}})
 
@@ -100,11 +109,11 @@ def aa_profile(OG):
 
 OGs = list(grouped.index)
 aa_profiles_dis =[aa_profile(OG) for OG in OGs]
-grouped.insert(len(grouped.columns)-1,'similarity_to_effectors_vs_non_effectors1',aa_profiles_dis)#change name in the final version
+grouped.insert(len(grouped.columns)-1,'similarity_to_effectors_vs_non_effectors',aa_profiles_dis)
  
 #%% flatten hirarchical columns and indices to a simple features table
 updated_features = grouped.reset_index()
 updated_features.columns = ['_'.join(col) for col in updated_features.columns.values]
 updated_features.columns = [col.replace('label','_').strip('_') for col in updated_features.columns]
-updated_features.to_csv(r'OGs_features.csv',index=False)
+updated_features.to_csv('OGs_features.csv',index=False)
 

@@ -6,7 +6,6 @@ from protein_mmseq import protein_mmseqs_all_vs_all
 effectors = argv[1]
 bacterial_proteome = argv[2]
 effectors_prots = argv[3]
-log_file = argv[4]
 
 if not os.path.exists('blast_outputs'):
     os.makedirs('blast_outputs')

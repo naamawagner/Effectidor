@@ -1,8 +1,7 @@
 import sys
-sys.path.append('/bioseq/effectidor/auxiliaries')
+#sys.path.append('/bioseq/effectidor/auxiliaries')
 import os
 import logging
-#import shutil
 import Bio.SeqUtils
 import effectidor_CONSTANTS as CONSTS  # from /effectidor/auxiliaries
 from time import sleep,time
@@ -12,6 +11,10 @@ from T3Es_wrapper import effectors_learn
 import shutil
 import re
 import subprocess
+
+data_dir = CONSTS.EFFECTIDOR_DATA
+blast_datasets_dir = f'{data_dir}/blast_data'
+scripts_dir = CONSTS.EFFECTIDOR_EXEC
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('main')
@@ -83,10 +86,10 @@ def verify_fasta_format(fasta_path,Type,input_name):
 def verify_ORFs(ORFs_path):
     logger.info(f'Validating ORFs:{ORFs_path}')
     ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path,'fasta')])
-    if len(ORFs_recs) < 1000:
+    if len(ORFs_recs) < 900:
         return f'The ORFs file contains only {str(len(ORFs_recs))} records. Make sure this file contains all the ORFs (open reading frames) in the genome - Effectidor is designed to analyze full genomes and not a sample of genes. Also, make sure this file contains ORFs and not full genome sequence! The full genome sequence can be uploaded in the advanced options.'
     elif len(ORFs_recs) > 10000:
-        return f'The ORFs file contains {str(len(ORFs_recs))} records! Effectidor is designed to analyze only one bacterial genome at a time. Make sure your ORFs file contains all the ORFs (open reading frames) in the genome, and only the ORFs of one genome. This number cannot exceed 10,000 ORFs.'
+        return f'The ORFs file contains {str(len(ORFs_recs))} records! Every file should contain data of a single bacterial genome. Make sure this file contains all the ORFs (open reading frames) in the genome, and only the ORFs of one genome. This number cannot exceed 10,000 ORFs per genome. If it contains data of multiple genomes, separate them to different files (compressed together in a ZIP archive) such that every file will contain the ORFs of a single genome'
 
 def verify_effectors_f(effectors_path, ORFs_path):
     logger.info(f'Validating effectors:{effectors_path}')
@@ -95,10 +98,10 @@ def verify_effectors_f(effectors_path, ORFs_path):
     ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path,'fasta')])
     if not effectors_set.issubset(ORFs_recs):
         not_in_ORFs = ', '.join([rec for rec in effectors_set.difference(ORFs_recs)])
-        return f'Illegal effectors records. The following records IDs are in the effectors file and not in the ORFs file:\n{not_in_ORFs}.\n\nIf these effectors are from other bacterial genomes, they can be supplied (in <b>protein</b> FASTA file) in the advanced options.\nIf these are effectors from the analyzed bacterial genome, they should be identical to the records available in the input ORFs file.'
+        return f'Illegal effectors records. The following records IDs are in the effectors file and not in the ORFs file:<br>{not_in_ORFs}.<br><br>If these effectors are from other bacterial genomes, they can be supplied (in <b>protein</b> FASTA file) in the advanced options.\nIf these are effectors from the analyzed bacterial genome, they should be identical to the records available in the input ORFs file.'
     if len(effectors_set) != len(effectors_recs):
         more_than_once = ','.join([effector for effector in effectors_set if effectors_recs.count(effector)>1])
-        return f'Illegal effectors records. The following records IDs appear more than once in the file:\n{more_than_once}.'
+        return f'Illegal effectors records. The following records IDs appear more than once in the file:<br>{more_than_once}.'
     
 def verify_genome_one_contig(genome_path, file_name):
     logger.info(f'Validating one contig:{genome_path}')
@@ -122,7 +125,7 @@ def verify_zip(file,name):
         if not f.startswith('_') and not f.startswith('.') and os.path.isfile(f'{"/".join(file.split("/")[:-1])}/zip_tmp/{f}'):
             error_msg = verify_fasta_format(f'{"/".join(file.split("/")[:-1])}/zip_tmp/{f}','protein',f)
             if error_msg:
-                return f'In {name}:\n{error_msg}'
+                return f'In {name}:<br>{error_msg}'
             flag = True
             subprocess.check_output(f'rm {"/".join(file.split("/")[:-1])}/zip_tmp/{f}',shell=True)
     if flag == False:
@@ -158,38 +161,37 @@ def validate_set(file,name):
         non_unique_ids = '<br>'.join(non_unique)
         return f'{name} contains non unique records. The following records appear more than once:<br><br>{non_unique_ids}'
 
-def validate_gff_format(gff_dir):
-    for f in os.listdir(gff_dir):
-        with open(f'{gff_dir}/{f}') as in_f:
-            first_line= in_f.readline()
-            if not (first_line.startswith("##gff-version") or first_line.startswith("##sequence-region")):
-                return f'''Illegal GFF format! The file {f} in your GFF input is not in <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> format!<br>
-            The content in the file does not start with a line of ##gff-version as must be'''
+def validate_gff_format(gff_f,genome_name=''):
+    with open(gff_f) as in_f:
+        first_line= in_f.readline()
+        if not (first_line.startswith("##gff-version") or first_line.startswith("##sequence-region")):
+            return f'''Illegal GFF format! The GFF file for the genome {genome_name} is not in <a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> format!<br>
+        The content in the file does not start with a line of ##gff-version or ##sequence-region as must be'''
             
-def validate_gff(gff_dir,ORFs_f):
+def validate_gff(gff_f,ORFs_f,genome_name=''):
     logger.info(f'Validating GFF')
-    if validate_gff_format(gff_dir):
-        return validate_gff_format(gff_dir)
+    error_msg = validate_gff_format(gff_f)
+    if error_msg:
+        return (error_msg)
     logger.info(f'Validating GFF coverage')
     import fasta_parser
     import pip_box_features
     locus_dic = fasta_parser.parse_ORFs(ORFs_f)
     CDS_set = set()
     RNA_set = set()
-    for f in os.listdir(gff_dir):
-        with open(f'{gff_dir}/{f}') as in_f:
-            content = in_f.read().replace('|','_')
-            content = content.replace('.','_')
-            with open(f'{gff_dir}/{f}','w') as out_f:
-                out_f.write(content)
-        CDS,RNA = pip_box_features.parse_gff(f'{gff_dir}/{f}',locus_dic)
-        logger.info(f'{locus_dic.keys()}')
-        logger.info(f'CDS:{CDS}\nRNA:{RNA}')
-        CDS_set.update(CDS)
-        RNA_set.update(RNA)
+    with open(gff_f) as in_f:
+        content = in_f.read().replace('|','_')
+        content = content.replace('.','_')
+        with open(gff_f,'w') as out_f:
+            out_f.write(content)
+    CDS,RNA = pip_box_features.parse_gff(gff_f,locus_dic)
+    logger.info(f'{locus_dic.keys()}')
+    logger.info(f'CDS:{CDS}\nRNA:{RNA}')
+    CDS_set.update(CDS)
+    RNA_set.update(RNA)
     not_in_gff = [locus for locus in locus_dic if (locus not in CDS_set and locus not in RNA_set)]
     if len(not_in_gff)>0:
-        return f'''There are records in your ORFs input that are not available in the GFF file. Please revise your input and submit again.<br>
+        return f'''For the genome {genome_name} there are records in your ORFs input that are not available in the corresponding GFF input. Please revise your input and submit again.<br>
                 These records are:<br>{", ".join(not_in_gff)}'''
     if len(RNA_set) > 0:
         recs = SeqIO.parse(ORFs_f,'fasta')
@@ -203,87 +205,167 @@ def validate_gff(gff_dir,ORFs_f):
             cds_recs.append(rec) 
         SeqIO.write(cds_recs,ORFs_f,'fasta')
         
-def validate_genome_and_gff(gff_dir,genome_dir,ORFs_f):
+def validate_genome_and_gff(gff_f,genome_f,ORFs_f):
     logger.info(f'Validating genome and gff')
     import fasta_parser
     import pip_box_features
     locus_dic = fasta_parser.parse_ORFs(ORFs_f)
-    gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]    
     regions = []
-    for gff_f in gff_files:
-        locus_area_d,circulars = pip_box_features.parse_gff_to_CDS_loc(gff_f,locus_dic)
-        for region in locus_area_d:
-            regions.append(region)
-        #with open(gff_f) as in_f:
-        #    for line in in_f:
-        #        if line.startswith('#'): #header
-        #            line_l = line.split()
-        #            if 'sequence-region' in line_l[0]:
-        #                regions.append(line_l[1])
+    locus_area_d,circulars = pip_box_features.parse_gff_to_CDS_loc(gff_f,locus_dic)
+    for region in locus_area_d:
+        regions.append(region)
     genome_recs = []
-    for genome_f in os.listdir(genome_dir):
-        if os.path.isfile(f'{genome_dir}/{genome_f}') and not genome_f.startswith('_') and not genome_f.startswith('.'):
-            recs_ids = [rec.id for rec in SeqIO.parse(f'{genome_dir}/{genome_f}','fasta')]
-            genome_recs.extend(recs_ids)
+    recs_ids = [rec.id for rec in SeqIO.parse(genome_f,'fasta')]
+    genome_recs.extend(recs_ids)
     if len(genome_recs) > len(set(genome_recs)):
         non_unique = []
         for ID in genome_recs:
             if genome_recs.count(ID) > 1:
                 non_unique.append(ID)
         non_unique = set(non_unique)
-        return f'Several contigs appear more than once within the genomic sequences data. These contigs IDs are:<br>{", ".join(non_unique)}<br>Please make sure to upload the genomic sequences such that each sequence will apear only once. These sequences can be uploaded in different FASTA files or in one FASTA file.'
+        return f'Several contigs appear more than once within the genomic sequences data. These contigs IDs are:<br>{", ".join(non_unique)}<br>Please make sure to upload the genomic sequences such that each sequence will appear only once in the file, with unique IDs, matching to the IDs listed in the GFF file.'
     #return f'IDs: {str(genome_recs)}'
     not_in_genome = []
     for region in regions:
         if region not in genome_recs:
             not_in_genome.append(region)
     if len(not_in_genome)>0:
-        return f'The following regions from the GFF file are not found in the full genome file:<br>{", ".join(not_in_genome)}.<br>Make sure the regions names are matching between the GFF and genome files and re-submit the job, or contact us for more information.'
-    
+        return f'The following regions from the GFF file are not found in the full genome file:<br>{", ".join(not_in_genome)}.<br>Make sure the regions names are matching between the GFF and genome files and re-submit the job.'
+
 
 def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS_path, error_path):
     logger.info('Validating input...')
-    os.makedirs(f'{output_dir_path}/contigs_ORFs')
-    if ORFs_path.endswith('.zip'):     
-        shutil.unpack_archive(f'{output_dir_path}/ORFs.zip',f'{output_dir_path}/contigs_ORFs')
-        ORFs=[]
-        for file in os.listdir(f'{output_dir_path}/contigs_ORFs'):
-            if os.path.isfile(f'{output_dir_path}/contigs_ORFs/{file}'):
-                error_msg = verify_fasta_format(f'{output_dir_path}/contigs_ORFs/{file}','DNA',f'{file} in ORFs archive')
+    if ORFs_path.endswith('.zip'):
+        ORFs_genomes = []
+        os.makedirs(f'{output_dir_path}/ORFs_tmp')
+        shutil.unpack_archive(ORFs_path,f'{output_dir_path}/ORFs_tmp')
+        for file in os.listdir(f'{output_dir_path}/ORFs_tmp'):
+            if os.path.isfile(f'{output_dir_path}/ORFs_tmp/{file}') and not file.startswith('_') and not file.startswith('.'):
+                error_msg = verify_fasta_format(f'{output_dir_path}/ORFs_tmp/{file}','DNA',f'{file} in ORFs archive')
                 if error_msg:
                     error_msg = f'Illegal fasta files in {file} in ORFs archive: {error_msg}<br>This archive is expected to contain only <b>DNA</b> FASTA files.'
                     fail(error_msg,error_path)
-                recs = SeqIO.parse(f'{output_dir_path}/contigs_ORFs/{file}','fasta')
-                for rec in recs:
-                    ORFs.append(rec)
-        SeqIO.write(ORFs,f'{output_dir_path}/ORFs.fasta','fasta')
-        error_msg = validate_set(f'{output_dir_path}/ORFs.fasta','Your ORFs file')
-        if error_msg:
-            fail(error_msg,error_path)
+                error_msg = validate_set(f'{output_dir_path}/ORFs_tmp/{file}', f'File {file} in your ORFs input')
+                if error_msg:
+                    fail(error_msg, error_path)
+                error_msg = verify_ORFs(f'{output_dir_path}/ORFs_tmp/{file}')
+                if error_msg:
+                    fail(f'For file {file} in your ORFs input: {error_msg}')
+                genome_name = '_'.join(file.split('/')[-1].split('.')[0].split(' '))
+                ORFs_genomes.append(genome_name)
+                os.makedirs(os.path.join(output_dir_path,'Effectidor_runs',genome_name),exist_ok=True)
+                shutil.move(os.path.join(output_dir_path,'ORFs_tmp',file),os.path.join(output_dir_path,'Effectidor_runs',genome_name,'ORFs.fasta'))
+        ORFs_set = set(ORFs_genomes)
     else:
         error_msg = verify_fasta_format(ORFs_path,'DNA','input ORFs')
-        shutil.copy(ORFs_path,f'{output_dir_path}/contigs_ORFs')
         if error_msg:
             error_msg = f'Illegal fasta file in ORFs input: {error_msg}<br>This input is expected to hold a <b>DNA</b> FASTA file.'
             fail(error_msg,error_path)
-        error_msg = validate_set(ORFs_path,'Your ORFs file')
+        error_msg = validate_set(ORFs_path,'Your ORFs input')
         if error_msg:
             fail(error_msg,error_path)
-    ORFs_f = f'{output_dir_path}/ORFs.fasta'
-    error_msg = verify_ORFs(ORFs_f)
-    if error_msg:
-        fail(error_msg,error_path)
+        error_msg = verify_ORFs(ORFs_path)
+        if error_msg:
+            fail(error_msg, error_path)
+
+    if gff_path:
+        # gff
+        if gff_path.endswith('.zip'):
+            gff_genomes = []
+            os.makedirs(f'{output_dir_path}/gff_tmp')
+            shutil.unpack_archive(gff_path,f'{output_dir_path}/gff_tmp')
+            for file in os.listdir(f'{output_dir_path}/gff_tmp'):
+                if os.path.isfile(f'{output_dir_path}/gff_tmp/{file}') and not file.startswith('_') and not file.startswith('.'):
+                    genome_name = '_'.join(file.split('/')[-1].split('.')[0].split(' '))
+                    gff_genomes.append(genome_name)
+                    if genome_name in os.listdir(f'{output_dir_path}/Effectidor_runs'):
+                        shutil.move(os.path.join(output_dir_path, 'gff_tmp', file),os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'genome.gff3'))
+                        error_msg = validate_gff(os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'genome.gff3'),
+                                                 os.path.join(output_dir_path,'Effectidor_runs',genome_name,'ORFs.fasta'),genome_name)
+                        if error_msg:
+                            fail(error_msg, error_path)
+            gff_set = set(gff_genomes)
+            if not gff_set == ORFs_set:
+                missing_gff = ORFs_set.difference(gff_set)
+                if missing_gff: # If there are ORFs files without a corresponding GFF file, we need to crush it. Why? Because for every genome we must calculate the same features. We cannot calculate the GFF features only for some of the genomes.
+                    error_msg = f'There are several genomes with missing data.<br>The following genomes did not have a matching gff file:<br>{", ".join(missing_gff)}.<br><br>Make sure all the files that refer to the same genome have matching names, as instructed.'
+                    fail(error_msg, error_path)
+
+        else:
+            error_msg = validate_gff(gff_path,ORFs_path)
+            if error_msg:
+                fail(error_msg,error_path)
+        if genome_path:
+            # genome
+            if genome_path.endswith('.zip'):
+                os.makedirs(f'{output_dir_path}/full_genome_tmp')
+                shutil.unpack_archive(genome_path,f'{output_dir_path}/full_genome_tmp')
+                full_genome_names = []
+                for file in os.listdir(f'{output_dir_path}/full_genome_tmp'):
+                    print(file)
+                    if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/full_genome_tmp/{file}'): # discard system files and directories
+                        error_msg = verify_fasta_format(f'{output_dir_path}/full_genome_tmp/{file}','DNA', f'{file} in full genome archive')
+                        if error_msg:
+                            error_msg = f'Illegal fasta files in {file} in full genome archive: {error_msg}'
+                            fail(error_msg,error_path)
+                        genome_name = '_'.join(file.split('/')[-1].split('.')[0].split(' '))
+                        print(f'file:{file}, genome:{genome_name}')
+                        full_genome_names.append(genome_name)
+                        if genome_name in os.listdir(f'{output_dir_path}/Effectidor_runs'):
+                            shutil.move(os.path.join(output_dir_path, 'full_genome_tmp', file), os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'genome.fasta'))
+                            error_msg = validate_genome_and_gff(os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'genome.gff3'),
+                                                                os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'genome.fasta'),
+                                                                os.path.join(output_dir_path,'Effectidor_runs',genome_name,'ORFs.fasta'))
+                            if error_msg:
+                                fail(f'In genome {genome_name}:<br>{error_msg}')
+                full_genome_set = set(full_genome_names)
+                if not gff_set==full_genome_set==ORFs_set:
+                    missing_full_genome = ORFs_set.difference(full_genome_set)
+                    if missing_full_genome: # If there are ORFs files without a corresponding full genome file, we need to crush it. Why? Because for every genome we must calculate the same features. We cannot calculate the full genome dependent features only for some of the genomes.
+                        error_msg = f'There are several genomes with missing data.<br>The following genomes did not have a matching full genome fasta file:<br>{", ".join(missing_full_genome)}.<br><br>Make sure all the files that refer to the same genome have matching names, as instructed.'
+                        fail(error_msg,error_path)
+            else:
+                error_msg = verify_fasta_format(genome_path, 'DNA', 'full genome')
+                if error_msg:
+                    fail(error_msg)
+                if gff_path:
+                    error_msg = validate_genome_and_gff(gff_path, genome_path,
+                                                        ORFs_path)
+                    if error_msg:
+                        fail(error_msg, error_path)
+
     if effectors_path:
-        error_msg = verify_fasta_format(effectors_path,'DNA', 'input effectors')
-        if error_msg:
-            error_msg = f'Illegal effectors file: {error_msg}'
-            fail(error_msg, error_path)
-        error_msg = verify_effectors_f(effectors_path,f'{output_dir_path}/ORFs.fasta')
-        if error_msg:
-            fail(error_msg, error_path)
-        error_msg = validate_set(effectors_path,'Your effectors file')
-        if error_msg:
-            fail(error_msg,error_path)
+        if effectors_path.endswith('.zip'):
+            os.makedirs(f'{output_dir_path}/effectors_tmp')
+            shutil.unpack_archive(effectors_path,f'{output_dir_path}/effectors_tmp')
+            for file in os.listdir(f'{output_dir_path}/effectors_tmp'):
+                if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/effectors_tmp/{file}'):
+                    error_msg = verify_fasta_format(f'{output_dir_path}/effectors_tmp/{file}', 'DNA', f'input effectors {file}')
+                    if error_msg:
+                        error_msg = f'Illegal effectors input: {error_msg}'
+                        fail(error_msg, error_path)
+                    error_msg = validate_set(f'{output_dir_path}/effectors_tmp/{file}', f'File {file} in your effectors input')
+                    if error_msg:
+                        fail(error_msg,error_path)
+                    genome_name = '_'.join(file.split('/')[-1].split('.')[0].split(' '))
+                    if genome_name in os.listdir(f'{output_dir_path}/Effectidor_runs'):
+                        shutil.move(os.path.join(output_dir_path, 'effectors_tmp', file), os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'effectors.fasta'))
+                        error_msg = verify_effectors_f(os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'effectors.fasta'),
+                                                       os.path.join(output_dir_path, 'Effectidor_runs', genome_name,'ORFs.fasta'))
+                        if error_msg:
+                            error_msg = f'In {genome}: {error_msg}'
+                            fail(error_msg, error_path)
+        else:
+            error_msg = verify_fasta_format(effectors_path,'DNA', 'input effectors')
+            if error_msg:
+                error_msg = f'Illegal effectors file: {error_msg}'
+                fail(error_msg, error_path)
+            error_msg = verify_effectors_f(effectors_path,ORFs_path)
+            if error_msg:
+                fail(error_msg, error_path)
+            error_msg = validate_set(effectors_path,'Your effectors file')
+            if error_msg:
+                fail(error_msg,error_path)
     if input_T3Es_path:
         error_msg = verify_fasta_format(input_T3Es_path,'protein', 'effectors for homology search')
         if error_msg:
@@ -291,57 +373,62 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         error_msg = validate_set(input_T3Es_path,'Your effectors file for homology search')
         if error_msg:
             fail(error_msg,error_path)
+        os.makedirs(f'{output_dir_path}/blast_data',exist_ok=True)
+        cmd = f'cp {blast_datasets_dir}/*.faa {output_dir_path}/blast_data/'
+        subprocess.check_output(cmd, shell=True)
+        blast_datasets_dir = f'{output_dir_path}/blast_data'
+        eff1_recs = SeqIO.parse(f'{output_dir_path}/blast_data/T3Es.faa', 'fasta')
+        eff_l = list(eff1_recs)
+        seqs = [rec.seq for rec in eff_l]
+        eff2_recs = SeqIO.parse(input_T3Es_path, 'fasta')
+        for rec in eff2_recs:
+            if rec.seq not in seqs:
+                eff_l.append(rec)
+                seqs.append(rec.seq)
+        SeqIO.write(eff_l, f'{output_dir_path}/blast_data/T3Es.faa', 'fasta')
+
+        if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
+            for genome in os.listdir(f'{output_dir_path}/Effectidor_runs'):
+                shutil.copy(input_T3Es_path,f'{output_dir_path}/Effectidor_runs/{genome}')
     if host_proteome:
         error_msg = verify_zip(host_proteome,'Host data')
         if error_msg:
             fail(error_msg,error_path)
-    if genome_path:
-        # genome
-        os.makedirs(f'{output_dir_path}/full_genome')
-        if genome_path.endswith('.zip'):
-            shutil.unpack_archive(f'{output_dir_path}/genome_sequence.zip',f'{output_dir_path}/full_genome')
-        else:
-            shutil.move(f'{output_dir_path}/genome.fasta',f'{output_dir_path}/full_genome')
-        #genome_files_names = []
-        for file in os.listdir(f'{output_dir_path}/full_genome'):
-            if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/full_genome/{file}'): # discard system files and directories
-                error_msg = verify_fasta_format(f'{output_dir_path}/full_genome/{file}','DNA', f'{file} in full genome archive')
-                if error_msg:
-                    error_msg = f'Illegal fasta files in {file} in full genome archive: {error_msg}'
-                    fail(error_msg,error_path)
-                '''
-                error_msg = verify_genome_one_contig(f'{output_dir_path}/full_genome/{file}',file)
-                if error_msg:
-                    fail(error_msg,error_path)'''
-                #genome_files_names.append('.'.join(file.split('.')[:-1]))
-    if gff_path:
-        # gff
-        os.makedirs(f'{output_dir_path}/gff')
-        if gff_path.endswith('.zip'):
-            shutil.unpack_archive(f'{output_dir_path}/genome_features.zip',f'{output_dir_path}/gff')
-        else:
-            shutil.move(f'{output_dir_path}/genome.gff3',f'{output_dir_path}/gff')
-        #gff_files_names = ['.'.join(file.split('.')[:-1]) for file in os.listdir(f'{output_dir_path}/gff') if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/gff/{file}')]
-        #if set(gff_files_names) != set(genome_files_names):
-            #in_gff_not_genome = set(gff_files_names).difference(set(genome_files_names))
-            #in_genome_not_in_gff = set(genome_files_names).difference(set(gff_files_names))
-            #error_msg = 'The names of the files in the gff archive are not matching the names of the files in the full genome archive!'
-            #if len(in_gff_not_genome) > 0:
-            #    error_msg += f' The following file names are present in the GFF archive but not in the full genome archive: {in_gff_not_genome}'
-            #if len(in_genome_not_in_gff) > 0:
-            #    error_msg += f' The following file names are present in the full genome archive but not in the GFF archive: {in_genome_not_in_gff}'
-            #fail(error_msg,error_path)
-        error_msg = validate_gff(f'{output_dir_path}/gff',f'{output_dir_path}/ORFs.fasta')
-        if error_msg:
-            fail(error_msg,error_path)
-    if genome_path and gff_path:
-        error_msg = validate_genome_and_gff(f'{output_dir_path}/gff',f'{output_dir_path}/full_genome',f'{output_dir_path}/ORFs.fasta')
-        if error_msg:
-            fail(error_msg,error_path)
+        os.makedirs(f'{output_dir_path}/blast_data/temp_extract', exist_ok=True)
+        shutil.unpack_archive(host_proteome, f'{output_dir_path}/blast_data/temp_extract')
+        recs = []
+        for f in os.listdir(f'{output_dir_path}/blast_data/temp_extract'):
+            if not f.startswith('_') and not f.startswith('.') and os.path.isfile(
+                    f'{output_dir_path}/blast_data/temp_extract/{f}'):
+                f_recs = SeqIO.parse(f'{output_dir_path}/blast_data/temp_extract/{f}', 'fasta')
+                for rec in f_recs:
+                    recs.append(rec)
+        SeqIO.write(recs, f'{output_dir_path}/blast_data/host.faa', 'fasta')
+        shutil.rmtree(f'{output_dir_path}/blast_data/temp_extract')
+
     if no_T3SS_path:
         error_msg = verify_zip(no_T3SS_path,'Close bacteria without T3SS data')
         if error_msg:
             fail(error_msg,error_path)
+        os.makedirs(f'{output_dir_path}/blast_data/temp_extract', exist_ok=True)
+        shutil.unpack_archive(no_T3SS_path, f'{output_dir_path}/blast_data/temp_extract')
+        for file in os.listdir(f'{output_dir_path}/blast_data/temp_extract'):
+            if not file.startswith('_') and not file.startswith('.') and os.path.isfile(
+                    f'{output_dir_path}/blast_data/temp_extract/{file}'):
+                new_name_l = file.replace(' ', '_').split('.')
+                new_name = '.'.join(new_name_l[:-1]) + '.' + 'faa'
+                os.rename(f'{output_dir_path}/blast_data/temp_extract/{file}',
+                          f'{output_dir_path}/blast_data/temp_extract/{new_name}')
+                shutil.move(f'{output_dir_path}/blast_data/temp_extract/{new_name}',
+                            f'{output_dir_path}/blast_data')
+        shutil.rmtree(f'{output_dir_path}/blast_data/temp_extract')
+
+    if os.path.exists(f'{output_dir_path}/blast_data') and os.path.exists(f'{output_dir_path}/Effectidor_runs'):
+        for genome in os.listdir(f'{output_dir_path}/Effectidor_runs'):
+            os.makedirs(os.path.join(output_dir_path,'Effectidor_runs',genome,'blast_data'),exist_ok=True)
+            for f in os.listdir(f'{output_dir_path}/blast_data'):
+                shutil.copy(f'{output_dir_path}/blast_data/{f}',os.path.join(output_dir_path,'Effectidor_runs',genome,'blast_data'))
+            #shutil.copytree(f'{output_dir_path}/blast_data',f'{output_dir_path}/Effectidor_runs/{genome}',dirs_exist_ok=True)
 
 def cleanup_is_running(queues=('pupkolab','pupkoweb')):
     for q in queues:
@@ -364,12 +451,14 @@ def cleanup_ran_today(path=r'/bioseq/data/results/effectidor/'):
     # cleanup did not run today
     return False
 
-def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, full_genome=False, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False, signal=False):
+def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path, gff_path, no_T3SS, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False, signal=False):
+    '''
     try:
         if not cleanup_is_running() and not cleanup_ran_today():
             subprocess.call(f'/opt/pbs/bin/qsub /bioseq/effectidor/auxiliaries/remove_old_files.pbs',shell=True)
     except:
         pass
+    '''
     error_path = f'{output_dir_path}/error.txt'
     try:
         if html_path:
@@ -378,28 +467,102 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
     
         os.makedirs(output_dir_path, exist_ok=True)
     
-        tmp_dir = f'{os.path.split(ORFs_path)[0]}/tmp'  # same folder as the input files
+        tmp_dir = f'{output_dir_path}/tmp'
         os.makedirs(tmp_dir, exist_ok=True)
         
         validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path, no_T3SS, error_path)
-        if genome_path and gff_path:
-            CIS_elements = True
+
+        find_OGs_cmd = f'module load python/python-anaconda3.6.5;!@#python {os.path.join(scripts_dir,"find_OGs_in_genomes.py")} {output_dir_path}\tfind_OGs_effectidor\n'
+        with open(os.path.join(output_dir_path,'find_OGs.cmds'),'w') as out_f:
+            out_f.write(find_OGs_cmd)
+        cmd = f'{os.path.join(scripts_dir,"q_submitter.py")} {os.path.join(output_dir_path,"find_OGs.cmds")} {output_dir_path} -q {queue}'
+        subprocess.check_output(cmd, shell=True)
+
+        if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
+            currently_running = []
+            for genome in os.listdir(f'{output_dir_path}/Effectidor_runs'):
+                genome_ORFs_path = os.path.join(f'{output_dir_path}/Effectidor_runs',genome,'ORFs.fasta')
+                genome_output_path = os.path.join(f'{output_dir_path}/Effectidor_runs',genome)
+                parameters = f'{error_path} {genome_ORFs_path} {genome_output_path} --queue {queue}'
+                if effectors_path:
+                    input_effectors_path = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'effectors.fasta')
+                    parameters += f' --input_effectors_path {input_effectors_path}'
+                if gff_path:
+                    gff_file = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'genome.gff3')
+                    parameters += f' --gff_file {gff_file}'
+                if genome_path:
+                    full_genome_f = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'genome.fasta')
+                    parameters += f' --full_genome_f {full_genome_f}'
+                if PIP:
+                    parameters += ' --PIP'
+                if hrp:
+                    parameters += ' --hrp'
+                if mxiE:
+                    parameters += ' --mxiE'
+                if exs:
+                    parameters += ' --exs'
+                if tts:
+                    parameters += ' --tts'
+                if homology_search:
+                    parameters += ' --homology_search'
+                if signal:
+                    parameters += ' --translocation_signal'
+
+                job_cmd = f'module load python/python-anaconda3.6.5;!@#python {os.path.join(scripts_dir,"T3Es_wrapper.py")} {parameters}\tEffectidor_features_{genome}\n'
+                cmds_f = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'features_wrapper.cmds')
+                with open(cmds_f,'w') as job_f:
+                    job_f.write(job_cmd)
+                cmd = f'{os.path.join(scripts_dir,"q_submitter.py")} {cmds_f} {os.path.join(output_dir_path, "Effectidor_runs", genome)} -q {queue}'
+                subprocess.check_output(cmd,shell=True)
+                currently_running.append(genome)
+                while len(currently_running) > 4: # features can be extracted for up to 5 genomes at a time, to avoid overload on the cluster.
+                    sleep(60)
+                    currently_running = [genome for genome in currently_running if not os.path.exists(os.path.join(output_dir_path, "Effectidor_runs", genome, 'features.csv'))]
+            while len(currently_running) > 0: # wait until they all finish before proceeding with the next step.
+                sleep(60)
+                currently_running = [genome for genome in currently_running if not os.path.exists(
+                    os.path.join(output_dir_path, "Effectidor_runs", genome, 'features.csv'))]
+
         else:
-            CIS_elements = False
-        if gff_path:
-            organization = True
+            effectors_learn(error_path, ORFs_path, effectors_path, output_dir_path, tmp_dir, queue, gff_path, genome_path, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts, homology_search=homology_search, signal=signal)
+        # add a check for failed features jobs...
+        subprocess.check_output(['python', os.path.join(scripts_dir,'merge_features_for_OGs.py'), output_dir_path])
+
+        # learning step
+
+        low_quality_flag = False
+        subprocess.check_output(['python', os.path.join(scripts_dir,'learning.py'), output_dir_path, 'OGs_features.csv'])
+        if os.path.exists(f'{output_dir_path}/out_learning/learning_failed.txt'):
+            low_quality_flag = True
+            #return create_effectors_html(effectors_prots,ORFs_file,working_directory)
+            #error_msg = 'Learning failed. It can be due to a small training set, or other reasons. For further details you can contact us.'
+            #fail(error_msg,error_path)
+        # making final output files and tables
+        '''
+        in_f = f'{output_dir_path}/out_learning/concensus_predictions.csv'
+        out_f_normal = f'{output_dir_path}/out_learning/concensus_predictions_with_annotation.csv'
+        out_f_pseudo = f'{output_dir_path}/out_learning/pseudogenes.csv'
+        out_f_T3SS = f'{output_dir_path}/out_learning/T3SS.csv'
+        annotations = ORFs_file
+        out_for_html_normal = f'{output_dir_path}/out_learning/concensus_predictions_with_annotation_for_html.csv'
+        out_for_html_pseudo = f'{output_dir_path}/out_learning/pseudogenes_predictions_with_annotation_for_html.csv'
+        out_T3SS_for_html = f'{output_dir_path}/out_learning/T3SS_for_html.csv'
+        if organization:
+            gff_dir = f'{working_directory}/gff'
+            add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS,gff_dir)
         else:
-            organization = False
-        predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=organization, CIS_elements=CIS_elements, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts, homology_search=homology_search, signal=signal)
-        
-        #if full_genome:
-        #    if genome_path and gff_path:
-        #        predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, CIS_elements=True, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts, homology_search=homology_search)
-        #    else:
-        #        predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, organization=True, homology_search=homology_search)
-        #else:
-        #    predicted_table, positives_table, T3SS_table, low_confidence_flag = effectors_learn(error_path, f'{output_dir_path}/ORFs.fasta', effectors_path, output_dir_path, tmp_dir, queue, homology_search=homology_search)
-    
+            add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS)
+        from csv_to_colored_xlsx_converter import convert_csv_to_colored_xlsx
+        convert_csv_to_colored_xlsx(out_f_normal)
+        convert_csv_to_colored_xlsx(out_f_pseudo)
+        if organization:
+            gff_dir = f'{working_directory}/gff'
+            add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,gff_dir,line_end='<br>')
+        else:
+            add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,line_end='<br>')
+        predicted_table, positives_table, T3SS_table = make_html_tables(out_for_html_normal,out_T3SS_for_html)
+        return predicted_table, positives_table, T3SS_table, low_quality_flag'''
+
         if html_path:
             #shutil.make_archive(final_zip_path, 'zip', output_dir_path)
             finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table, low_confidence_flag)
@@ -489,14 +652,14 @@ def edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_
 def edit_failure_html(CONSTS, error_msg, html_path, run_number):
     update_html(html_path, 'RUNNING', 'FAILED')
     append_to_html(html_path,
-                   f'<div class="container" style="{CONSTS.CONTAINER_STYLE}" align="justify"><h3>\n'
+                   f'<div class="container" style="{CONSTS.CONTAINER_STYLE}" align="justify"><h3><br>'
                    f'<font color="red">{error_msg}</font></h3><br><br>'
                    f'Please make sure your input is OK and then try to re-run your job or '
                    f'<a href="mailto:{CONSTS.ADMIN_EMAIL}?subject={CONSTS.WEBSERVER_NAME}%20Run%20Number:%20{run_number}">'
                    f'contact us'
                    f'</a> '
                    f'for further information.<br>'
-                   f'</div>\n')
+                   f'</div><br>')
 
 
 def add_closing_html_tags(html_path, CONSTS, run_number):
@@ -572,7 +735,6 @@ if __name__ == '__main__':
         parser.add_argument('--homology_search', help='search additional effectors based on homology to internal dataset', action='store_true')
         parser.add_argument('--translocation_signal',help='extract translocation signal feature', action='store_true')
 
-        parser.add_argument('--full_genome', help='to extract genome organization features', action='store_true')
         parser.add_argument('--PIP', help='look for PIP-box in promoters', action='store_true')
         parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
         parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
@@ -593,9 +755,12 @@ if __name__ == '__main__':
         exs_flag = args.exs
         tts_flag = args.tts
         
-        main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=args.full_genome, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=args.homology_search, signal=args.translocation_signal)
-        
-       #     if args.homology_search:
+        main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path,args.host_proteome_path,
+             args.html_path, args.queue_name, args.genome_path,args.gff_path, args.no_T3SS, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag,
+             exs=exs_flag, tts=tts_flag, homology_search=args.homology_search, signal=args.translocation_signal)
+
+
+#     if args.homology_search:
        #         main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=True)
        #     else:
        #         main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path, args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, full_genome=True, PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag)

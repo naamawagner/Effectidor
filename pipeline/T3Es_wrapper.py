@@ -47,7 +47,7 @@ def write_sh_file(tmp_dir,path_to_dir_with_fastas,path_for_embedding_files,path_
     with open(f'{tmp_dir}/Embedding.sh','w') as out:
         out.write(content)
 
-def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir,queue,organization=False,CIS_elements=False,PIP=False,hrp=False,mxiE=False,exs=False,tts=False,homology_search=False,signal=False):
+def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir, queue, gff_file, full_genome_f, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,signal=False):
     import pandas as pd
     import subprocess
     import os
@@ -56,7 +56,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     import shutil
     from add_annotations_to_predictions import add_annotations_to_predictions,make_html_tables
     import sys
-    sys.path.append('/bioseq/effectidor/auxiliaries')
+    #sys.path.append('/bioseq/effectidor/auxiliaries')
     from auxiliaries import fail
     import effectidor_CONSTANTS
     low_quality_flag = False
@@ -64,48 +64,27 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     scripts_dir = effectidor_CONSTANTS.EFFECTIDOR_EXEC
     data_dir = effectidor_CONSTANTS.EFFECTIDOR_DATA
     os.chdir(working_directory)
-    log_file = f'{working_directory}/log.txt'
     # input files
     #ORFs_file = 'ORFs.fasta'
     #effectors_file = 'effectors.fasta'
     all_prots = 'translated_ORFs.faa'
-    signal_prot_dir = f'{working_directory}/NTerminal_prots'
-    signal_embed_dir = f'{working_directory}/NTerminal_embedding'
-    effectors_prots = 'translated_effectors.faa'
+    signal_prot_dir = os.path.join(working_directory, 'NTerminal_prots')
+    signal_embed_dir = os.path.join(working_directory, 'NTerminal_embedding')
+    effectors_prots = os.path.join(working_directory, 'translated_effectors.faa')
     blast_datasets_dir = f'{data_dir}/blast_data'
-    
-    if not os.path.exists('blast_data'):
-        os.makedirs('blast_data')
-    if os.path.exists('non_T3SS.zip'):
-        #unzip it to the blast datasets dir
-        os.makedirs(f'{working_directory}/blast_data/temp_extract')
-        shutil.unpack_archive(f'{working_directory}/non_T3SS.zip',f'{working_directory}/blast_data/temp_extract')
-        for file in os.listdir(f'{working_directory}/blast_data/temp_extract'):
-            if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{working_directory}/blast_data/temp_extract/{file}'):
-                new_name_l = file.replace(' ','_').split('.')
-                new_name = '.'.join(new_name_l[:-1])+'.'+'faa'
-                os.rename(f'{working_directory}/blast_data/temp_extract/{file}',f'{working_directory}/blast_data/temp_extract/{new_name}')
-                shutil.move(f'{working_directory}/blast_data/temp_extract/{new_name}',f'{working_directory}/blast_data')
-    if os.path.exists(f'{working_directory}/blast_data/host.zip'):
-        if not os.path.exists(f'{working_directory}/blast_data/temp_extract'):
-            os.makedirs(f'{working_directory}/blast_data/temp_extract')
-        shutil.unpack_archive(f'{working_directory}/blast_data/host.zip',f'{working_directory}/blast_data/temp_extract')
-        recs = []
-        for f in os.listdir(f'{working_directory}/blast_data/temp_extract'):
-            if not f.startswith('_') and not f.startswith('.') and os.path.isfile(f'{working_directory}/blast_data/temp_extract/{f}'):
-                f_recs= SeqIO.parse(f'{working_directory}/blast_data/temp_extract/{f}','fasta')
-                for rec in f_recs:
-                    recs.append(rec)
-        SeqIO.write(recs,f'{working_directory}/blast_data/host.faa','fasta')
-    cmd = f'cp {blast_datasets_dir}/*.faa ./blast_data/'
-    subprocess.check_output(cmd,shell=True)
-    blast_datasets_dir = './blast_data/'
 
-    if os.path.exists('user_T3Es.fasta'): # add these records to the T3Es dataset 
+    os.makedirs(tmp_dir,exist_ok=True)
+    if not os.path.exists(f'{working_directory}/blast_data/T3Es.faa'): #if no input for effectors homology search was supplied
+        os.makedirs(f'{working_directory}/blast_data',exist_ok=True) # this directory was already created if another input for homology search was supplied (host proteome or proteomes of closely related bacteria without T3SS)
+        cmd = f'cp {blast_datasets_dir}/*.faa {working_directory}/blast_data/'
+        subprocess.check_output(cmd,shell=True)
+    blast_datasets_dir = f'{working_directory}/blast_data'
+
+    if os.path.exists(f'{working_directory}/user_T3Es.fasta'): # add these records to the T3Es dataset
         eff1_recs=SeqIO.parse(f'{blast_datasets_dir}/T3Es.faa','fasta')
         eff_l = list(eff1_recs)
         seqs = [rec.seq for rec in eff_l]
-        eff2_recs=SeqIO.parse('user_T3Es.fasta','fasta')
+        eff2_recs=SeqIO.parse(f'{working_directory}/user_T3Es.fasta','fasta')
         for rec in eff2_recs:
             if rec.seq not in seqs:
                 eff_l.append(rec)
@@ -125,6 +104,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
             ID = rec.id
             N_seq = rec.seq[:100]
             rec.seq = N_seq
+            rec.description = ID
             file_path = f'{signal_prot_dir}/{ID}.faa'
             SeqIO.write(rec,file_path,'fasta')
         if not os.path.exists(signal_embed_dir):
@@ -132,16 +112,15 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         write_sh_file(tmp_dir,signal_prot_dir,signal_embed_dir,f'{working_directory}/Embedding_pred.csv',queue)
     
     if not effectors_file:
-        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots,log_file])
+        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots])
     elif homology_search:
         effectors_prots2 = 'homology_found_effectors.faa'
-        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots2,log_file])
+        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots2])
         eff1 = SeqIO.to_dict(SeqIO.parse(effectors_prots,'fasta'))
         eff2 = SeqIO.to_dict(SeqIO.parse(effectors_prots2,'fasta'))
         eff1.update(eff2)
         SeqIO.write(eff1.values(),effectors_prots,'fasta')
-
-    # make sure effectors were found before proceeding!
+    ''' comment for now, move in the future. In this version this check should be done on the OGs!
     eff_recs = list(SeqIO.parse(effectors_prots,'fasta'))
     if len(eff_recs) == 0:
         error_msg = 'No effectors were found in the data! Make sure you run the analysis on a bacterium with an active T3SS and try to run it again with an effectors file containing all the known effectors in the bacterium.'
@@ -150,24 +129,21 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         return create_effectors_html(effectors_prots,ORFs_file,working_directory)
         #error_msg = f'Not enough effectors were found in the data! Only {len(eff_recs)} were found in the initial homology serach. This is not enough to train a classifier.If you know more effectors are available in the bacterium, try to run it again with an effectors file containing all the known effectors in the bacterium.'
         #fail(error_msg,error_path)
+    '''
     # find and create non effectors fasta file
     subprocess.check_output(['python',f'{scripts_dir}/find_non_effectors.py',all_prots,effectors_prots])
     # creating the features extraction commands
     with open(f'{working_directory}/features_jobs.cmds','w') as jobs_f:
         # sequence features
         jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/sequence_features.py {ORFs_file} {effectors_prots} {working_directory}\tsequence_features\n')
-        # homology (blast) features
+        # sequence similarity features
         jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/homology.py {ORFs_file} {all_prots} {blast_datasets_dir} {effectors_prots} {working_directory}\thomology\n')
-        if organization:
-            gff_dir = f'{working_directory}/gff'
+        if gff_file:
             # genome organization features
-            ORFs_dir = f'{working_directory}/contigs_ORFs'
-            jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/genome_organization.py {ORFs_dir} {effectors_prots} {working_directory} {gff_dir}\tgenome_organization\n')
-            if CIS_elements:
-                # PIP-box features
-                gff_dir = f'{working_directory}/gff'
-                genome_dir = f'{working_directory}/full_genome'
-                cmds = f'module load python/python-anaconda3.6.5; python {scripts_dir}/pip_box_features.py {ORFs_file} {working_directory} {gff_dir} {genome_dir}'
+            jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/genome_organization.py {ORFs_file} {effectors_prots} {working_directory} {gff_file}\tgenome_organization\n')
+            if full_genome_f:
+                # regulatory elements features
+                cmds = f'module load python/python-anaconda3.6.5; python {scripts_dir}/pip_box_features.py {ORFs_file} {working_directory} {gff_file} {full_genome_f}'
                 if PIP:
                     cmds += ' --PIP'
                 if hrp:
@@ -195,15 +171,15 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     amount_of_expected_results = 3
     if signal:
         amount_of_expected_results += 1
-    if organization:
+    if gff_file:
         amount_of_expected_results += 1
-        if CIS_elements:
+        if full_genome_f:
             amount_of_expected_results += 1
             
     while x < amount_of_expected_results:
         print('number of expected outputs is '+str(amount_of_expected_results)+' , number of existing outputs is '+str(x)+', waiting for additional '+str(amount_of_expected_results-x)+' outputs')
-        time.sleep(300)
-        num_finished_jobs = sum([item.endswith('ER') for item in os.listdir(f'{working_directory}/tmp')])
+        time.sleep(60)
+        num_finished_jobs = sum([item.endswith('ER') for item in os.listdir(tmp_dir)])
         x = sum([item.endswith('done') for item in os.listdir(working_directory)])
         if x < num_finished_jobs:
             break
@@ -226,10 +202,10 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     if signal:
         files_to_merge.append('Embedding_pred.csv')
         done_files.append('Embedding_pred.csv.done')
-    if organization:
+    if gff_file:
         files_to_merge.append('genome_organization_features.csv')
         done_files.append('genome_organization_features.done')
-        if CIS_elements:
+        if full_genome_f:
             files_to_merge.append('pip_box_features.csv')
             done_files.append('pip_box_features.done')
     failed_jobs = [done_job.split('.')[0] for done_job in done_files if not os.path.exists(done_job)]
@@ -245,7 +221,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     merged_df.to_csv('features.csv',index=False)
     
     # learning step
-    
+    ''' TODO: move this step to a different script
     subprocess.check_output(['python',f'{scripts_dir}/learning.py'])
     if os.path.exists(r'out_learning/learning_failed.txt'):
         low_quality_flag = True
@@ -277,6 +253,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,line_end='<br>')
     predicted_table, positives_table, T3SS_table = make_html_tables(out_for_html_normal,out_T3SS_for_html)
     return predicted_table, positives_table, T3SS_table, low_quality_flag
+    '''
 
 import os
 if __name__ == '__main__':
@@ -287,8 +264,7 @@ if __name__ == '__main__':
         import argparse
         parser = argparse.ArgumentParser()
         parser.add_argument('error_path',
-                            help='A path to the error file.',
-                            type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
+                            help='A path to the error file.')
         parser.add_argument('input_ORFs_path',
                             help='A path to a DNA ORFs file.',
                             type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
@@ -300,17 +276,17 @@ if __name__ == '__main__':
                             help='A path to a folder in which the output files will be created.',
                             type=lambda path: path.rstrip('/'))
         parser.add_argument('--queue',default='pupkoweb')
-        parser.add_argument('--organization', action='store_true',help='calculate organization features')
-        parser.add_argument('--CIS_elements',action='store_true',help='extract regulatory elements features')
+        parser.add_argument('--gff_file', help='A path to a gff file, to calculate genome organization features',
+                            default = '')
+        parser.add_argument('--full_genome_f',help='A path to a full genome fasta file to extract regulatory elements features (used together with the gff file)',
+                            default = '')
         parser.add_argument('--PIP', help='look for PIP-box in promoters', action='store_true')
         parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
         parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
         parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
         parser.add_argument('--tts', help='look for tts-box in promoters', action='store_true')
         parser.add_argument('--translocation_signal',help='extract translocation signal feature', action='store_true')
-        parser.add_argument('--html_path', default=None,
-                            help='A path to an html file that will be updated during the run.',
-                            type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
+        parser.add_argument('--homology_search',help='search additional effectors based on homology to internal dataset',action='store_true')
 
         parser.add_argument('-v', '--verbose', help='Increase output verbosity', action='store_true')
 
@@ -321,4 +297,7 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(level=logging.INFO)
 
-        effectors_learn(args.error_path,args.input_ORFs_path, args.input_effectors_path, args.output_dir_path, f'{args.output_dir_path}/tmp',args.queue,organization=args.organization,CIS_elements=args.CIS_elements,PIP=args.PIP,hrp=args.hrp,mxiE=args.mxiE,exs=args.exs,tts=args.tts,signal=args.translocation_signal)
+        effectors_learn(args.error_path, args.input_ORFs_path, args.input_effectors_path, args.output_dir_path,
+                        f'{args.output_dir_path}/tmp', args.queue, args.gff_file, args.full_genome_f, PIP=args.PIP,
+                        hrp=args.hrp, mxiE=args.mxiE, exs=args.exs, tts=args.tts, homology_search=args.homology_search,
+                        signal=args.translocation_signal)
