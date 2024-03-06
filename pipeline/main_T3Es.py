@@ -11,6 +11,7 @@ from T3Es_wrapper import effectors_learn
 import shutil
 import re
 import subprocess
+import pandas as pd
 
 data_dir = CONSTS.EFFECTIDOR_DATA
 blast_datasets_dir = f'{data_dir}/blast_data'
@@ -476,7 +477,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         with open(os.path.join(output_dir_path,'find_OGs.cmds'),'w') as out_f:
             out_f.write(find_OGs_cmd)
         cmd = f'{os.path.join(scripts_dir,"q_submitter.py")} {os.path.join(output_dir_path,"find_OGs.cmds")} {output_dir_path} -q {queue}'
-        subprocess.check_output(cmd, shell=True)
+        OGs_job_number = subprocess.check_output(cmd, shell=True).decode('ascii').strip()
 
         if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
             currently_running = []
@@ -526,12 +527,26 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         else:
             effectors_learn(error_path, ORFs_path, effectors_path, output_dir_path, tmp_dir, queue, gff_path, genome_path, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts, homology_search=homology_search, signal=signal)
         # add a check for failed features jobs...
+        while not os.path.exists(os.path.join(output_dir_path, f'{OGs_job_number}.ER')): # make sure the find_OGs job was finished before proceeding
+            sleep(120)
         subprocess.check_output(['python', os.path.join(scripts_dir,'merge_features_for_OGs.py'), output_dir_path])
-
+        '''
+        features_data = pd.read_csv('OGs_features.csv')
+        positives_size = features_data[is_effector].value_counts()['effector']
+        if positives_size == 0:
+            #fail
+        elif positives_size < 3:
+            # return these
+        '''
         # learning step
 
         low_quality_flag = False
         subprocess.check_output(['python', os.path.join(scripts_dir,'learning.py'), output_dir_path, 'OGs_features.csv'])
+        preds_df = pd.read_csv(f'{output_dir_path}/out_learning/concensus_predictions.csv')
+        annotations_df = pd.read_csv(f'{output_dir_path}/OGs_annotations.csv')
+        ortho_df = pd.read_csv(f'{output_dir_path}/clean_orthologs_table_with_pseudo.csv')
+        preds_df.merge(annotations_df).merge(ortho_df).to_csv(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations.csv',index=False)
+
         if os.path.exists(f'{output_dir_path}/out_learning/learning_failed.txt'):
             low_quality_flag = True
             #return create_effectors_html(effectors_prots,ORFs_file,working_directory)

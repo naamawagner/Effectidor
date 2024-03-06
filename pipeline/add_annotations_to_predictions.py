@@ -3,6 +3,63 @@ import csv
 import pandas as pd
 import os
 
+def create_annotations_f(ORFs_f,gff_f='',out_f='',pseudo_f=''):
+    '''
+    The annotation is extracted from the gff file if given and otherwise from the ORFs fasta file.
+    It is then saved to the out_f (csv format)
+    '''
+    locus_annotation = {}
+    pseudo_genes = []
+    if gff_f:
+        with open(gff_f) as gff:
+            for line in gff:
+                if not line.startswith('#'):
+                    row = line.strip().split('\t')
+                    if len(row) == 9:
+                        if row[2] == 'CDS':
+                            locus, annot = '', ''
+                            features = row[-1].split(';')
+                            for fe in features:
+                                if 'locus_tag=' in fe:
+                                    locus = fe.split('=')[1]
+                                elif 'product=' in fe:
+                                    annot = fe.split('=')[1]
+                            if 'pseudo=true' in row[-1]:
+                                pseudo_genes.append(locus)
+                                #annot = 'pseudogene ' + annot
+                            locus_annotation[locus] = annot
+    else: # get the annotations from the fasta file
+        recs = SeqIO.parse(ORFs_f, 'fasta')
+        for rec in recs:
+            is_locus = False
+            annotation = ''
+            header = rec.description
+            header_l = header.split('[') # split by '[' and not by spaces as the annotation fields contain spaces
+            for a in header_l:
+                if 'locus_tag=' in a:
+                    locus = a.split('=')[1].strip('] ')
+                    is_locus = True
+                elif 'protein=' in a:
+                    annotation = a.split('=')[1].strip('] ')
+
+            if is_locus:
+                locus_annotation[locus] = annotation
+                if 'pseudo=true' in header:
+                    pseudo_genes.append(locus)
+            else:
+                locus_annotation[rec.id] = annotation
+                if 'pseudo=true' in header:
+                    pseudo_genes.append(rec.id)
+    with open(out_f,'w',newline='') as out:
+        writer = csv.writer(out)
+        header = ['locus','annotation']
+        writer.writerow(header)
+        for locus in locus_annotation:
+            writer.writerow([locus,locus_annotation[locus]])
+    with open(pseudo_f,'w') as pseudo:
+        pseudo.write('\n'.join(pseudo_genes))
+
+
 def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations_fasta,out_f_T3SS,gff_d='',line_end='\n'):
     locus_annotation={}
     if gff_d:

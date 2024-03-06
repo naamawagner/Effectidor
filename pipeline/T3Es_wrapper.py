@@ -54,7 +54,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     import time
     from Bio import SeqIO
     import shutil
-    from add_annotations_to_predictions import add_annotations_to_predictions,make_html_tables
+    from add_annotations_to_predictions import add_annotations_to_predictions,make_html_tables,create_annotations_f
     import sys
     #sys.path.append('/bioseq/effectidor/auxiliaries')
     from auxiliaries import fail
@@ -166,7 +166,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     if signal:
         if not os.path.exists(f'{working_directory}/Embedding_pred.csv.done'):
             subprocess.call(f'/opt/pbs/bin/qsub {tmp_dir}/Embedding.sh',shell=True)
-    
+    create_annotations_f(ORFs_file,gff_file,'annotations.csv','pseudogenes.txt')
     x = sum([item.endswith('done') for item in os.listdir(working_directory)])
     amount_of_expected_results = 3
     if signal:

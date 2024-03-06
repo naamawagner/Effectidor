@@ -27,35 +27,67 @@ def get_ortho_dict(wd,ortho_f='clean_orthologs_table.csv'):
     return genomes_orthogroup_dict
    
 genomes_orthogroup_dict = get_ortho_dict(working_directory)
-#print(genomes_orthogroup_dict)
 
-with open('full_data.csv','w',newline='') as out_f:
-    writer = csv.writer(out_f)
-    if os.path.exists(Effectidor_features_d):
-        genomes = os.listdir(Effectidor_features_d)
-        first_genome = genomes[0]
-        with open(os.path.join(Effectidor_features_d,first_genome,'features.csv')) as in_f:
-            reader = csv.reader(in_f)
-            header = ['OG']+next(reader)
-            writer.writerow(header)
-            for row in reader:
-                row = [genomes_orthogroup_dict[first_genome][row[0]]]+row
-                writer.writerow(row)
-        for genome in genomes[1:]:
-            with open(os.path.join(Effectidor_features_d,genome,'features.csv')) as in_f:
+# prepare the orthologs table for final merge:
+with open(os.path.join(working_directory, 'clean_orthologs_table.csv')) as in_f:
+    full_content = in_f.read()
+if os.path.exists(Effectidor_features_d):
+    genomes = os.listdir(Effectidor_features_d)
+    for genome in genomes:
+        pseudogenes_path = os.path.join(Effectidor_features_d,genome,'pseudogenes.txt')
+        with open(pseudogenes_path) as pseudo_f:
+            pseudogenes = pseudo_f.read().split('\n')
+            for pseudo in pseudogenes:
+                full_content = full_content.replace(f'{pseudo},',f'{pseudo}(pseudogene),')
+                full_content = full_content.replace(f'{pseudo};', f'{pseudo}(pseudogene);')
+else:
+    with open('pseudogenes.txt'):
+        pseudogenes = pseudo_f.read().split('\n')
+        for pseudo in pseudogenes:
+            full_content = full_content.replace(f'{pseudo},', f'{pseudo}(pseudogene),')
+            full_content = full_content.replace(f'{pseudo};', f'{pseudo}(pseudogene);')
+full_content = full_content.replace('OG_name,','OG,')
+with open('clean_orthologs_table_with_pseudo.csv','w') as out_f:
+    out_f.write(full_content)
+
+def combine_all_genomes_data(out_f_path,in_f_name):
+    with open(out_f_path,'w',newline='') as out_path:
+        writer = csv.writer(out_path)
+        if os.path.exists(Effectidor_features_d):
+            genomes = os.listdir(Effectidor_features_d)
+            first_genome = genomes[0]
+            with open(os.path.join(Effectidor_features_d, first_genome, f'{in_f_name}.csv')) as in_f:
                 reader = csv.reader(in_f)
-                next(reader)
+                header = ['OG'] + next(reader)
+                writer.writerow(header)
                 for row in reader:
-                    row = [genomes_orthogroup_dict[genome][row[0]]]+row
-                    writer.writerow(row)
-    else:
-        with open('features.csv') as in_f:
-            reader = csv.reader(in_f)
-            header = ['OG']+next(reader)
-            writer.writerow(header)
-            for row in reader:
-                row = [genomes_orthogroup_dict['genome_ORFs'][row[0]]]+row
-                writer.writerow(row)
+                    if row[0] in genomes_orthogroup_dict[first_genome]:
+                        row = [genomes_orthogroup_dict[first_genome][row[0]]] + row
+                        writer.writerow(row)
+            for genome in genomes[1:]:
+                with open(os.path.join(Effectidor_features_d, genome, f'{in_f_name}.csv')) as in_f:
+                    reader = csv.reader(in_f)
+                    next(reader)
+                    for row in reader:
+                        if row[0] in genomes_orthogroup_dict[genome]:
+                            row = [genomes_orthogroup_dict[genome][row[0]]] + row
+                            writer.writerow(row)
+        else:
+            with open(f'{in_f_name}.csv') as in_f:
+                reader = csv.reader(in_f)
+                header = ['OG'] + next(reader)
+                writer.writerow(header)
+                for row in reader:
+                    if row[0] in genomes_orthogroup_dict['genome_ORFs']:
+                        row = [genomes_orthogroup_dict['genome_ORFs'][row[0]]] + row
+                        writer.writerow(row)
+
+combine_all_genomes_data('full_data.csv','features')
+combine_all_genomes_data('full_OGs_annotations.csv','annotations')
+
+annot_df = pd.read_csv('full_OGs_annotations.csv')
+grouped_annot = annot_df.groupby(['OG'])['annotation'].agg(pd.Series.mode)
+grouped_annot.to_csv('OGs_annotations.csv')
 
 def label(iterable_arg):
     '''define a label of an OG, based on the labels of its members'''
