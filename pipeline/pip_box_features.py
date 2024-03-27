@@ -121,28 +121,28 @@ def parse_gff_to_CDS_loc(gff_f,locus_dic):
                                 break
     return locus_area_d,circulars
 
-def get_promoters(gene_area_dic,circular_contigs,genome_f):
+def get_promoters(gene_area_dic,circular_contigs,genome_f,promoter_length=700):
     promoters_d = {}
     genome = SeqIO.to_dict(SeqIO.parse(genome_f,'fasta'))
     for region_dic in gene_area_dic:
         for gene in gene_area_dic[region_dic]:
             if gene_area_dic[region_dic][gene][1]==1: #forward
                 start,end = gene_area_dic[region_dic][gene][0][0],gene_area_dic[region_dic][gene][0][1]
-                if start >= 350:
-                    promoter = genome[region_dic].seq[start-350:start]
+                if start >= promoter_length:
+                    promoter = genome[region_dic].seq[start-promoter_length:start]
                 else:
                     if region_dic in circular_contigs:
-                        to_add = 350-start
+                        to_add = promoter_length-start
                         promoter = genome[region_dic].seq[-to_add:]+genome[region_dic].seq[:start]
                     else:
                         promoter = genome[region_dic].seq[:start]
             else: #-1 reverse
                 start,end = gene_area_dic[region_dic][gene][0][0],gene_area_dic[region_dic][gene][0][1]
-                if len(genome[region_dic].seq)-end >=350:
-                    promoter = genome[region_dic].seq[end:end+350].reverse_complement()
+                if len(genome[region_dic].seq)-end >=promoter_length:
+                    promoter = genome[region_dic].seq[end:end+promoter_length].reverse_complement()
                 else:
                     if region_dic in circular_contigs:
-                        to_add = 350 - (len(genome[region_dic].seq)-end)
+                        to_add = promoter_length - (len(genome[region_dic].seq)-end)
                         promoter = genome[region_dic].seq[end:]+genome[region_dic].seq[:to_add]
                         promoter = promoter.reverse_complement()
                     else:
