@@ -3,6 +3,7 @@ import os
 import csv
 import pandas as pd
 import math
+import numpy as np
 
 working_directory = argv[1]
 os.chdir(working_directory)
@@ -84,10 +85,23 @@ def combine_all_genomes_data(out_f_path,in_f_name):
 
 combine_all_genomes_data('full_data.csv','features')
 combine_all_genomes_data('full_OGs_annotations.csv','annotations')
+combine_all_genomes_data('full_effector_homologs.csv','closest_effector_homologs')
 
-annot_df = pd.read_csv('full_OGs_annotations.csv')
-grouped_annot = annot_df.groupby(['OG'])['annotation'].agg(pd.Series.mode)
-grouped_annot.to_csv('OGs_annotations.csv')
+def groupbyMode(in_f,out_f,target,new_col_name):
+    df = pd.read_csv(in_f)
+    g_df = df.groupby(['OG'])[target].agg(pd.Series.mode)
+    g_df = g_df.apply(lambda x: ', '.join(x) if type(x) == np.ndarray else x)
+    g_df.rename(new_col_name,inplace=True)
+    g_df.to_csv(out_f)
+
+groupbyMode('full_OGs_annotations.csv','OGs_annotations.csv','annotation','Annotation(s)')
+groupbyMode('full_effector_homologs.csv','OG_effector_homologs.csv','Effector_ID','Effector_homolog(s)')
+
+# annot_df = pd.read_csv('full_OGs_annotations.csv')
+# grouped_annot = annot_df.groupby(['OG'])['annotation'].agg(pd.Series.mode)
+# grouped_annot.to_csv('OGs_annotations.csv')
+
+
 
 def label(iterable_arg):
     '''define a label of an OG, based on the labels of its members'''
@@ -102,16 +116,16 @@ def label(iterable_arg):
 df = pd.read_csv('full_data.csv')
 features = list(df.columns[2:-1])
 #defining manipulation per feature in the transformation to OGs
-minimum = [feature for feature in features if 'distance_from_closest_effector' in feature]
+median = ['distance_from_closest_effector']
 maximum = [feature for feature in features if ('T3_signal' in feature or '_box' in feature)]
 for feature in maximum:
     features.remove(feature)
-for feature in minimum:
+for feature in median:
     features.remove(feature)
 
 #%% transformation to OGs
 grouped = df.groupby('OG').agg({**{feature:['mean'] for feature in features},\
-                    **{feature:['mean','min','median'] for feature in minimum},\
+                    **{feature:['median'] for feature in median},\
                     **{feature:['max'] for feature in maximum},\
                     **{'is_effector':label}})
 
