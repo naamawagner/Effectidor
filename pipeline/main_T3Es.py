@@ -12,6 +12,7 @@ import shutil
 import re
 import subprocess
 import pandas as pd
+from add_annotations_to_predictions import make_html_tables
 
 data_dir = CONSTS.EFFECTIDOR_DATA
 blast_datasets_dir = f'{data_dir}/blast_data'
@@ -256,6 +257,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                 ORFs_genomes.append(genome_name)
                 os.makedirs(os.path.join(output_dir_path,'Effectidor_runs',genome_name),exist_ok=True)
                 shutil.move(os.path.join(output_dir_path,'ORFs_tmp',file),os.path.join(output_dir_path,'Effectidor_runs',genome_name,'ORFs.fasta'))
+        shutil.rmtree(f'{output_dir_path}/ORFs_tmp',ignore_errors=True)
         ORFs_set = set(ORFs_genomes)
     else:
         error_msg = verify_fasta_format(ORFs_path,'DNA','input ORFs')
@@ -285,6 +287,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                                                  os.path.join(output_dir_path,'Effectidor_runs',genome_name,'ORFs.fasta'),genome_name)
                         if error_msg:
                             fail(error_msg, error_path)
+            shutil.rmtree(f'{output_dir_path}/gff_tmp',ignore_errors=True)
             gff_set = set(gff_genomes)
             if not gff_set == ORFs_set:
                 missing_gff = ORFs_set.difference(gff_set)
@@ -319,6 +322,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                                                                 os.path.join(output_dir_path,'Effectidor_runs',genome_name,'ORFs.fasta'))
                             if error_msg:
                                 fail(f'In genome {genome_name}:<br>{error_msg}')
+                shutil.rmtree(f'{output_dir_path}/full_genome_tmp',ignore_errors=True)
                 full_genome_set = set(full_genome_names)
                 if not gff_set==full_genome_set==ORFs_set:
                     missing_full_genome = ORFs_set.difference(full_genome_set)
@@ -485,8 +489,8 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                 genome_ORFs_path = os.path.join(f'{output_dir_path}/Effectidor_runs',genome,'ORFs.fasta')
                 genome_output_path = os.path.join(f'{output_dir_path}/Effectidor_runs',genome)
                 parameters = f'{error_path} {genome_ORFs_path} {genome_output_path} --queue {queue}'
-                if effectors_path:
-                    input_effectors_path = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'effectors.fasta')
+                input_effectors_path = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'effectors.fasta')
+                if os.path.exists(input_effectors_path):
                     parameters += f' --input_effectors_path {input_effectors_path}'
                 if gff_path:
                     gff_file = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'genome.gff3')
@@ -530,57 +534,43 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         while not os.path.exists(os.path.join(output_dir_path, f'{OGs_job_number}.ER')): # make sure the find_OGs job was finished before proceeding
             sleep(120)
         subprocess.check_output(['python', os.path.join(scripts_dir,'merge_features_for_OGs.py'), output_dir_path])
-        '''
-        features_data = pd.read_csv('OGs_features.csv')
-        positives_size = features_data[is_effector].value_counts()['effector']
+
+        annotations_df = pd.read_csv(f'{output_dir_path}/OGs_annotations.csv')
+        features_data = pd.read_csv(f'{output_dir_path}/OGs_features.csv')
+        positives_size = features_data['is_effector'].value_counts()['effector']
         if positives_size == 0:
-            #fail
+            error_msg = 'No effectors were found in your data! If you know your data should contain type III effectors please supply these data.'
+            fail(error_msg, error_path)
         elif positives_size < 3:
+            effectors = features_data[features_data['is_effector']=='effector']
+            homologs = pd.read_csv(f'{output_dir_path}/OG_effector_homologs.csv')
+            positives_table = effectors['OG'].merge(annotations_df,how='left').merge(homologs,how='left').to_html(index=False,justify='left',escape=False)
+            predicted_table = ''
             # return these
-        '''
+
         # learning step
+        else:
+            subprocess.check_output(['python', os.path.join(scripts_dir,'learning.py'), output_dir_path, 'OGs_features.csv'])
+            preds_df = pd.read_csv(f'{output_dir_path}/out_learning/concensus_predictions.csv')
+            ortho_df = pd.read_csv(f'{output_dir_path}/clean_orthologs_table_with_pseudo.csv')
+            annotated_preds = preds_df.merge(annotations_df)
+            annotated_preds.to_csv(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations.csv',index=False)
+            annotated_preds.merge(ortho_df).to_csv(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations_and_ortho_table.csv',index=False)
+            from csv_to_colored_xlsx_converter import convert_csv_to_colored_xlsx
+            convert_csv_to_colored_xlsx(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations_and_ortho_table.csv')
+
+            predicted_table, positives_table = make_html_tables(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations.csv',f'{output_dir_path}/OG_effector_homologs.csv')
 
         low_quality_flag = False
-        subprocess.check_output(['python', os.path.join(scripts_dir,'learning.py'), output_dir_path, 'OGs_features.csv'])
-        preds_df = pd.read_csv(f'{output_dir_path}/out_learning/concensus_predictions.csv')
-        annotations_df = pd.read_csv(f'{output_dir_path}/OGs_annotations.csv')
-        ortho_df = pd.read_csv(f'{output_dir_path}/clean_orthologs_table_with_pseudo.csv')
-        preds_df.merge(annotations_df).merge(ortho_df).to_csv(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations.csv',index=False)
-
         if os.path.exists(f'{output_dir_path}/out_learning/learning_failed.txt'):
             low_quality_flag = True
-            #return create_effectors_html(effectors_prots,ORFs_file,working_directory)
-            #error_msg = 'Learning failed. It can be due to a small training set, or other reasons. For further details you can contact us.'
-            #fail(error_msg,error_path)
-        # making final output files and tables
-        '''
-        in_f = f'{output_dir_path}/out_learning/concensus_predictions.csv'
-        out_f_normal = f'{output_dir_path}/out_learning/concensus_predictions_with_annotation.csv'
-        out_f_pseudo = f'{output_dir_path}/out_learning/pseudogenes.csv'
-        out_f_T3SS = f'{output_dir_path}/out_learning/T3SS.csv'
-        annotations = ORFs_file
-        out_for_html_normal = f'{output_dir_path}/out_learning/concensus_predictions_with_annotation_for_html.csv'
-        out_for_html_pseudo = f'{output_dir_path}/out_learning/pseudogenes_predictions_with_annotation_for_html.csv'
-        out_T3SS_for_html = f'{output_dir_path}/out_learning/T3SS_for_html.csv'
-        if organization:
-            gff_dir = f'{working_directory}/gff'
-            add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS,gff_dir)
-        else:
-            add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS)
-        from csv_to_colored_xlsx_converter import convert_csv_to_colored_xlsx
-        convert_csv_to_colored_xlsx(out_f_normal)
-        convert_csv_to_colored_xlsx(out_f_pseudo)
-        if organization:
-            gff_dir = f'{working_directory}/gff'
-            add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,gff_dir,line_end='<br>')
-        else:
-            add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,line_end='<br>')
-        predicted_table, positives_table, T3SS_table = make_html_tables(out_for_html_normal,out_T3SS_for_html)
-        return predicted_table, positives_table, T3SS_table, low_quality_flag'''
 
         if html_path:
             #shutil.make_archive(final_zip_path, 'zip', output_dir_path)
-            finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table, low_confidence_flag)
+            finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table, low_quality_flag)#still need to complete the T3SS_table (Noam)
+        else:
+            with open(f'{output_dir_path}/output.txt','w') as out:
+                out.write(f'positives:\n{positives_table}\n\npredicted:\n{predicted_table}')
 
     except Exception as e:
         logger.info(f'SUCCEEDED = False')
@@ -600,22 +590,22 @@ def finalize_html(html_path, error_path, run_number, predicted_table, positives_
     succeeded = not os.path.exists(error_path)
     logger.info(f'SUCCEEDED = {succeeded}')
     if succeeded:
-        edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_table, T3SS_table, low_confidence_flag)
+        edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_table, low_confidence_flag)
     else:
         edit_failure_html(CONSTS, error_path, html_path, run_number)
     add_closing_html_tags(html_path, CONSTS, run_number)
 
 
-def edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_table, T3SS_table, low_confidence_flag):
+def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_table, low_confidence_flag):
     update_html(html_path, 'RUNNING', 'FINISHED')
     if low_confidence_flag:
         append_to_html(html_path, f'''
                        <div class="container" style="{CONSTS.CONTAINER_STYLE}" align="justify"><h3>
-                       <font color="red">WARNING: The predictions might be of low quality due to small positive set to train the classifier, or for other reasons.
+                       <font color="red">WARNING: The predictions might be of low quality.
                        </font></h3><br>
                        </div>
                        ''')
-    if positives_table:
+    if predicted_table:
         append_to_html(html_path, f'''
                 <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='left'>
                 <a href='out_learning/concensus_predictions_with_annotation.xlsx' target='_blank'>Download predictions file</a>
@@ -659,7 +649,7 @@ def edit_success_html(CONSTS, html_path, run_number, predicted_table, positives_
         append_to_html(html_path, f'''
                 <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='left'>
                 Unfortunatelly, we could not train a satisfying classifier due to small positive set.<br>The effectors found based on homology are listed in the table bellow:<br>
-                {predicted_table}
+                {positives_table}
                 </div>
                 ''')
 
