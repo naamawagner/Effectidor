@@ -147,20 +147,20 @@ def add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations_fa
                             writer_normal.writerow(row)
 
 
-def make_html_tables(predictions_f,T3SS):
+def make_html_tables(predictions_f,effector_homolog,T3SS=''):
     data = pd.read_csv(predictions_f)
     predicted = data[data.is_effector=='?']
     positives = data[data.is_effector=='yes']
     header = list(data.columns)
     header[1]='Score'
-    header[0]='Locus tag'
     predicted.columns = header
     positives.columns = header
     predicted.drop(columns=['is_effector'], inplace=True)
     positives.drop(columns=['is_effector'], inplace=True)
-    predicted_table = predicted.head(10).to_html(index=False,justify='left',escape=False)
-    positives_table = positives.to_html(index=False,justify='left',escape=False)
-    T3SS_data = pd.read_csv(T3SS)
-    T3SS_table = T3SS_data.to_html(index=False,justify='left',escape=False)
-    return predicted_table,positives_table,T3SS_table
+    effector_homolog_df = pd.read_csv(effector_homolog)
+    predicted_table = predicted.head(10).merge(effector_homolog_df,how='left').to_html(index=False,justify='left',escape=False)
+    positives_table = positives.merge(effector_homolog_df,how='left').to_html(index=False,justify='left',escape=False)
+    # T3SS_data = pd.read_csv(T3SS)
+    # T3SS_table = T3SS_data.to_html(index=False,justify='left',escape=False)
+    return predicted_table,positives_table
     
