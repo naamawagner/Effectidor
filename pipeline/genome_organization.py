@@ -68,10 +68,8 @@ def closest_effector(locus):
                     break
             if upstream_closest != 0 and downstream_closest != 0: # there is a neighbor effector
                 return min(upstream_closest,downstream_closest)
-            elif binary_l[gene_place] == 1: # there is no neighbor effector but this is an effector
-                return len(contig)
-            else: # this is not an effector nor it has a neighbor effector
-                return 5000 #maybe change in the future
+            else: # it has no neighbor effector
+                return None #it will be filled with the median of this feature later (before learning)
     for i in range(len(linear_contigs)):#linear
         if locus in linear_contigs[i]:
             contig = linear_contigs[i]
@@ -87,16 +85,14 @@ def closest_effector(locus):
                 if binary_l[gene_place-i] == 1:
                     downstream_closest = i
                     break
-            if upstream_closest != 0 and downstream_closest != 0: # there is a neighbor effector
+            if upstream_closest != 0 and downstream_closest != 0: # there are neighbor effectors both upstream and downstream
                 return min(upstream_closest,downstream_closest)
-            elif upstream_closest != 0:
+            elif upstream_closest != 0: # there is a neighbor effector upstream
                 return upstream_closest
-            elif downstream_closest != 0:
+            elif downstream_closest != 0: # there is a neighbor effector downstream
                 return downstream_closest
-            elif binary_l[gene_place] == 1: # there is no neighbor effector but this is an effector
-                return len(contig)
-            else: # this is not an effector nor it has a neighbor effector
-                return 5000 #maybe change in the future
+            else: # it has no neighbor effector
+                return None #it will be filled with the median of this feature later (before learning)
 
 
 def effectors_in_neighbors(locus,k_neighbors):

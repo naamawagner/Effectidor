@@ -23,6 +23,9 @@ out_dir='out_learning'
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 dataset=pd.read_csv(features_file)
+dataset.fillna(dataset.median(),inplace=True)
+filled_nan_f = os.path.join(wd,'features_filled_nan.csv')
+dataset.to_csv(filled_nan_f,index=False)
 ID_name = dataset.columns[0]
 dataset.is_effector.replace(['no','effector'],[0,1],inplace=True)
 array = dataset.values
@@ -292,16 +295,18 @@ try:
     classifiers_scores[f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'] = w_av_AUPRC
         
     best_classifier = max(classifiers_scores,key= lambda key: classifiers_scores[key])
-    #if classifiers_scores[best_classifier]-w_av_AUPRC > 0.02: # if another classifier is significantly better than the vote, take it.
-    #    concensus_df = preds_df[[ID_name,f'{best_classifier}','is_effector']]
-    #    concensus_df.rename(columns = {best_classifier:f'likelihood to be effector by {best_classifier}'},inplace=True)
-    #    sorted_concensus = concensus_df.sort_values(by=f'likelihood to be effector by {best_classifier}',ascending=False)
-    #    sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
-    #else: # vote is the best classifier or very close to it, so take it
-    concensus_df = preds_df[[ID_name,f'wVote (AUPRC {"%.3f" % w_av_AUPRC})','is_effector']]
-    sorted_concensus = concensus_df.sort_values(by=f'wVote (AUPRC {"%.3f" % w_av_AUPRC})',ascending=False)
-    sorted_concensus.rename(columns = {f'wVote (AUPRC {"%.3f" % w_av_AUPRC})':f'score (AUPRC on test set: {"%.3f" % w_av_AUPRC})'},inplace=True)
-    sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
+    if classifiers_scores[best_classifier]-w_av_AUPRC > 0.05: # if another classifier is significantly better than the vote, take it.
+        concensus_df = preds_df[[ID_name,f'{best_classifier}','is_effector']]
+        score_label = best_classifier
+        auprc = classifiers_scores[best_classifier]
+    else: # vote is the best classifier or very close to it, so take it
+        concensus_df = preds_df[[ID_name,f'wVote (AUPRC {"%.3f" % w_av_AUPRC})','is_effector']]
+        score_label = f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'
+        auprc = w_av_AUPRC
+    sorted_concensus = concensus_df.sort_values(by=score_label,ascending=False)
+    sorted_concensus.rename(columns = {score_label:f'score (AUPRC on test set: {"%.3f" % auprc})'},inplace=True)
+    rounded_scores = sorted_concensus.round({f'score (AUPRC on test set: {"%.3f" % auprc})':3})
+    rounded_scores.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
     
     # figures
     
@@ -313,7 +318,7 @@ try:
         for i in range(10):
             feature = next(reader)[0]
             best_features.append(feature)
-    f = features_file
+    f = filled_nan_f
     #f = r'C:\Users\TalPNB2\Naama\Naama\effectors\Citrobacter_rodentium\revision\Citrobacter_features_with_addition.csv'
     data = pd.read_csv(f)
     labeled=data[data.is_effector!='?']
@@ -422,14 +427,14 @@ except:
     best_classifier = max(classifiers_scores,key= lambda key: classifiers_scores[key])
     if classifiers_scores[best_classifier]-w_av_AUPRC > 0.02: # if another classifier is significantly better than the vote, take it.
         concensus_df = preds_df[[ID_name,f'{best_classifier}','is_effector']]
-        concensus_df.rename(columns = {best_classifier:f'score by {best_classifier}'},inplace=True)
-        sorted_concensus = concensus_df.sort_values(by=f'score by {best_classifier}',ascending=False)
+        concensus_df.rename(columns = {best_classifier:'score'},inplace=True)
         #sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
     else: # vote is the best classifier or very close to it, so take it
         concensus_df = preds_df[[ID_name,f'wVote (AUPRC {"%.3f" % w_av_AUPRC})','is_effector']]
-        sorted_concensus = concensus_df.sort_values(by=f'wVote (AUPRC {"%.3f" % w_av_AUPRC})',ascending=False)
-        sorted_concensus.rename(columns = {f'wVote (AUPRC {"%.3f" % w_av_AUPRC})':f'score (AUPRC on test set: {"%.3f" % w_av_AUPRC})'},inplace=True)
-    sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
+        concensus_df.rename(columns = {f'wVote (AUPRC {"%.3f" % w_av_AUPRC})':'score'},inplace=True)
+    sorted_concensus = concensus_df.sort_values(by='score', ascending=False)
+    rounded_scores = sorted_concensus.round({'score': 3})
+    rounded_scores.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
     
     # figures
     
@@ -441,7 +446,7 @@ except:
         for i in range(10):
             feature = next(reader)[0]
             best_features.append(feature)
-    f = features_file
+    f = filled_nan_f
     #f = r'C:\Users\TalPNB2\Naama\Naama\effectors\Citrobacter_rodentium\revision\Citrobacter_features_with_addition.csv'
     data = pd.read_csv(f)
     labeled=data[data.is_effector!='?']
