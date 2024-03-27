@@ -28,9 +28,9 @@ else:
 # Run Microbializer block
 queue = 'power-pupko'
 sh_file_content = f'''#!/bin/bash -x\n#PBS -S /bin/bash\n#PBS -q {queue}\n#PBS -o {working_directory}\n#PBS -e {working_directory}\n#PBS -N Microbializer_for_Effectidor\n
-                    #PBS -r y\nhostname\necho job_name: Microbializer_for_Effectidor\n\nsource /powerapps/share/miniconda3-4.7.12/etc/profile.d/conda.sh\n
-                    conda activate /groups/pupko/yairshimony/miniconda3/envs/microbializer\nexport PATH=$CONDA_PREFIX/bin:$PATH\n\n
-                    python /groups/pupko/yairshimony/microbializer_prod/pipeline/main.py --contigs_dir {working_directory}/genomes_for_Microbializer/ --output_dir output_OGs --add_orphan_genes_to_ogs --only_calc_ogs --inputs_are_annotated_genomes\n'''
+#PBS -r y\nhostname\necho job_name: Microbializer_for_Effectidor\n\nsource /powerapps/share/miniconda3-4.7.12/etc/profile.d/conda.sh\n
+conda activate /groups/pupko/yairshimony/miniconda3/envs/microbializer\nexport PATH=$CONDA_PREFIX/bin:$PATH\n\n
+python /groups/pupko/yairshimony/microbializer_prod/pipeline/main.py --contigs_dir {working_directory}/genomes_for_Microbializer/ --output_dir output_OGs --add_orphan_genes_to_ogs --only_calc_ogs --inputs_are_annotated_genomes\n'''
 with open('search_OGs.pbs','w') as pbs_f:
     pbs_f.write(sh_file_content)
 cmd = 'qsub search_OGs.pbs'
