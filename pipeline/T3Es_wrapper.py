@@ -137,7 +137,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         # sequence features
         jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/sequence_features.py {ORFs_file} {effectors_prots} {working_directory}\tsequence_features\n')
         # sequence similarity features
-        jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/homology.py {ORFs_file} {all_prots} {blast_datasets_dir} {effectors_prots} {working_directory}\thomology\n')
+        jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/homology.py {ORFs_file} {all_prots} {blast_datasets_dir} {working_directory}\thomology\n')
         if gff_file:
             # genome organization features
             jobs_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/genome_organization.py {ORFs_file} {effectors_prots} {working_directory} {gff_file}\tgenome_organization\n')

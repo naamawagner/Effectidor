@@ -6,8 +6,8 @@ from protein_mmseq import protein_mmseqs_all_vs_all
 ORFs_f = argv[1]
 blast_query = argv[2]
 blast_dataset_dir = argv[3]
-effectors_prots = argv[4]
-working_directory = argv[5]
+#effectors_prots = argv[4]
+working_directory = argv[4]
 blast_out = 'blast_outputs'
 os.chdir(working_directory)
 locus_dic=fasta_parser.parse_ORFs(ORFs_f)
@@ -55,7 +55,7 @@ with open(blast_query,'w') as out_f:
 
 blast_out_dics=[]
 datasets = {dataset[:-4]:f'{blast_dataset_dir}/{dataset}' for dataset in os.listdir(blast_dataset_dir) if dataset.endswith('faa')}
-datasets['effectors'] = effectors_prots
+#datasets['effectors'] = effectors_prots
 datasets_l=sorted(datasets.keys())
 if not os.path.exists(blast_out):
     os.makedirs(blast_out)
@@ -84,7 +84,7 @@ with open('closest_effector_homologs.csv','w',newline='') as out:
     writer = csv.writer(out)
     header = ['locus','Effector_ID']
     writer.writerow(header)
-    T3Es_blast_dic = parse_blast_out(f'{blast_out}/T3Es.blast')
+    T3Es_blast_dic = parse_blast_out(f'{blast_out}/T3Es.blast',10**(-4))
     for locus in T3Es_blast_dic:
         row = [locus,T3Es_blast_dic[locus][0]]
         writer.writerow(row)
