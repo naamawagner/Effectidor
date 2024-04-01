@@ -13,6 +13,7 @@ import re
 import subprocess
 import pandas as pd
 from add_annotations_to_predictions import make_html_tables
+from csv_to_colored_xlsx_converter import convert_csv_to_colored_xlsx
 
 data_dir = CONSTS.EFFECTIDOR_DATA
 blast_datasets_dir = f'{data_dir}/blast_data'
@@ -556,7 +557,6 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
             annotated_preds = preds_df.merge(annotations_df)
             annotated_preds.to_csv(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations.csv',index=False)
             annotated_preds.merge(ortho_df).to_csv(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations_and_ortho_table.csv',index=False)
-            from csv_to_colored_xlsx_converter import convert_csv_to_colored_xlsx
             convert_csv_to_colored_xlsx(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations_and_ortho_table.csv')
 
             predicted_table, positives_table = make_html_tables(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations.csv',f'{output_dir_path}/OG_effector_homologs.csv')

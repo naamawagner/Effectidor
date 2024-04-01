@@ -8,9 +8,13 @@ def convert_csv_to_colored_xlsx(path_to_csv, data_col='b', from_col='a', to_col=
     :return: creates a formatted xlsx file according to the
     """
     import pandas as pd
+    int_to_excel_column = lambda x: "" if x == 0 else int_to_excel_column((x - 1) // 26) + chr((x - 1) % 26 + 65)
 
     df = pd.read_csv(path_to_csv)
     number_of_loci = df.shape[0]
+    number_of_cols = df.shape[1]
+    to_col = int_to_excel_column(number_of_cols)
+    
 
     path_to_xlsx = path_to_csv.replace('csv', 'xlsx')
     writer = pd.ExcelWriter(path_to_xlsx, engine='xlsxwriter')
@@ -28,7 +32,7 @@ def convert_csv_to_colored_xlsx(path_to_csv, data_col='b', from_col='a', to_col=
     # table header formatting
     worksheet.conditional_format(f'{from_col}1:{to_col}1',
                                  {'type': 'formula',
-                                  'criteria': '=$A1="locus"',
+                                  'criteria': '=$C1="is_effector"',
                                   'format': workbook.add_format({'bg_color': '#FFEB9C',
                                                                  'bold': True,
                                                                  'italic': True})})
