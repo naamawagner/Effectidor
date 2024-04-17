@@ -121,7 +121,7 @@ def effectors_in_neighbors(locus,k_neighbors):
             binary_l = binary_linear_lsts[i]
             gene_place = contig.index(locus)
             if len(contig)-1 <= k_neighbors:
-                return sum(binary_l[:gene_place])+sum(binary_l[gene_place:])
+                return sum(binary_l[:gene_place])+sum(binary_l[gene_place+1:])
             if gene_place >= k_neighbors: # enough genes upstream
                 down = sum(binary_l[gene_place-k_neighbors:gene_place])
             else:
