@@ -30,7 +30,7 @@ queue = 'power-pupko'
 sh_file_content = f'''#!/bin/bash -x\n#PBS -S /bin/bash\n#PBS -q {queue}\n#PBS -o {working_directory}\n#PBS -e {working_directory}\n#PBS -N Microbializer_for_Effectidor\n
 #PBS -r y\nhostname\necho job_name: Microbializer_for_Effectidor\n\nsource /powerapps/share/miniconda3-4.7.12/etc/profile.d/conda.sh\n
 conda activate /groups/pupko/yairshimony/miniconda3/envs/microbializer\nexport PATH=$CONDA_PREFIX/bin:$PATH\n\n
-python /groups/pupko/yairshimony/microbializer_prod/pipeline/main.py --contigs_dir {working_directory}/genomes_for_Microbializer/ --output_dir output_OGs --add_orphan_genes_to_ogs --only_calc_ogs --inputs_are_annotated_genomes\n'''
+python /groups/pupko/yairshimony/microbializer_prod/pipeline/main.py --contigs_dir {working_directory}/genomes_for_Microbializer/ --output_dir output_OGs --add_orphan_genes_to_ogs --only_calc_ogs --inputs_are_annotated_genomes --bypass_number_of_genomes_limit\n'''
 with open('search_OGs.pbs','w') as pbs_f:
     pbs_f.write(sh_file_content)
 cmd = 'qsub search_OGs.pbs'
@@ -40,7 +40,7 @@ while not os.path.exists(f'{run_number}.ER'): #while the job hasn't finished
     time.sleep(300)
 
 # move Microbializer output to the working directory for future use
-Microbializer_output_f = 'M1CR0B1AL1Z3R_output_OGs/06e_final_table/final_orthologs_table.csv'
+Microbializer_output_f = 'M1CR0B1AL1Z3R_output_OGs/07a_final_table/final_orthologs_table.csv'
 shutil.copy(Microbializer_output_f,working_directory)
 
 #subprocess.call("rm -r M1CR0B1AL1Z3R_output_OGs",shell=True)

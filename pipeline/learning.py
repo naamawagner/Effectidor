@@ -304,8 +304,8 @@ try:
         score_label = f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'
         auprc = w_av_AUPRC
     sorted_concensus = concensus_df.sort_values(by=score_label,ascending=False)
-    sorted_concensus.rename(columns = {score_label:f'score (AUPRC on test set: {"%.3f" % auprc})'},inplace=True)
-    rounded_scores = sorted_concensus.round({f'score (AUPRC on test set: {"%.3f" % auprc})':3})
+    sorted_concensus.rename(columns = {score_label:f'score'},inplace=True)
+    rounded_scores = sorted_concensus.round({f'score':3})
     rounded_scores.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
     
     # figures
@@ -319,7 +319,6 @@ try:
             feature = next(reader)[0]
             best_features.append(feature)
     f = filled_nan_f
-    #f = r'C:\Users\TalPNB2\Naama\Naama\effectors\Citrobacter_rodentium\revision\Citrobacter_features_with_addition.csv'
     data = pd.read_csv(f)
     labeled=data[data.is_effector!='?']
     f_names = labeled.columns[1:-1]

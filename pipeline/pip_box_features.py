@@ -185,18 +185,6 @@ tts_box = 'GTCAG[TCG]T[TCAG]{4}G[AT][AC]AG[CGT][TAC][ATCG]{3}[CTG]{2}[ATCG]{4}A'
 tts_box_l = ['G','T','C','A','G','[TGC]','T']+['[ATGC]']*4+['G','[AT]','[AC]','A','G','[CGT]','[TAC]']+['[ATGC]']*3+['[CTG]']*2+['[ATGC]']*4+['A']
 tts_box_one_mismatch = create_box_one_mismatch(tts_box_l)              
 
-def run_hmmer(hmm_profile_path,query,out):
-    cmd = f'module load hmmer/hmmer-3.3.2;hmmsearch {hmm_profile_path} {query} > {out}'
-    subprocess.check_output(cmd,shell=True)
-    
-def parse_hmmer(hmmer_out,locus):
-    with open(hmmer_out) as hmmer_f:
-        for line in hmmer_f:
-            if line.startswith(' ') and locus in line:
-                line_l = line.split()
-                e_val_log , score = -math.log(float(line_l[3])) , float(line_l[4])
-                return e_val_log,score
-    return 0,0
                 
     
 def main(ORFs_file, working_directory, gff_f, genome_f, PIP=False, hrp=False, mxiE=False, exs=False, tts=False):
@@ -217,34 +205,34 @@ def main(ORFs_file, working_directory, gff_f, genome_f, PIP=False, hrp=False, mx
         csv_writer = csv.writer(f)
         header=['locus']
         if PIP:
-            header += ['PIP_box','PIP_box_mismatch']
+            header += ['PIP_box']
         if hrp:
-            header += ['hrp_box','hrp_box_mismatch']
+            header += ['hrp_box']
         if mxiE:
-            header += ['mxiE_box','mxiE_box_mismatch']
+            header += ['mxiE_box']
         if exs:
-            header += ['exs_box','exs_box_mismatch']
+            header += ['exs_box']
         if tts:
-            header += ['tts_box','tts_box_mismatch']
+            header += ['tts_box']
             #header += ['tts_hmmer_e_val_log','tts_hmmer_score']
         csv_writer.writerow(header)
         for locus in locus_dic:
             l=[locus]
             if PIP:
                 l.append(existence_upstream_to_AUG(locus,pip_box))
-                l.append(existence_upstream_to_AUG(locus,pip_box_one_mismatch))
+                #l.append(existence_upstream_to_AUG(locus,pip_box_one_mismatch))
             if hrp:
                 l.append(existence_upstream_to_AUG(locus,hrp_box))
-                l.append(existence_upstream_to_AUG(locus,hrp_one_mismatch))
+                #l.append(existence_upstream_to_AUG(locus,hrp_one_mismatch))
             if mxiE:
                 l.append(existence_upstream_to_AUG(locus,mxiE_box))
-                l.append(existence_upstream_to_AUG(locus,mxiE_box_one_mismatch))
+                #l.append(existence_upstream_to_AUG(locus,mxiE_box_one_mismatch))
             if exs:
                 l.append(existence_upstream_to_AUG(locus,exs_box))
-                l.append(existence_upstream_to_AUG(locus,exs_box_one_mismatch))
+                #l.append(existence_upstream_to_AUG(locus,exs_box_one_mismatch))
             if tts:
                 l.append(existence_upstream_to_AUG(locus,tts_box))
-                l.append(existence_upstream_to_AUG(locus,tts_box_one_mismatch))
+                #l.append(existence_upstream_to_AUG(locus,tts_box_one_mismatch))
                 
             csv_writer.writerow(l)
     endfile = open('pip_box_features.done','w')

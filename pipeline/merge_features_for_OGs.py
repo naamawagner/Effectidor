@@ -26,30 +26,52 @@ def get_ortho_dict(wd,ortho_f='clean_orthologs_table.csv'):
                 for locus in row[i].split(';'):
                     genomes_orthogroup_dict[genome][locus]=OG
     return genomes_orthogroup_dict
-   
+
 genomes_orthogroup_dict = get_ortho_dict(working_directory)
 
 # prepare the orthologs table for final merge:
-with open(os.path.join(working_directory, 'clean_orthologs_table.csv')) as in_f:
-    full_content = in_f.read()
+# with open(os.path.join(working_directory, 'clean_orthologs_table.csv')) as in_f:
+#     full_content = in_f.read()
 if os.path.exists(Effectidor_features_d):
+    pseudogenes = []
     genomes = os.listdir(Effectidor_features_d)
     for genome in genomes:
         pseudogenes_path = os.path.join(Effectidor_features_d,genome,'pseudogenes.txt')
         with open(pseudogenes_path) as pseudo_f:
-            pseudogenes = pseudo_f.read().split('\n')
-            for pseudo in pseudogenes:
-                full_content = full_content.replace(f'{pseudo},',f'{pseudo}(pseudogene),')
-                full_content = full_content.replace(f'{pseudo};', f'{pseudo}(pseudogene);')
+            content = pseudo_f.read()
+            if content != '':
+                pseudogenes.extend(content.split('\n'))
+
+            # for pseudo in pseudogenes:
+            #     full_content = full_content.replace(f'{pseudo},',f'{pseudo}(pseudogene),')
+            #     full_content = full_content.replace(f'{pseudo};', f'{pseudo}(pseudogene);')
 else:
-    with open('pseudogenes.txt'):
+    with open('pseudogenes.txt') as pseudo_f:
         pseudogenes = pseudo_f.read().split('\n')
-        for pseudo in pseudogenes:
-            full_content = full_content.replace(f'{pseudo},', f'{pseudo}(pseudogene),')
-            full_content = full_content.replace(f'{pseudo};', f'{pseudo}(pseudogene);')
-full_content = full_content.replace('OG_name,','OG,')
-with open('clean_orthologs_table_with_pseudo.csv','w') as out_f:
-    out_f.write(full_content)
+with open(os.path.join(working_directory,'pseudogenes.txt'),'w') as pseudo_f:
+    pseudo_f.write('\n'.join(pseudogenes))
+
+with open(os.path.join(working_directory, 'clean_orthologs_table.csv')) as in_f:
+    with open('clean_orthologs_table_with_pseudo.csv', 'w') as out_f:
+        header = next(in_f)
+        header = header.replace('OG_name,','OG,')
+        out_f.write(header)
+        for row in in_f:
+            to_remove = []
+            for pseudo in pseudogenes:
+                if f'{pseudo},' in row or f'{pseudo};' in row:
+                    row = row.replace(f'{pseudo},', f'{pseudo}(pseudogene),')
+                    row = row.replace(f'{pseudo};', f'{pseudo}(pseudogene);')
+                    to_remove.append(pseudo)
+            out_f.write(row)
+            for pseudo in to_remove:
+                pseudogenes.remove(pseudo)
+
+#             full_content = full_content.replace(f'{pseudo},', f'{pseudo}(pseudogene),')
+#             full_content = full_content.replace(f'{pseudo};', f'{pseudo}(pseudogene);')
+# full_content = full_content.replace('OG_name,','OG,')
+# with open('clean_orthologs_table_with_pseudo.csv','w') as out_f:
+#     out_f.write(full_content)
 
 def combine_all_genomes_data(out_f_path,in_f_name):
     with open(out_f_path,'w',newline='') as out_path:

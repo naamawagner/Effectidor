@@ -307,14 +307,14 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                 shutil.unpack_archive(genome_path,f'{output_dir_path}/full_genome_tmp')
                 full_genome_names = []
                 for file in os.listdir(f'{output_dir_path}/full_genome_tmp'):
-                    print(file)
+                    #print(file)
                     if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{output_dir_path}/full_genome_tmp/{file}'): # discard system files and directories
                         error_msg = verify_fasta_format(f'{output_dir_path}/full_genome_tmp/{file}','DNA', f'{file} in full genome archive')
                         if error_msg:
                             error_msg = f'Illegal fasta files in {file} in full genome archive: {error_msg}'
                             fail(error_msg,error_path)
                         genome_name = '_'.join(file.split('/')[-1].split('.')[0].split(' '))
-                        print(f'file:{file}, genome:{genome_name}')
+                        #print(f'file:{file}, genome:{genome_name}')
                         full_genome_names.append(genome_name)
                         if genome_name in os.listdir(f'{output_dir_path}/Effectidor_runs'):
                             shutil.move(os.path.join(output_dir_path, 'full_genome_tmp', file), os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'genome.fasta'))
@@ -569,8 +569,8 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
             #shutil.make_archive(final_zip_path, 'zip', output_dir_path)
             finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table, low_quality_flag)#still need to complete the T3SS_table (Noam)
         else:
-            with open(f'{output_dir_path}/output.txt','w') as out:
-                out.write(f'positives:\n{positives_table}\n\npredicted:\n{predicted_table}')
+            with open(f'{output_dir_path}/output.html','w') as out:
+                out.write(f'positives:\n{positives_table}\n<br>\npredicted:\n{predicted_table}')
 
     except Exception as e:
         logger.info(f'SUCCEEDED = False')
