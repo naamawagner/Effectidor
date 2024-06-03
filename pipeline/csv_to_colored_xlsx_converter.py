@@ -52,7 +52,7 @@ def convert_csv_to_colored_xlsx(path_to_csv, data_col='b', from_col='a', to_col=
                                       'format': workbook.add_format({'bg_color': bg_color,
                                                                      'font_color': font_color})})
 
-    writer.save()
+    writer.close()
 
 '''
 if __name__ == '__main__':
