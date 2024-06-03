@@ -42,7 +42,7 @@ def create_effectors_html(effectors_file,ORFs_file,out_dir):
     effectors_table = data.to_html(index=False,justify='left',escape=False)
     return effectors_table,None,None, False
             
-def write_sh_file(tmp_dir,path_to_dir_with_fastas,path_for_embedding_files,path_for_output_csv,queue):
+def write_sh_file(tmp_dir,path_to_dir_with_fastas,path_for_embedding_files,path_for_output_csv,queue='power-pupko'):
     content = f'''#!/bin/bash\n\n#PBS -S /bin/bash\n#PBS -r y\n#PBS -q {queue}@power9\n#PBS -l ncpus=10,mem=15gb\n#PBS -v PBS_O_SHELL=bash,PBS_ENVIRONMENT=PBS_BATCH\n#PBS -N Effectidor_embedding\n#PBS -e {tmp_dir}\n#PBS -o {tmp_dir}\n\nsource /groups/pupko/alburquerque/miniconda3/etc/profile.d/conda.sh\nconda activate MsaEmbedding\ncd /groups/pupko/alburquerque/MsaTransformerEffectidor/\nPYTHONPATH=$(pwd)\npython extract.py --model_location "/groups/pupko/alburquerque/MsaTransformerEffectidor/esm1_t34_670M_UR50S.pt" --input_dir "{path_to_dir_with_fastas}" --output_dir "{path_for_embedding_files}" --repr_layers 34 --include mean\npython create_effectidor_feats.py --path_to_embedding_files "{path_for_embedding_files}" --path_to_fasta_files "{path_to_dir_with_fastas}" --output_file_path "{path_for_output_csv}"'''
     with open(f'{tmp_dir}/Embedding.sh','w') as out:
         out.write(content)
@@ -78,8 +78,11 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         os.makedirs(f'{working_directory}/blast_data',exist_ok=True) # this directory was already created if another input for homology search was supplied (host proteome or proteomes of closely related bacteria without T3SS)
         cmd = f'cp {blast_datasets_dir}/*.faa {working_directory}/blast_data/'
         subprocess.check_output(cmd,shell=True)
-    blast_datasets_dir = f'{working_directory}/blast_data'
+    cmd = f'cp -r {os.path.join(data_dir,"T3SS_data")} {working_directory}'
+    subprocess.check_output(cmd, shell=True)
 
+    blast_datasets_dir = f'{working_directory}/blast_data'
+    '''
     if os.path.exists(f'{working_directory}/user_T3Es.fasta'): # add these records to the T3Es dataset
         eff1_recs=SeqIO.parse(f'{blast_datasets_dir}/T3Es.faa','fasta')
         eff_l = list(eff1_recs)
@@ -90,15 +93,15 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
                 eff_l.append(rec)
                 seqs.append(rec.seq)
         SeqIO.write(eff_l,f'{blast_datasets_dir}/T3Es.faa','fasta')
+    '''
             
     # feature extraction step
     
     # translate the input fasta files
     subprocess.check_output(['python',f'{scripts_dir}/translate_fasta.py',ORFs_file,effectors_file,all_prots,effectors_prots])
-    #make N-terminal sequences for Signal search
-    if signal:
-        if not os.path.exists(signal_prot_dir):
-            os.makedirs(signal_prot_dir)
+
+    if signal: #make N-terminal sequences for Signal search
+        os.makedirs(signal_prot_dir, exist_ok=True)
         recs = SeqIO.parse(all_prots,'fasta')
         for rec in recs:
             ID = rec.id
@@ -109,7 +112,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
             SeqIO.write(rec,file_path,'fasta')
         if not os.path.exists(signal_embed_dir):
             os.makedirs(signal_embed_dir)
-        write_sh_file(tmp_dir,signal_prot_dir,signal_embed_dir,f'{working_directory}/Embedding_pred.csv',queue)
+        write_sh_file(tmp_dir,signal_prot_dir,signal_embed_dir,f'{working_directory}/Embedding_pred.csv')
     
     if not effectors_file:
         subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots])
@@ -132,6 +135,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     '''
     # find and create non effectors fasta file
     subprocess.check_output(['python',f'{scripts_dir}/find_non_effectors.py',all_prots,effectors_prots])
+    subprocess.check_output(['python',f'{scripts_dir}/find_T3SS_components.py', working_directory, all_prots, 'T3SS_data'])
     # creating the features extraction commands
     with open(f'{working_directory}/features_jobs.cmds','w') as jobs_f:
         # sequence features

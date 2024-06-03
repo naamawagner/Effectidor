@@ -10,7 +10,8 @@ QUERY_COVERAGE_PERCENTAGE_CUT_OFF = 0.3
 FLAGELLA_SYSTEM = "Flagellar"
 MMSEQS_OUTPUT_FORMAT = 'query,target,fident,alnlen,mismatch,gapopen,qstart,qend,qlen,qcov,tstart,tend,evalue,bits'
 COLUMN_NAMES = ['T3SS_protein', 'bacterial_protein', "identity_percent", "alignment length", "mismatch", "gapopen",
-                "query_start", "query_end", "query_ length", 'query_coverage_percentage', "target_ start", "target_end", 'e_value', 'bit_score']
+                "query_start", "query_end", "query_ length", 'query_coverage_percentage', "target_ start", "target_end",
+                'e_value', 'bit_score']
 HEADERS = ["Subsystem_T3SS Protein", "Bacterial Protein ID"]
 
 
@@ -19,11 +20,11 @@ def run_mmseqs(query_files_directory, output_mmseqs, bacterial_proteome, tmp_mms
         query_file_path = os.path.join(query_files_directory, query_file)
         output_path = os.path.join(
             output_mmseqs, query_file.split(".")[0] + ".m8")
-        mmseqs_command = f"mmseqs easy-search {query_file_path} {bacterial_proteome} {output_path} {tmp_mmseqs} --format-output {MMSEQS_OUTPUT_FORMAT}"
+        mmseqs_command = f"mmseqs easy-search {query_file_path} {bacterial_proteome} {output_path} {tmp_mmseqs} --format-output {MMSEQS_OUTPUT_FORMAT} --threads 1"
         if RUN_WITH_CONDA:
             conda_activate_command = ". ~/miniconda3/etc/profile.d/conda.sh; conda activate test;"
-            run_mmseqs = conda_activate_command + mmseqs_command
-            subprocess.run(run_mmseqs, shell=True)
+            mmseqs_command = conda_activate_command + mmseqs_command
+            subprocess.run(mmseqs_command, shell=True)
         else:
             subprocess.run(mmseqs_command, shell=True)
 
@@ -100,7 +101,11 @@ def get_best_bacterial_T3SS_match_dict(all_subsystems_dict):
 
 
 def get_full_bacterial_T3SS_dict(T3SS_data, best_bacterial_T3SS_match_dict):
-    # If a homologous bacterial gene is found - {bacterial_gene: (system_gene, subsystem)}. If no homologous bacterial gene is found - {integer: (system_gene, subsystem)}
+    '''
+    returns a dictionary in the following format:
+    If a homologous bacterial gene is found - {bacterial_gene: (system_gene, subsystem)}.
+    If no homologous bacterial gene is found - {integer: (system_gene, subsystem)}
+    '''
     full_bacterial_T3SS_dict = {}
     i = 1
     for T3SS_data_file in os.listdir(T3SS_data):
