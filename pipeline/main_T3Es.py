@@ -54,8 +54,9 @@ def verify_fasta_format(fasta_path, Type, input_name):
                     if not putative_end_of_file:  # ignore trailing empty lines
                         putative_end_of_file = line_number
                     continue
-                # if putative_end_of_file:  # non-empty line after empty line
-                #    return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. Line {putative_end_of_file} in fasta {input_name} is empty.'
+                # if putative_end_of_file:  # non-empty line after empty line return f'Illegal <a
+                # href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA format</a>. Line {
+                # putative_end_of_file} in fasta {input_name} is empty.'
                 if line.startswith('>'):
                     if previous_line_was_header:
                         return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" ' \
@@ -83,7 +84,9 @@ def verify_fasta_format(fasta_path, Type, input_name):
                     AGCT_count = seq.count('A') + seq.count('G') + seq.count('T') + seq.count('C') + seq.count('N')
                     if AGCT_count >= 0.95 * len(seq):
                         f = AGCT_count * 100 / len(seq)
-                        return f'Protein fasta {input_name} seems to contain DNA records (record {rec.id} contains {float("%.2f" % f)}% DNA characters). Make sure all samples in the file are protein sequences and re-submit. '
+                        return f'Protein fasta {input_name} seems to contain DNA records (record {rec.id} contains ' \
+                               f'{float("%.2f" % f)}% DNA characters). Make sure all samples in the file are protein ' \
+                               f'sequences and re-submit. '
         except UnicodeDecodeError as e:
             logger.info(e.args)
             line_number += 1  # the line that was failed to be read
@@ -99,16 +102,16 @@ def verify_ORFs(ORFs_path):
     logger.info(f'Validating ORFs:{ORFs_path}')
     ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path, 'fasta')])
     if len(ORFs_recs) < 900:
-        return f'The ORFs file contains only {str(len(ORFs_recs))} records. Make sure this file contains all the ORFs ' \
-               f'(open reading frames) in the genome - Effectidor is designed to analyze full genomes and not a ' \
-               f'sample of genes. Also, make sure this file contains ORFs and not full genome sequence! The full ' \
+        return f'The ORFs file contains only {str(len(ORFs_recs))} records. Make sure this file contains all the ' \
+               f'ORFs (open reading frames) in the genome - Effectidor is designed to analyze full genomes and not ' \
+               f'a sample of genes. Also, make sure this file contains ORFs and not full genome sequence! The full ' \
                f'genome sequence can be uploaded in the advanced options. '
     elif len(ORFs_recs) > 10000:
         return f'The ORFs file contains {str(len(ORFs_recs))} records! Every file should contain data of a single ' \
                f'bacterial genome. Make sure this file contains all the ORFs (open reading frames) in the genome, ' \
                f'and only the ORFs of one genome. This number cannot exceed 10,000 ORFs per genome. If it contains ' \
                f'data of multiple genomes, separate them to different files (compressed together in a ZIP archive) ' \
-               f'such that every file will contain the ORFs of a single genome '
+               f'such that every file will contain the ORFs of a single genome. '
 
 
 def verify_effectors_f(effectors_path, ORFs_path):
@@ -521,7 +524,7 @@ def cleanup_ran_today(path=r'/bioseq/data/results/effectidor/'):
 
 
 def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path,
-         gff_path, no_T3SS, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,
+         gff_path, no_T3SS, identity_cutoff='50', coverage_cutoff='60', PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,
          signal=False):
     '''
     try:
@@ -546,7 +549,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
 
         find_OGs_cmd = f'module load python/python-anaconda3.6.5;!@#python ' \
                        f'{os.path.join(scripts_dir, "find_OGs_in_genomes.py")} ' \
-                       f'{output_dir_path}\tfind_OGs_effectidor\n'
+                       f'{output_dir_path} {identity_cutoff} {coverage_cutoff}\tfind_OGs_effectidor\n'
         with open(os.path.join(output_dir_path, 'find_OGs.cmds'), 'w') as out_f:
             out_f.write(find_OGs_cmd)
         cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {os.path.join(output_dir_path, "find_OGs.cmds")} ' \
@@ -632,21 +635,21 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         else:
             subprocess.check_output(
                 ['python', os.path.join(scripts_dir, 'learning.py'), output_dir_path, 'OGs_features.csv'])
-            preds_df = pd.read_csv(f'{output_dir_path}/out_learning/concensus_predictions.csv')
+            preds_df = pd.read_csv(f'{output_dir_path}/out_learning/consensus_predictions.csv')
             ortho_df = pd.read_csv(f'{output_dir_path}/clean_orthologs_table_with_pseudo.csv')
             annotated_preds = preds_df.merge(annotations_df)
-            annotated_preds.to_csv(f'{output_dir_path}/out_learning/concensus_predictions_with_annotations.csv',
+            annotated_preds.to_csv(f'{output_dir_path}/out_learning/consensus_predictions_with_annotations.csv',
                                    index=False)
             annotated_preds.merge(ortho_df).to_csv(
-                f'{output_dir_path}/out_learning/concensus_predictions_with_annotations_and_ortho_table.csv',
+                f'{output_dir_path}/out_learning/consensus_predictions_with_annotations_and_ortho_table.csv',
                 index=False)
             convert_csv_to_colored_xlsx(
-                f'{output_dir_path}/out_learning/concensus_predictions_with_annotations_and_ortho_table.csv')
+                f'{output_dir_path}/out_learning/consensus_predictions_with_annotations_and_ortho_table.csv')
 
             predicted_table, positives_table = make_html_tables(
-                f'{output_dir_path}/out_learning/concensus_predictions_with_annotations.csv',
+                f'{output_dir_path}/out_learning/consensus_predictions_with_annotations.csv',
                 f'{output_dir_path}/OG_effector_homologs.csv')
-
+            subprocess.check_output(['python', os.path.join(scripts_dir, 'phyletic_patterns.py'), output_dir_path])
         low_quality_flag = False
         if os.path.exists(f'{output_dir_path}/out_learning/learning_failed.txt'):
             low_quality_flag = True
@@ -695,7 +698,7 @@ def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_
     if predicted_table:
         append_to_html(html_path, f'''
                 <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='left'>
-                <a href='out_learning/concensus_predictions_with_annotation.xlsx' target='_blank'>Download predictions file</a>
+                <a href='out_learning/consensus_predictions_with_annotation.xlsx' target='_blank'>Download predictions file</a>
                 <br>
                 <a href='out_learning/pseudogenes.xlsx' target='_blank'>Download pseudogenes file</a>
                 <br>
@@ -838,6 +841,10 @@ if __name__ == '__main__':
     parser.add_argument('--tts', help='look for tts-box in promoters', action='store_true')
     parser.add_argument('-q', '--queue_name', help='The cluster to which the job(s) will be submitted to',
                         default='pupkolabr')
+    parser.add_argument('--identity_cutoff', help='identity percentage cutoff for orthologs and paralogs search',
+                        default='50')
+    parser.add_argument('--coverage_cutoff', help='coverage percentage cutoff for orthologs and paralogs search',
+                        default='60')
 
     args = parser.parse_args()
 
@@ -853,7 +860,7 @@ if __name__ == '__main__':
     tts_flag = args.tts
 
     main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path,
-         args.host_proteome_path,
-         args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS, PIP=PIP_flag, hrp=hrp_flag,
-         mxiE=mxiE_flag,
-         exs=exs_flag, tts=tts_flag, homology_search=args.homology_search, signal=args.translocation_signal)
+         args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS,
+         identity_cutoff=args.identity_cutoff, coverage_cutoff=args.coverage_cutoff, PIP=PIP_flag, hrp=hrp_flag,
+         mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=args.homology_search,
+         signal=args.translocation_signal)
