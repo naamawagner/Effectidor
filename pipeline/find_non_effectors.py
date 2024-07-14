@@ -40,19 +40,19 @@ def parse_blast_out(blast_out, e_val=0.01, min_coverage=0):
     return blast_out_dic
 
 
-if os.path.exists('blast_outputs/effectors_hits.csv'):
-    effectors = {}
-    with open('blast_outputs/effectors_hits.csv') as in_f:
-        reader = csv.reader(in_f)
-        for row in reader:
-            effectors[row[0]] = float(row[1])
-
 prots_dict = SeqIO.to_dict(SeqIO.parse(all_prots, 'fasta'))
 if not os.path.exists('tmp_mmseq'):
     os.makedirs('tmp_mmseq')
 protein_mmseqs_all_vs_all(all_prots, k12_dataset, k12_out_file, 'tmp_mmseq')
 k12_dict = parse_blast_out(k12_out_file, e_val=10**(-6))
-if os.path.exists('blast_outputs/effectors_hits.csv'):
+
+if os.path.exists('blast_outputs/effectors_hits.csv'):  # if the effectors were found based on mmseqs, we need to
+    # verify their hit to effectors was better than their hit to non-effectors
+    effectors = {}
+    with open('blast_outputs/effectors_hits.csv') as in_f:
+        reader = csv.reader(in_f)
+        for row in reader:
+            effectors[row[0]] = float(row[1])
     effectors_to_keep = []
     for effector in effectors:
         if effector not in k12_dict:

@@ -28,7 +28,7 @@ dataset = pd.concat([dataset[dataset.columns[0]], features_filled_nan, dataset[d
 filled_nan_f = os.path.join(wd, 'features_filled_nan.csv')
 dataset.to_csv(filled_nan_f, index=False)
 ID_name = dataset.columns[0]
-dataset.replace({'is_effector':{'no': 0, 'effector': 1}}, inplace=True)
+dataset.replace({'is_effector': {'no': 0, 'effector': 1}}, inplace=True)
 array = dataset.values
 features = array[:, 1:-1]
 un_labeled = dataset[dataset.is_effector == '?']
@@ -299,18 +299,19 @@ try:
     classifiers_scores[f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'] = w_av_AUPRC
         
     best_classifier = max(classifiers_scores, key=lambda key: classifiers_scores[key])
-    if classifiers_scores[best_classifier]-w_av_AUPRC > 0.05:  # if another classifier is significantly better than the vote, take it.
-        concensus_df = preds_df[[ID_name, f'{best_classifier}', 'is_effector']]
+    if classifiers_scores[best_classifier]-w_av_AUPRC > 0.05:  # if another classifier is significantly better than
+        # the vote, take it.
+        consensus_df = preds_df[[ID_name, f'{best_classifier}', 'is_effector']]
         score_label = best_classifier
         auprc = classifiers_scores[best_classifier]
     else:  # vote is the best classifier or very close to it, so take it
-        concensus_df = preds_df[[ID_name, f'wVote (AUPRC {"%.3f" % w_av_AUPRC})', 'is_effector']]
+        consensus_df = preds_df[[ID_name, f'wVote (AUPRC {"%.3f" % w_av_AUPRC})', 'is_effector']]
         score_label = f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'
         auprc = w_av_AUPRC
-    sorted_concensus = concensus_df.sort_values(by=score_label, ascending=False)
-    sorted_concensus.rename(columns={score_label: f'score'}, inplace=True)
-    rounded_scores = sorted_concensus.round({f'score': 3})
-    rounded_scores.to_csv(f'{out_dir}/concensus_predictions.csv', index=False)
+    sorted_consensus = consensus_df.sort_values(by=score_label, ascending=False)
+    sorted_consensus.rename(columns={score_label: f'score'}, inplace=True)
+    rounded_scores = sorted_consensus.round({f'score': 3})
+    rounded_scores.to_csv(f'{out_dir}/consensus_predictions.csv', index=False)
     
     # figures
     
@@ -427,16 +428,16 @@ except:
     classifiers_scores[f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'] = w_av_AUPRC
         
     best_classifier = max(classifiers_scores, key=lambda key: classifiers_scores[key])
-    if classifiers_scores[best_classifier]-w_av_AUPRC > 0.02:  # if another classifier is significantly better than the vote, take it.
-        concensus_df = preds_df[[ID_name, f'{best_classifier}', 'is_effector']]
-        concensus_df.rename(columns={best_classifier: 'score'}, inplace=True)
-        #sorted_concensus.to_csv(f'{out_dir}/concensus_predictions.csv',index=False)
+    if classifiers_scores[best_classifier]-w_av_AUPRC > 0.02:  # if another classifier is significantly better than
+        # the vote, take it.
+        consensus_df = preds_df[[ID_name, f'{best_classifier}', 'is_effector']]
+        consensus_df.rename(columns={best_classifier: 'score'}, inplace=True)
     else:  # vote is the best classifier or very close to it, so take it
-        concensus_df = preds_df[[ID_name, f'wVote (AUPRC {"%.3f" % w_av_AUPRC})', 'is_effector']]
-        concensus_df.rename(columns={f'wVote (AUPRC {"%.3f" % w_av_AUPRC})': 'score'}, inplace=True)
-    sorted_concensus = concensus_df.sort_values(by='score', ascending=False)
-    rounded_scores = sorted_concensus.round({'score': 3})
-    rounded_scores.to_csv(f'{out_dir}/concensus_predictions.csv', index=False)
+        consensus_df = preds_df[[ID_name, f'wVote (AUPRC {"%.3f" % w_av_AUPRC})', 'is_effector']]
+        consensus_df.rename(columns={f'wVote (AUPRC {"%.3f" % w_av_AUPRC})': 'score'}, inplace=True)
+    sorted_consensus = consensus_df.sort_values(by='score', ascending=False)
+    rounded_scores = sorted_consensus.round({'score': 3})
+    rounded_scores.to_csv(f'{out_dir}/consensus_predictions.csv', index=False)
     
     # figures
     
