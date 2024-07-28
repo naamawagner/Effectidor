@@ -43,8 +43,15 @@ def create_effectors_html(effectors_file,ORFs_file,out_dir):
     return effectors_table,None,None, False
             
 def write_sh_file(tmp_dir,path_to_dir_with_fastas,path_for_embedding_files,path_for_output_csv,queue='power-pupko'):
-    content = f'''#!/bin/bash\n\n#PBS -S /bin/bash\n#PBS -r y\n#PBS -q {queue}@power9\n#PBS -l ncpus=10,mem=15gb\n#PBS -v PBS_O_SHELL=bash,PBS_ENVIRONMENT=PBS_BATCH\n#PBS -N Effectidor_embedding\n#PBS -e {tmp_dir}\n#PBS -o {tmp_dir}\n\nsource /groups/pupko/alburquerque/miniconda3/etc/profile.d/conda.sh\nconda activate MsaEmbedding\ncd /groups/pupko/alburquerque/MsaTransformerEffectidor/\nPYTHONPATH=$(pwd)\npython extract.py --model_location "/groups/pupko/alburquerque/MsaTransformerEffectidor/esm1_t34_670M_UR50S.pt" --input_dir "{path_to_dir_with_fastas}" --output_dir "{path_for_embedding_files}" --repr_layers 34 --include mean\npython create_effectidor_feats.py --path_to_embedding_files "{path_for_embedding_files}" --path_to_fasta_files "{path_to_dir_with_fastas}" --output_file_path "{path_for_output_csv}"'''
-    with open(f'{tmp_dir}/Embedding.sh','w') as out:
+    content = f'''source /groups/pupko/alburquerque/miniconda3/etc/profile.d/conda.sh!@#\
+conda activate MsaEmbedding!@#cd /groups/pupko/alburquerque/MsaTransformerEffectidor/!@#\
+PYTHONPATH=$(pwd)!@#\
+python extract.py --model_location "/groups/pupko/alburquerque/MsaTransformerEffectidor/esm1_t34_670M_UR50S.pt" \
+--input_dir {path_to_dir_with_fastas} --output_dir {path_for_embedding_files} --repr_layers 34 \
+--include mean!@#\
+python create_effectidor_feats.py --path_to_embedding_files {path_for_embedding_files} \
+--path_to_fasta_files {path_to_dir_with_fastas} --output_file_path {path_for_output_csv}\tEffectidor_embedding'''
+    with open(f'{tmp_dir}/Embedding.cmds','w') as out:
         out.write(content)
 
 def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir, queue, gff_file, full_genome_f, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,signal=False):
@@ -109,20 +116,21 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
             rec.seq = N_seq
             rec.description = ID
             file_path = f'{signal_prot_dir}/{ID}.faa'
-            SeqIO.write(rec,file_path,'fasta')
+            SeqIO.write(rec, file_path, 'fasta')
         if not os.path.exists(signal_embed_dir):
             os.makedirs(signal_embed_dir)
-        write_sh_file(tmp_dir,signal_prot_dir,signal_embed_dir,f'{working_directory}/Embedding_pred.csv')
+        write_sh_file(tmp_dir, signal_prot_dir, signal_embed_dir, f'{working_directory}/Embedding_pred.csv')
+
     
     if not effectors_file:
-        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots])
+        subprocess.check_output(['python', f'{scripts_dir}/find_effectors.py', f'{blast_datasets_dir}/T3Es.faa', all_prots, effectors_prots])
     elif homology_search:
         effectors_prots2 = 'homology_found_effectors.faa'
-        subprocess.check_output(['python',f'{scripts_dir}/find_effectors.py',f'{blast_datasets_dir}/T3Es.faa',all_prots,effectors_prots2])
-        eff1 = SeqIO.to_dict(SeqIO.parse(effectors_prots,'fasta'))
-        eff2 = SeqIO.to_dict(SeqIO.parse(effectors_prots2,'fasta'))
+        subprocess.check_output(['python', f'{scripts_dir}/find_effectors.py', f'{blast_datasets_dir}/T3Es.faa', all_prots, effectors_prots2])
+        eff1 = SeqIO.to_dict(SeqIO.parse(effectors_prots, 'fasta'))
+        eff2 = SeqIO.to_dict(SeqIO.parse(effectors_prots2, 'fasta'))
         eff1.update(eff2)
-        SeqIO.write(eff1.values(),effectors_prots,'fasta')
+        SeqIO.write(eff1.values(), effectors_prots, 'fasta')
     ''' comment for now, move in the future. In this version this check should be done on the OGs!
     eff_recs = list(SeqIO.parse(effectors_prots,'fasta'))
     if len(eff_recs) == 0:
@@ -164,13 +172,14 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     with open(f'{working_directory}/signalp.cmds','w') as sig_f:
         sig_f.write(f'module load python/python-anaconda3.6.5; python {scripts_dir}/signal_peptide_features.py {ORFs_file} {all_prots} {working_directory}\tsignalP\n')
     if not os.path.exists(f'{working_directory}/physical_features.done'):
-        subprocess.call(f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py {working_directory}/features_jobs.cmds {tmp_dir} -q {queue}',shell=True)
+        subprocess.call(f'{os.path.join(scripts_dir, "q_submitter.py")} {working_directory}/features_jobs.cmds {tmp_dir} -q {queue}', shell=True)
     if not os.path.exists(f'{working_directory}/signal_p_features.done'):
-        subprocess.call(f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py --cpu 3 {working_directory}/signalp.cmds {tmp_dir} -q {queue}',shell=True)
+        subprocess.call(f'{os.path.join(scripts_dir, "q_submitter.py")} --cpu 3 {working_directory}/signalp.cmds {tmp_dir} -q {queue}', shell=True)
     if signal:
         if not os.path.exists(f'{working_directory}/Embedding_pred.csv.done'):
-            subprocess.call(f'/opt/pbs/bin/qsub {tmp_dir}/Embedding.sh',shell=True)
-    create_annotations_f(ORFs_file,gff_file,'annotations.csv','pseudogenes.txt')
+            cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {os.path.join(tmp_dir,"Embedding.cmds")} {tmp_dir} -q {queue} --cpu 10 --memory 15'
+            subprocess.call(cmd, shell=True)
+    create_annotations_f(ORFs_file, gff_file, 'annotations.csv', 'pseudogenes.txt')
     x = sum([item.endswith('done') for item in os.listdir(working_directory)])
     amount_of_expected_results = 3
     if signal:
@@ -188,21 +197,21 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         if x < num_finished_jobs:
             break
         
-    effectors = SeqIO.to_dict(SeqIO.parse(effectors_prots,'fasta')).keys()
-    non_effectors = SeqIO.to_dict(SeqIO.parse('non_effectors.faa','fasta')).keys()
-    all_locuses = SeqIO.to_dict(SeqIO.parse(all_prots,'fasta')).keys()
+    effectors = SeqIO.to_dict(SeqIO.parse(effectors_prots, 'fasta')).keys()
+    non_effectors = SeqIO.to_dict(SeqIO.parse('non_effectors.faa', 'fasta')).keys()
+    all_locuses = SeqIO.to_dict(SeqIO.parse(all_prots, 'fasta')).keys()
     label_dict = {}
     for locus in all_locuses:
         if locus in effectors:
-            label_dict[locus] = [locus,'effector']
+            label_dict[locus] = [locus, 'effector']
         elif locus in non_effectors:
-            label_dict[locus] = [locus,'no']
+            label_dict[locus] = [locus, 'no']
         else:
             label_dict[locus] = [locus, '?']
-    label_df = pd.DataFrame.from_dict(label_dict,orient='index',columns=['locus','is_effector'])
+    label_df = pd.DataFrame.from_dict(label_dict,orient='index',columns=['locus', 'is_effector'])
     
-    files_to_merge =['physical_features.csv','homology_features.csv','signal_p_features.csv']
-    done_files = ['physical_features.done','homology_features.done','signal_p_features.done']
+    files_to_merge =['physical_features.csv', 'homology_features.csv', 'signal_p_features.csv']
+    done_files = ['physical_features.done', 'homology_features.done', 'signal_p_features.done']
     if signal:
         files_to_merge.append('Embedding_pred.csv')
         done_files.append('Embedding_pred.csv.done')

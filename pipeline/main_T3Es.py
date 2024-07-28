@@ -547,7 +547,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path,
                        gff_path, no_T3SS, error_path)
 
-        find_OGs_cmd = f'module load python/python-anaconda3.6.5;!@#python ' \
+        find_OGs_cmd = f'module load MMseqs2/May2024;!@#python ' \
                        f'{os.path.join(scripts_dir, "find_OGs_in_genomes.py")} ' \
                        f'{output_dir_path} {identity_cutoff} {coverage_cutoff}\tfind_OGs_effectidor\n'
         with open(os.path.join(output_dir_path, 'find_OGs.cmds'), 'w') as out_f:
@@ -611,9 +611,9 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                             genome_path, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts,
                             homology_search=homology_search, signal=signal)
         # add a check for failed features jobs...
-        while not os.path.exists(os.path.join(output_dir_path, f'{OGs_job_number}.ER')):  # make sure the find_OGs
-            # job was finished before proceeding
-            sleep(120)
+        while not os.path.exists(os.path.join(output_dir_path, 'clean_orthologs_table.csv')):
+            # make sure the find_OGs job was finished before proceeding
+            sleep(60)
         subprocess.check_output(['python', os.path.join(scripts_dir, 'merge_features_for_OGs.py'), output_dir_path])
 
         annotations_df = pd.read_csv(f'{output_dir_path}/OGs_annotations.csv')
@@ -840,7 +840,7 @@ if __name__ == '__main__':
     parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
     parser.add_argument('--tts', help='look for tts-box in promoters', action='store_true')
     parser.add_argument('-q', '--queue_name', help='The cluster to which the job(s) will be submitted to',
-                        default='pupkolabr')
+                        default='power-pupko')
     parser.add_argument('--identity_cutoff', help='identity percentage cutoff for orthologs and paralogs search',
                         default='50')
     parser.add_argument('--coverage_cutoff', help='coverage percentage cutoff for orthologs and paralogs search',
