@@ -698,25 +698,30 @@ def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_
     if predicted_table:
         append_to_html(html_path, f'''
                 <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='left'>
-                <a href='out_learning/consensus_predictions_with_annotation.xlsx' target='_blank'>Download predictions file</a>
+                <a href='out_learning/consensus_predictions_with_annotations_and_ortho_table.xlsx' target='_blank'>Download predictions file</a>
                 <br>
-                <a href='out_learning/pseudogenes.xlsx' target='_blank'>Download pseudogenes file</a>
+                <a href='T3SS.csv' target='_blank'>Download T3SS and flagella components' details</a>
                 <br>
                 <a href='out_learning/feature_importance.csv' target='_blank'>Download feature importance file</a>
                 <br>
-                <a href='features.csv' target='_blank'>Download raw features file</a>
+                <a href='OGs_features.csv' target='_blank'>Download features file</a>
                 <br><br>
                 <h3><b>Positive samples that were used to train the model</b></h3>
                 {positives_table}
                 <br>
                 <h3><b>Top 10 predictions, among unlabeled samples</b></h3>
                 {predicted_table}
-                <br>
-                <h3><b>Type 3 secretion system proteins that were found in the genome:</b></h3>
-                {T3SS_table}
                 </div>
                 <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='center'>
-                <h3><b>feature importance
+                <h3><b>
+                T3Es presence/absence map
+                <br>
+                <a href='T3Es_presence_absence.png'><img src='T3Es_presence_absence.png'></a>
+                <br>
+                T3SS and flagella components presence/absence map
+                <a href='T3SS_presence_absence.png'><img src='T3SS_presence_absence.png'></a>
+                <br>
+                feature importance
                 <br>
                 <a href='out_learning/feature_importance.png'><img src='out_learning/feature_importance.png'></a>
                 <br><br>

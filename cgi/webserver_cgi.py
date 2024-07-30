@@ -299,6 +299,8 @@ def run_cgi():
         write_to_debug_file(cgi_debug_path, f'10\n')
         effectors_homology = form['homology_search'].value.strip()
         translocation_signal = form['translocation_signal'].value.strip()
+        identity = form['identity_cutoff'].value.strip()
+        coverage = form['coverage_cutoff'].value.strip()
         if ORFs_name.endswith('zip'): #ZIP archive
             ORFs_path = os.path.join(wd, 'ORFs.zip')
         else: #FASTA
@@ -345,7 +347,9 @@ def run_cgi():
             write_to_debug_file(cgi_debug_path, f'no_T3SS file was saved to disk successfully\n\n')
         
             parameters += f' --no_T3SS {no_T3SS_path}'
-            
+
+        parameters += f' --identity_cutoff {identity}'
+        parameters += f' --coverage_cutoff {coverage}'
         PIP, hrp, mxiE, exs, tts = False,False,False,False,False
         if form['gff'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'16\n')
@@ -429,6 +433,8 @@ def run_cgi():
                 notification_content += f'GFF file: {gff_name}\n'
             if genome_f_name:
                 notification_content += f'genome file: {genome_f_name}\n'
+            notification_content += f'Minimal identity percentage of orthologs and paralogs: {identity}\n'
+            notification_content += f'Minimal coverage percentage of orthologs and paralogs: {coverage}\n'
             notification_content += f'\nYou can track the progress of your job at:\n{os.path.join(CONSTS.WEBSERVER_URL, "results", run_number, "output.html")}\n\n'
 
             # Send the user a notification email for their submission
