@@ -293,7 +293,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                     fail(error_msg, error_path)
                 error_msg = verify_ORFs(f'{output_dir_path}/ORFs_tmp/{file}')
                 if error_msg:
-                    fail(f'For file {file} in your ORFs input: {error_msg}')
+                    fail(f'For file {file} in your ORFs input: {error_msg}', error_path)
                 genome_name = '_'.join(file.split('/')[-1].split('.')[0].split(' '))
                 ORFs_genomes.append(genome_name)
                 os.makedirs(os.path.join(output_dir_path, 'Effectidor_runs', genome_name), exist_ok=True)
@@ -375,7 +375,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                                 os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'genome.fasta'),
                                 os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'ORFs.fasta'))
                             if error_msg:
-                                fail(f'In genome {genome_name}:<br>{error_msg}')
+                                fail(f'In genome {genome_name}:<br>{error_msg}', error_path)
                 shutil.rmtree(f'{output_dir_path}/full_genome_tmp', ignore_errors=True)
                 full_genome_set = set(full_genome_names)
                 if not gff_set == full_genome_set == ORFs_set:
@@ -391,7 +391,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
             else:
                 error_msg = verify_fasta_format(genome_path, 'DNA', 'full genome')
                 if error_msg:
-                    fail(error_msg)
+                    fail(error_msg, error_path)
                 if gff_path:
                     error_msg = validate_genome_and_gff(gff_path, genome_path,
                                                         ORFs_path)
