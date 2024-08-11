@@ -169,16 +169,16 @@ def create_box_one_mismatch(box_list):
     box_one_mismatch = '|'.join(box_one_mismatch)
     return box_one_mismatch
 
-exs_box = 'A{5}[ATGC][AT][ATGC][AC][CT][ATGC]{3}[AC][CT]TG[CT]A{2}[GT]'                     
-exs_box_l = ['A']*5+['[ATGC]']+['[AT]', '[ATGC]', '[AC]', '[CT]']+['[ATGC]']*3+['[AC]', '[CT]', 'T', 'G', '[CT]']+['A']*2+['[GT]']
+exs_box = '[AT]{3}[AC][AT]{2}[AC]{3}C[GT][GTA]CC[GA]A[AT][ATC][CT]TG[GA][TC]A'
+exs_box_l = ['[AT]']*3+['[AC]']+['[AT]']*2+['[AC]']*3+['C', '[GT]', '[GTA]']+['C']*2+['[GA]', 'A', '[AT]', '[ATC]', '[CT]', 'T', 'G', '[GA]', '[TC]', 'A']
 exs_box_one_mismatch = create_box_one_mismatch(exs_box_l)
 
 pip_box = 'TTCG[TCG][ATCG]{15}TTCG[TCG]'
 pip_box_l = ['T']*2+['C', 'G', '[TCG]']+['[ATGC]']*15+['T']*2+['C', 'G', '[TCG]']
 pip_box_one_mismatch = create_box_one_mismatch(pip_box_l)
- 
-mxiE_box = 'GTATCGT{7}A[ATGC]AG'
-mxiE_box_l = ['G', 'T', 'A', 'T', 'C', 'G']+['T']*7+['A', '[ATGC]', 'A', 'G']
+
+mxiE_box = 'G[TG]AT[CT]GT{4}[ACT]T[AT]A[ATCG]AG'
+mxiE_box_l = ['G', '[TG]', 'A', 'T', '[CT]', 'G']+['T']*4+['[ACT]', 'T', '[AT]', 'A', '[ATCG]', 'A', 'G']
 mxiE_box_one_mismatch = create_box_one_mismatch(mxiE_box_l)  
 
 tts_box = 'GTCAG[TCG]T[TCAG]{4}G[AT][AC]AG[CGT][TAC][ATCG]{3}[CTG]{2}[ATCG]{4}A'
