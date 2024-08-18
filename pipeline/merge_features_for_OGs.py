@@ -154,7 +154,8 @@ maximum = [feature for feature in features if ('T3_signal' in feature or '_box' 
 for feature in maximum:
     features.remove(feature)
 for feature in median:
-    features.remove(feature)
+    if feature in features:
+        features.remove(feature)
 
 #%% transformation to OGs
 grouped = df.groupby('OG').agg({**{feature: ['mean'] for feature in features},
