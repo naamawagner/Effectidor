@@ -149,13 +149,12 @@ def label(iterable_arg):
 df = pd.read_csv('full_data.csv')
 features = list(df.columns[2:-1])
 # defining manipulation per feature in the transformation to OGs
-median = ['distance_from_closest_effector']
+median = ['distance_from_closest_effector' if 'distance_from_closest_effector' in features]
 maximum = [feature for feature in features if ('T3_signal' in feature or '_box' in feature)]
 for feature in maximum:
     features.remove(feature)
 for feature in median:
-    if feature in features:
-        features.remove(feature)
+    features.remove(feature)
 
 #%% transformation to OGs
 grouped = df.groupby('OG').agg({**{feature: ['mean'] for feature in features},
