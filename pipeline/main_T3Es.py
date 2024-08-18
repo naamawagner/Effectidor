@@ -649,6 +649,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
             predicted_table, positives_table = make_html_tables(
                 f'{output_dir_path}/out_learning/consensus_predictions_with_annotations.csv',
                 f'{output_dir_path}/OG_effector_homologs.csv')
+        if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
             subprocess.check_output(['python', os.path.join(scripts_dir, 'phyletic_patterns.py'), output_dir_path])
         low_quality_flag = False
         if os.path.exists(f'{output_dir_path}/out_learning/learning_failed.txt'):
@@ -656,8 +657,10 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
 
         if html_path:
             # shutil.make_archive(final_zip_path, 'zip', output_dir_path)
+            T3SS_data = pd.read_csv(os.path.join(output_dir_path, 'T3SS.csv'))
+            T3SS_table = T3SS_data.to_html(index=False, justify='left', escape=False)
             finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table,
-                          low_quality_flag)  # still need to complete the T3SS_table (Noam)
+                          low_quality_flag, output_dir_path)
         else:
             with open(f'{output_dir_path}/output.html', 'w') as out:
                 out.write(f'positives:\n{positives_table}\n<br>\npredicted:\n{predicted_table}')
@@ -676,17 +679,20 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
             add_closing_html_tags(html_path, CONSTS, run_number)
 
 
-def finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table, low_confidence_flag):
+def finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table, low_confidence_flag,
+                  output_dir_path):
     succeeded = not os.path.exists(error_path)
     logger.info(f'SUCCEEDED = {succeeded}')
     if succeeded:
-        edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_table, low_confidence_flag)
+        edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_table,
+                          low_confidence_flag, output_dir_path)
     else:
         edit_failure_html(CONSTS, error_path, html_path, run_number)
     add_closing_html_tags(html_path, CONSTS, run_number)
 
 
-def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_table, low_confidence_flag):
+def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_table,
+                      low_confidence_flag, output_dir_path):
     update_html(html_path, 'RUNNING', 'FINISHED')
     if low_confidence_flag:
         append_to_html(html_path, f'''
@@ -713,19 +719,30 @@ def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_
                 {predicted_table}
                 </div>
                 <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='center'>
-                <h3><b>
-                T3Es presence/absence map
+                ''')
+        if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
+            append_to_html(html_path, f'''
+                <br>
+                <h3><b>T3Es presence/absence map</b></h3>
                 <br>
                 <a href='T3Es_presence_absence.png'><img src='T3Es_presence_absence.png'></a>
                 <br>
-                T3SS and flagella components presence/absence map
+                <h3><b>T3SS and flagella components presence/absence map</b></h3>
                 <a href='T3SS_presence_absence.png'><img src='T3SS_presence_absence.png'></a>
+                ''')
+        else:
+            append_to_html(html_path, f'''
+            <br>
+            <h3><b>T3SS and flagella components</b></h3>
+            {T3SS_table}
+            ''')
+        append_to_html(html_path, f'''
                 <br>
-                feature importance
+                <h3><b>feature importance</b></h3>
                 <br>
                 <a href='out_learning/feature_importance.png'><img src='out_learning/feature_importance.png'></a>
                 <br><br>
-                best features comparison - effectors vs non-effectors:
+                <h3><b>best features comparison - effectors vs non-effectors:</b></h3>
                 <br>
                 <a href='out_learning/0.png'><img src='out_learning/0.png'></a>
                 <a href='out_learning/1.png'><img src='out_learning/1.png'></a>
@@ -737,7 +754,6 @@ def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_
                 <a href='out_learning/7.png'><img src='out_learning/7.png'></a>
                 <a href='out_learning/8.png'><img src='out_learning/8.png'></a>
                 <a href='out_learning/9.png'><img src='out_learning/9.png'></a>
-                </b></h3>
                 </div>
                 ''')
     else:
