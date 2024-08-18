@@ -201,7 +201,7 @@ def write_cmds_file(cmds_file, run_number, parameters):
     # the queue does not like very long commands so I use a dummy delimiter (!@#) to break the commands for q_submitter
     new_line_delimiter = ';!@#'
     # the code contains features that are exclusive to Python3.6 (or higher)!
-    required_modules = ' '.join(['python/python-anaconda3.6.5'])
+    required_modules = ' '.join(['MMseqs2/May2024'])
     with open(cmds_file, 'w') as f:
         f.write(f'module load {required_modules}')
         f.write(new_line_delimiter)
