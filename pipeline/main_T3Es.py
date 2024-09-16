@@ -626,7 +626,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         elif positives_size < 3:
             effectors = features_data[features_data['is_effector'] == 'effector']
             homologs = pd.read_csv(f'{output_dir_path}/OG_effector_homologs.csv')
-            positives_table = effectors['OG'].merge(annotations_df, how='left').merge(homologs, how='left').to_html(
+            positives_table = annotations_df[annotations_df['OG'].isin(effectors['OG'])].merge(homologs, how='left').to_html(
                 index=False, justify='left', escape=False)
             predicted_table = ''
             # return these
@@ -725,10 +725,10 @@ def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_
                 <br>
                 <h3><b>T3Es presence/absence map</b></h3>
                 <br>
-                <a href='T3Es_presence_absence.png'><img src='T3Es_presence_absence.png'></a>
+                <a href='T3Es_presence_absence.png'><img src='T3Es_presence_absence.png' style="max-width: 100%;" /></a>
                 <br>
                 <h3><b>T3SS and flagella components presence/absence map</b></h3>
-                <a href='T3SS_presence_absence.png'><img src='T3SS_presence_absence.png'></a>
+                <a href='T3SS_presence_absence.png'><img src='T3SS_presence_absence.png' style="max-width: 100%;" /></a>
                 ''')
         else:
             append_to_html(html_path, f'''

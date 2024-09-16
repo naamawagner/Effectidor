@@ -363,7 +363,6 @@ def run_cgi():
             parameters += f' --gff_path {gff_path}'
         
             write_to_debug_file(cgi_debug_path, f'17\n')
-            parameters += ' --full_genome'
             
         if form['genome'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'15\n')

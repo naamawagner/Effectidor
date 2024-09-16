@@ -126,7 +126,10 @@ combine_all_genomes_data('full_effector_homologs.csv', 'closest_effector_homolog
 
 def groupbyMode(in_f, out_f, target, new_col_name):
     df = pd.read_csv(in_f)
-    g_df = df.groupby(['OG'])[target].agg(pd.Series.mode)
+    try:
+        g_df = df.groupby(['OG'])[target].agg(pd.Series.mode)
+    except ValueError:
+        g_df = df.groupby(['OG'], dropna=False)[target].apply(lambda x:None)
     g_df = g_df.apply(lambda x: ', '.join(x) if type(x) == np.ndarray else x)
     g_df.rename(new_col_name, inplace=True)
     g_df.to_csv(out_f)
