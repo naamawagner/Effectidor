@@ -100,7 +100,7 @@ def verify_fasta_format(fasta_path, Type, input_name):
 
 def verify_ORFs(ORFs_path):
     logger.info(f'Validating ORFs:{ORFs_path}')
-    ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path, 'fasta')])
+    ORFs_recs = list(SeqIO.parse(ORFs_path, 'fasta'))
     if len(ORFs_recs) < 900:
         return f'The ORFs file contains only {str(len(ORFs_recs))} records. Make sure this file contains all the ' \
                f'ORFs (open reading frames) in the genome - Effectidor is designed to analyze full genomes and not ' \
@@ -112,6 +112,25 @@ def verify_ORFs(ORFs_path):
                f'and only the ORFs of one genome. This number cannot exceed 10,000 ORFs per genome. If it contains ' \
                f'data of multiple genomes, separate them to different files (compressed together in a ZIP archive) ' \
                f'such that every file will contain the ORFs of a single genome. '
+    start_code = ['ATG', 'TGT', 'TTG']
+    end_code = ['TAA', 'TAG', 'TGA']
+    ORFs_seqs = [rec.seq for rec in ORFs_recs]
+    coding_estimate = [seq for seq in ORFs_seqs if len(seq) % 3 == 0 and seq[:3] in start_code and seq[-3:] in end_code]
+    est_cod_percent = int(100*len(coding_estimate)/len(ORFs_recs))
+    if est_cod_percent < 40:
+        return f'The ORFs file contains only {str(est_cod_percent)}% of coding sequences with valid start and end '\
+               f'codons, and length divided by 3. Make sure this input contains <b>coding sequences</b>.'
+
+    # correct frame if needed and specified
+    corrected_recs = []
+    for rec in ORFs_recs:
+        header = rec.description
+        if 'frame=2' in header:
+            rec.seq = rec.seq[1:]
+        elif 'frame=3' in header:
+            rec.seq = rec.seq[2:]
+        corrected_recs.append(rec)
+    SeqIO.write(corrected_recs, ORFs_path, 'fasta')
 
 
 def verify_effectors_f(effectors_path, ORFs_path):
@@ -740,20 +759,20 @@ def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_
                 <br>
                 <h3><b>feature importance</b></h3>
                 <br>
-                <a href='out_learning/feature_importance.png'><img src='out_learning/feature_importance.png'></a>
+                <a href='out_learning/feature_importance.png'><img src='out_learning/feature_importance.png' style="max-width: 100%;" /></a>
                 <br><br>
                 <h3><b>best features comparison - effectors vs non-effectors:</b></h3>
                 <br>
-                <a href='out_learning/0.png'><img src='out_learning/0.png'></a>
-                <a href='out_learning/1.png'><img src='out_learning/1.png'></a>
-                <a href='out_learning/2.png'><img src='out_learning/2.png'></a>
-                <a href='out_learning/3.png'><img src='out_learning/3.png'></a>
-                <a href='out_learning/4.png'><img src='out_learning/4.png'></a>
-                <a href='out_learning/5.png'><img src='out_learning/5.png'></a>
-                <a href='out_learning/6.png'><img src='out_learning/6.png'></a>
-                <a href='out_learning/7.png'><img src='out_learning/7.png'></a>
-                <a href='out_learning/8.png'><img src='out_learning/8.png'></a>
-                <a href='out_learning/9.png'><img src='out_learning/9.png'></a>
+                <a href='out_learning/0.png'><img src='out_learning/0.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/1.png'><img src='out_learning/1.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/2.png'><img src='out_learning/2.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/3.png'><img src='out_learning/3.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/4.png'><img src='out_learning/4.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/5.png'><img src='out_learning/5.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/6.png'><img src='out_learning/6.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/7.png'><img src='out_learning/7.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/8.png'><img src='out_learning/8.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/9.png'><img src='out_learning/9.png' style="max-width: 100%;" /></a>
                 </div>
                 ''')
     else:
