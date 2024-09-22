@@ -311,7 +311,10 @@ def run_cgi():
         parameters = f'{ORFs_path} {wd} --html_path {output_path} -q {CONSTS.QUEUE_NAME}'
         if form['effectors'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'11\n')
-            effectors_path = os.path.join(wd, 'effectors.fasta')
+            if effectors_name.endswith('zip'): # ZIP archive
+                effectors_path = os.path.join(wd, 'effectors.zip')
+            else: # FASTA
+                effectors_path = os.path.join(wd, 'effectors.fasta')
             upload_file(form, 'effectors', effectors_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'effectors file was saved to disk successfully\n\n')
             
