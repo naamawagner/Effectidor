@@ -222,7 +222,7 @@ def validate_gff_format(gff_f, genome_name=''):
 
 
 def validate_gff(gff_f, ORFs_f, genome_name=''):
-    logger.info(f'Validating GFF')
+    logger.info(f'Validating GFF: {gff_f}')
     error_msg = validate_gff_format(gff_f)
     if error_msg:
         return error_msg
@@ -238,8 +238,8 @@ def validate_gff(gff_f, ORFs_f, genome_name=''):
         with open(gff_f, 'w') as out_f:
             out_f.write(content)
     CDS, RNA = pip_box_features.parse_gff(gff_f, locus_dic)
-    logger.info(f'{locus_dic.keys()}')
-    logger.info(f'CDS:{CDS}\nRNA:{RNA}')
+    #logger.info(f'{locus_dic.keys()}')
+    #logger.info(f'CDS:{CDS}\nRNA:{RNA}')
     CDS_set.update(CDS)
     RNA_set.update(RNA)
     not_in_gff = [locus for locus in locus_dic if (locus not in CDS_set and locus not in RNA_set)]
@@ -261,7 +261,7 @@ def validate_gff(gff_f, ORFs_f, genome_name=''):
 
 
 def validate_genome_and_gff(gff_f, genome_f, ORFs_f):
-    logger.info(f'Validating genome and gff')
+    logger.info(f'Validating genome and gff: {gff_f}, {genome_f}')
     import fasta_parser
     import pip_box_features
     locus_dic = fasta_parser.parse_ORFs(ORFs_f)
@@ -677,7 +677,8 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         if html_path:
             # shutil.make_archive(final_zip_path, 'zip', output_dir_path)
             T3SS_data = pd.read_csv(os.path.join(output_dir_path, 'T3SS.csv'))
-            T3SS_table = T3SS_data.to_html(index=False, justify='left', escape=False)
+            T3SS_Table = T3SS_data.dropna()
+            T3SS_table = T3SS_Table.to_html(index=False, justify='left', escape=False)
             finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table,
                           low_quality_flag, output_dir_path)
         else:

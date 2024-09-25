@@ -62,7 +62,8 @@ def create_presence_absence_map(phyletic_csv, x_label, out_fig_path, colors=['si
 
     cmap = LinearSegmentedColormap.from_list('Custom', colors, len(colors))
     clustermap = sns.clustermap(df, cmap=cmap, figsize=(fig_width, fig_height),
-                                tree_kws={"linewidths": 0.}, col_cluster=col_cluster)
+                                tree_kws={"linewidths": 0.}, col_cluster=col_cluster,
+                                vmin=0, vmax=1)
     # clustermap = sns.clustermap(df, cmap=cmap, figsize=(fig_width, fig_height),
     #                            tree_kws={"linewidths": 0.}, cbar_pos=(0.01, 0.8, 0.01, 0.1))
     clustermap.ax_heatmap.xaxis.set_ticks_position('top')
