@@ -152,7 +152,11 @@ def label(iterable_arg):
 df = pd.read_csv('full_data.csv')
 features = list(df.columns[2:-1])
 # defining manipulation per feature in the transformation to OGs
-median = ['distance_from_closest_effector'] if 'distance_from_closest_effector' in features else []
+median = []
+if 'distance_from_closest_effector' in features:
+    median.append('distance_from_closest_effector')
+if 'distance_to_mobile_genetic_element' in features:
+    median.append('distance_to_mobile_genetic_element')
 maximum = [feature for feature in features if ('T3_signal' in feature or '_box' in feature)]
 for feature in maximum:
     features.remove(feature)
@@ -160,11 +164,13 @@ for feature in median:
     features.remove(feature)
 
 #%% transformation to OGs
+df.sort_values(by=features, inplace=True)
 grouped = df.groupby('OG').agg({**{feature: ['mean'] for feature in features},
                                 **{feature: ['median'] for feature in median},
                                 **{feature: ['max'] for feature in maximum},
                                 **{'is_effector': label}})
 
+grouped.sort_values(by=list(grouped.columns[:-1]), inplace=True)
 #%% adding the "similarity_to_effectors_vs_non_effectors" features for the OGs
 aa_freqs = [feature for feature in features if 'full_protein' in feature]
 effectors = grouped[grouped.is_effector.label == 'effector'][aa_freqs]
@@ -199,4 +205,5 @@ grouped.insert(len(grouped.columns)-1, 'similarity_to_effectors_vs_non_effectors
 updated_features = grouped.reset_index()
 updated_features.columns = ['_'.join(col) for col in updated_features.columns.values]
 updated_features.columns = [col.replace('label', '_').strip('_') for col in updated_features.columns]
+updated_features.sort_values(by=list(updated_features.columns[1:]), inplace=True)
 updated_features.to_csv('OGs_features.csv', index=False)

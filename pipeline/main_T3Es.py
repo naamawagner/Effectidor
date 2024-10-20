@@ -544,7 +544,7 @@ def cleanup_ran_today(path=r'/bioseq/data/results/effectidor/'):
 
 def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path,
          gff_path, no_T3SS, identity_cutoff='50', coverage_cutoff='60', PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,
-         signal=False):
+         signal=False, signalp=False, MGE=False):
     '''
     try:
         if not cleanup_is_running() and not cleanup_ran_today():
@@ -587,6 +587,8 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                 if gff_path:
                     gff_file = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'genome.gff3')
                     parameters += f' --gff_file {gff_file}'
+                    if MGE:
+                        parameters += ' --mobile_genetics_elements'
                 if genome_path:
                     full_genome_f = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'genome.fasta')
                     parameters += f' --full_genome_f {full_genome_f}'
@@ -604,6 +606,8 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                     parameters += ' --homology_search'
                 if signal:
                     parameters += ' --translocation_signal'
+                if signalp:
+                    parameters += ' --signalp'
 
                 job_cmd = f'module load MMseqs2/May2024;!@#python {os.path.join(scripts_dir, "T3Es_wrapper.py")} ' \
                           f'{parameters}\tEffectidor_features_{genome}\n '
@@ -648,7 +652,6 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
             positives_table = annotations_df[annotations_df['OG'].isin(effectors['OG'])].merge(homologs, how='left').to_html(
                 index=False, justify='left', escape=False)
             predicted_table = ''
-            # return these
 
         # learning step
         else:
@@ -874,7 +877,8 @@ if __name__ == '__main__':
     parser.add_argument('--homology_search', help='search additional effectors based on homology to internal dataset',
                         action='store_true')
     parser.add_argument('--translocation_signal', help='extract translocation signal feature', action='store_true')
-
+    parser.add_argument('--signalp', help='extract SignalP6 feature', action='store_true')
+    parser.add_argument('--mobile_genetics_elements', help='extract distance from mobile genetics elements', action='store_true')
     parser.add_argument('--PIP', help='look for PIP-box in promoters', action='store_true')
     parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
     parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
@@ -904,4 +908,4 @@ if __name__ == '__main__':
          args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS,
          identity_cutoff=args.identity_cutoff, coverage_cutoff=args.coverage_cutoff, PIP=PIP_flag, hrp=hrp_flag,
          mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=args.homology_search,
-         signal=args.translocation_signal)
+         signal=args.translocation_signal, signalp=args.signalp, MGE=args.mobile_genetics_elements)

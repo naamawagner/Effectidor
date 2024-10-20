@@ -95,7 +95,7 @@ X_train, X_test, y_train, y_test = model_selection.train_test_split(
 
 #%%
 scoring = 'average_precision'
-
+kfold = model_selection.StratifiedKFold(n_splits=K, shuffle=True, random_state=seed)
 models = list()
 models.append(('LDA', LinearDiscriminantAnalysis()))
 models.append(('NB', GaussianNB()))
@@ -111,8 +111,6 @@ for name, model in models:
     all_results = {}
     for option in x_y_options:
         X_train, Y_train = x_y_options[option][0], x_y_options[option][2]
-        scoring = scoring
-        kfold = model_selection.StratifiedKFold(n_splits=K, shuffle=True, random_state=seed)
         cv_results = model_selection.cross_val_score(
             model, X_train, y=Y_train, cv=kfold, scoring=scoring)
         results.append(cv_results)
@@ -139,7 +137,6 @@ for name, model, best, X_TRAIN, X_TEST, Y_TRAIN, Y_TEST, full_features, full_X, 
     all_data_features = []  # features of all data - both labeled and unlabeled
     try:
         # RecursiveFeatureElimination
-        kfold = model_selection.StratifiedKFold(n_splits=K, shuffle=True, random_state=seed)
         selector = RFECV(model, step=0.1, cv=kfold, scoring=scoring)
         selector = selector.fit(X_TRAIN, Y_TRAIN)
         X_RFECV_train = selector.transform(X_TRAIN)
@@ -162,7 +159,7 @@ for name, model, best, X_TRAIN, X_TEST, Y_TRAIN, Y_TEST, full_features, full_X, 
         full_features_l.append(X_from_model)
         all_data_features.append(features_model)
         # SelectFromExtraTree
-        clf = ExtraTreesClassifier(n_estimators=50)
+        clf = ExtraTreesClassifier(n_estimators=50, random_state=seed)
         fit_model = clf.fit(X_TRAIN, Y_TRAIN)
         selectmodel = SelectFromModel(fit_model, prefit=True)
         X_RDF_train = selectmodel.transform(X_TRAIN)
@@ -174,7 +171,7 @@ for name, model, best, X_TRAIN, X_TEST, Y_TRAIN, Y_TEST, full_features, full_X, 
         full_features_l.append(X_RDF)
         all_data_features.append(features_RDF)
     except:  # no feature importance or coef_
-        clf = ExtraTreesClassifier(n_estimators=50)
+        clf = ExtraTreesClassifier(n_estimators=50, random_state=seed)
         fit_model = clf.fit(X_TRAIN, Y_TRAIN)
         selectmodel = SelectFromModel(fit_model, prefit=True)
         X_RDF_train = selectmodel.transform(X_TRAIN)
@@ -190,7 +187,6 @@ for name, model, best, X_TRAIN, X_TEST, Y_TRAIN, Y_TEST, full_features, full_X, 
     full_features_l.append(full_X)
     all_data_features.append(features)
     for feature in train_features:
-        kfold = model_selection.StratifiedKFold(n_splits=K, shuffle=True, random_state=seed)
         cv_results = model_selection.cross_val_score(model, X_TRAIN, y=Y_TRAIN, cv=kfold, scoring=scoring)
         results.append(cv_results.mean())
     best_f = max(results)

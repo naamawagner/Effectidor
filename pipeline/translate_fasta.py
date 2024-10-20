@@ -19,10 +19,12 @@ def translate_fasta(ORFs_fasta,prots_fasta):
                         break
                 rec.id = locus
                 rec.description = locus
+            else:
+                rec.description = rec.id
             rec.seq = rec.seq.translate(to_stop=True)
             prots.append(rec)
-    SeqIO.write(prots,prots_fasta,'fasta')
+    SeqIO.write(prots, prots_fasta, 'fasta')
 
-translate_fasta(ORFs_file,all_prots)
+translate_fasta(ORFs_file, all_prots)
 if effectors_file:
-    translate_fasta(effectors_file,effectors_prots)
+    translate_fasta(effectors_file, effectors_prots)
