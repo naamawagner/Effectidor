@@ -783,7 +783,10 @@ def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_
         append_to_html(html_path, f'''
                 <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='left'> Unfortunately, we could not 
                 train a satisfying classifier due to small positive set.<br>The effectors found based on homology are 
-                listed in the table bellow:<br> {positives_table} 
+                listed in the table bellow:<br> {positives_table} <br>
+                <a href='clean_orthologs_table_with_pseudo.csv' target='_blank'>Download the OGs table</a>
+                <br>
+                <a href='T3SS.csv' target='_blank'>Download T3SS and flagella components' details</a>
                 </div>
                 ''')
 
