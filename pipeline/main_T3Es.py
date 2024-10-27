@@ -632,7 +632,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         else:
             effectors_learn(error_path, ORFs_path, effectors_path, output_dir_path, tmp_dir, queue, gff_path,
                             genome_path, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts,
-                            homology_search=homology_search, signal=signal)
+                            homology_search=homology_search, signal=signal, signalp=signalp ,MGE=MGE)
         # add a check for failed features jobs...
         while not os.path.exists(os.path.join(output_dir_path, 'clean_orthologs_table.csv')):
             # make sure the find_OGs job was finished before proceeding
@@ -685,8 +685,11 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
             finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table,
                           low_quality_flag, output_dir_path)
         else:
+            T3SS_data = pd.read_csv(os.path.join(output_dir_path, 'T3SS.csv'))
+            T3SS_Table = T3SS_data.dropna()
+            T3SS_table = T3SS_Table.to_html(index=False, justify='left', escape=False)
             with open(f'{output_dir_path}/output.html', 'w') as out:
-                out.write(f'positives:\n{positives_table}\n<br>\npredicted:\n{predicted_table}')
+                out.write(f'positives:\n{positives_table}\n<br>\npredicted:\n{predicted_table}<br>T3SS and flagella components:<br>{T3SS_table}')
 
     except Exception as e:
         logger.info(f'SUCCEEDED = False')
