@@ -348,8 +348,7 @@ def run_cgi():
             
         if form['host'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'13\n')
-            os.makedirs(f'{wd}/blast_data')
-            host_path = os.path.join(f'{wd}/blast_data', 'host.zip')
+            host_path = os.path.join(wd, 'host.zip')
             upload_file(form, 'host', host_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'host file was saved to disk successfully\n\n')
             
