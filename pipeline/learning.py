@@ -295,7 +295,7 @@ try:
     classifiers_scores[f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'] = w_av_AUPRC
         
     best_classifier = max(classifiers_scores, key=lambda key: classifiers_scores[key])
-    if classifiers_scores[best_classifier]-w_av_AUPRC > 0.05:  # if another classifier is significantly better than
+    if classifiers_scores[best_classifier]-w_av_AUPRC > 0.15:  # if another classifier is significantly better than
         # the vote, take it.
         consensus_df = preds_df[[ID_name, f'{best_classifier}', 'is_effector']]
         score_label = best_classifier
@@ -424,7 +424,7 @@ except:
     classifiers_scores[f'wVote (AUPRC {"%.3f" % w_av_AUPRC})'] = w_av_AUPRC
         
     best_classifier = max(classifiers_scores, key=lambda key: classifiers_scores[key])
-    if classifiers_scores[best_classifier]-w_av_AUPRC > 0.02:  # if another classifier is significantly better than
+    if classifiers_scores[best_classifier]-w_av_AUPRC > 0.15:  # if another classifier is significantly better than
         # the vote, take it.
         consensus_df = preds_df[[ID_name, f'{best_classifier}', 'is_effector']]
         consensus_df.rename(columns={best_classifier: 'score'}, inplace=True)
