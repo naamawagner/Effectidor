@@ -46,40 +46,42 @@ def parse_gff_for_MGE(gff_path: str) -> tuple[dict, dict, dict]:
 
 def find_closest_mge(output_path: str, dict_orfs: dict, genomic_components: dict,
                      sequence_id: str, mobile_genetic_elements: dict):
-    if sequence_id not in mobile_genetic_elements:
-        return None
     full_output_path = ''.join([output_path[:-4], '_full.csv'])
     closest_mge_all = {}
     genome_length: int = genomic_components[sequence_id]['length']
     is_circular: bool = genomic_components[sequence_id]['is_circular']
+    if sequence_id not in mobile_genetic_elements:
+        for orf_locus in dict_orfs[sequence_id].keys():
+            closest_mge = (orf_locus, None, None, None)
+            closest_mge_all[orf_locus]: tuple = closest_mge
+    else:
+        for orf_locus in dict_orfs[sequence_id].keys():
+            orf: dict = dict_orfs[sequence_id][orf_locus]
+            orf_start: int = orf['start']
+            orf_end: int = orf['end']
 
-    for orf_locus in dict_orfs[sequence_id].keys():
-        orf: dict = dict_orfs[sequence_id][orf_locus]
-        orf_start: int = orf['start']
-        orf_end: int = orf['end']
+            min_distance = float('inf')
+            closest_mge = (orf_locus, None, None, None)
 
-        min_distance = float('inf')
-        closest_mge = None
+            for mge_locus_tag, mge in mobile_genetic_elements[sequence_id].items():
+                mge_start: int = mge['start']
+                mge_end: int = mge['end']
+                if mge_locus_tag != orf_locus:
+                    distance1: int = abs(orf_end - mge_start)
+                    distance2: int = abs(mge_end - orf_start)
+                    if is_circular:
+                        wrap_around_distance1: int = genome_length - distance1
+                        wrap_around_distance2: int = genome_length - distance2
+                        current_distance: int = min(distance1, wrap_around_distance1, distance2, wrap_around_distance2)
+                    else:
+                        current_distance: int = min(distance1, distance2)
 
-        for mge_locus_tag, mge in mobile_genetic_elements[sequence_id].items():
-            mge_start: int = mge['start']
-            mge_end: int = mge['end']
-            if mge_locus_tag != orf_locus:
-                distance1: int = abs(orf_end - mge_start)
-                distance2: int = abs(mge_end - orf_start)
-                if is_circular:
-                    wrap_around_distance1: int = genome_length - distance1
-                    wrap_around_distance2: int = genome_length - distance2
-                    current_distance: int = min(distance1, wrap_around_distance1, distance2, wrap_around_distance2)
+                    if current_distance < min_distance:
+                        min_distance = current_distance
+                        closest_mge = (orf_locus, mge_locus_tag, current_distance, mge['MGE'])
                 else:
-                    current_distance: int = min(distance1, distance2)
+                    continue
 
-                if current_distance < min_distance:
-                    min_distance = current_distance
-                    closest_mge = (orf_locus, mge_locus_tag, current_distance, mge['MGE'])
-            else:
-                continue
-        if closest_mge:
             closest_mge_all[orf_locus]: tuple = closest_mge
 
     file_exists: bool = os.path.exists(output_path)
@@ -112,6 +114,7 @@ def main(gff_path: str, output_path: str):
         find_closest_mge(output_path, dict_orfs, genomic_components, sequence_id, mobile_elements)
     endfile = open(f'{output_path}.done', 'w')
     endfile.close()
+
 
 if __name__ == '__main__':
     import argparse
