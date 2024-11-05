@@ -63,7 +63,7 @@ def write_sh_file(tmp_dir,path_to_fasta,path_for_output_csv,queue='power-pupko')
 
 def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir, queue, gff_file, full_genome_f,
                     PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False, signal=False,
-                    signalp=False, MGE=False):
+                    signalp=False, MGE=True):
     import pandas as pd
     import subprocess
     import os
@@ -133,18 +133,18 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     with open(f'{working_directory}/features_jobs.cmds','w') as jobs_f:
         # sequence features
         jobs_f.write(f'''module load MMseqs2/May2024; python {scripts_dir}/sequence_features.py {ORFs_file} {effectors_prots} {working_directory}!@#\
-                        touch {os.path.join(tmp_dir,"sequence_features.done")}\tsequence_features\n''')
+                        touch {os.path.join(tmp_dir,"physical_features.done")}\tsequence_features\n''')
         # sequence similarity features
         jobs_f.write(f'''module load MMseqs2/May2024; python {scripts_dir}/homology.py {ORFs_file} {all_prots} {blast_datasets_dir} {working_directory}!@#\
-                        touch {os.path.join(tmp_dir,"homology.done")}\thomology\n''')
+                        touch {os.path.join(tmp_dir,"homology_features.done")}\thomology\n''')
         if gff_file:
             # genome organization features
             jobs_f.write(f'''module load MMseqs2/May2024; python {scripts_dir}/genome_organization.py {ORFs_file} {effectors_prots} {working_directory} {gff_file}!@#\
-                        touch {os.path.join(tmp_dir,"genome_organization.done")}\tgenome_organization\n''')
+                        touch {os.path.join(tmp_dir,"genome_organization_features.done")}\tgenome_organization\n''')
             if MGE:
                 jobs_f.write(
                     f'''module load MMseqs2/May2024; python {scripts_dir}/mobile_genetic_elements.py {gff_file} {working_directory}/mobile_genetic_elements.csv!@#\
-                    touch {os.path.join(tmp_dir, "mobile_genetic_elements.done")}\tmobile_genetics_elements\n''')
+                    touch {os.path.join(tmp_dir, "mobile_genetic_elements.csv.done")}\tmobile_genetic_elements\n''')
             if full_genome_f:
                 # regulatory elements features
                 cmds = f'module load MMseqs2/May2024; python {scripts_dir}/pip_box_features.py {ORFs_file} {working_directory} {gff_file} {full_genome_f}'
@@ -164,7 +164,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     if signalp:
         with open(f'{working_directory}/signalp.cmds','w') as sig_f:
             sig_f.write(f'''module load MMseqs2/May2024; python {scripts_dir}/signal_peptide_features.py {ORFs_file} {all_prots} {working_directory}!@#\
-                            touch {os.path.join(tmp_dir,"signal_peptide_features.done")}\tsignalP\n''')
+                            touch {os.path.join(tmp_dir,"signal_p_features.done")}\tsignalP\n''')
         if not os.path.exists(f'{working_directory}/signal_p_features.done'):
             subprocess.call(
                 f'{os.path.join(scripts_dir, "q_submitter.py")} --cpu 3 {working_directory}/signalp.cmds {tmp_dir} -q {queue}',
@@ -175,6 +175,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         if not os.path.exists(f'{working_directory}/Embedding_pred.csv.done'):
             cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {os.path.join(tmp_dir,"Embedding.cmds")} {tmp_dir} -q {queue} --cpu 10 --memory 15'
             subprocess.call(cmd, shell=True)
+    # TO COMPLETE: make sure the jobs were submitted before proceeding
     create_annotations_f(ORFs_file, gff_file, 'annotations.csv', 'pseudogenes.txt')
     x = sum([item.endswith('done') for item in os.listdir(working_directory)])
     # amount_of_expected_results = 3
@@ -200,19 +201,17 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         
     effectors = SeqIO.to_dict(SeqIO.parse(effectors_prots, 'fasta')).keys()
     non_effectors = SeqIO.to_dict(SeqIO.parse('non_effectors.faa', 'fasta')).keys()
-    all_locuses = SeqIO.to_dict(SeqIO.parse(all_prots, 'fasta')).keys()
+    all_loci = SeqIO.to_dict(SeqIO.parse(all_prots, 'fasta')).keys()
     label_dict = {}
-    for locus in all_locuses:
+    for locus in all_loci:
         if locus in effectors:
             label_dict[locus] = [locus, 'effector']
         elif locus in non_effectors:
             label_dict[locus] = [locus, 'no']
         else:
             label_dict[locus] = [locus, '?']
-    label_df = pd.DataFrame.from_dict(label_dict,orient='index',columns=['locus', 'is_effector'])
-    
-    # files_to_merge =['physical_features.csv', 'homology_features.csv', 'signal_p_features.csv']
-    # done_files = ['physical_features.done', 'homology_features.done', 'signal_p_features.done']
+    label_df = pd.DataFrame.from_dict(label_dict, orient='index', columns=['locus', 'is_effector'])
+
     files_to_merge = ['physical_features.csv', 'homology_features.csv']
     done_files = ['physical_features.done', 'homology_features.done']
     if signalp:
@@ -230,52 +229,19 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         if full_genome_f:
             files_to_merge.append('pip_box_features.csv')
             done_files.append('pip_box_features.done')
-    failed_jobs = [done_job.split('.')[0] for done_job in done_files if not os.path.exists(done_job)]
+    failed_jobs = [done_job.split('.')[0] for done_job in done_files if not os.path.exists(done_job) and os.path.exists(
+        os.path.join(tmp_dir, done_job))]
     if len(failed_jobs) > 0:
         failed_str = ', '.join(failed_jobs)
-        error_msg = f'Oups :(\nThe following jobs failed:\n\n{failed_str}'
-        fail(error_msg,error_path)
+        error_msg = f'The following jobs have failed:\n\n{failed_str}'
+        fail(error_msg, error_path)
     merged_df = pd.read_csv(files_to_merge[0])
     for f in files_to_merge[1:]:
         df1 = pd.read_csv(f)
         merged_df = merged_df.merge(df1)
     merged_df = merged_df.merge(label_df)
     merged_df.to_csv('features.csv',index=False)
-    
-    # learning step
-    ''' TODO: move this step to a different script
-    subprocess.check_output(['python',f'{scripts_dir}/learning.py'])
-    if os.path.exists(r'out_learning/learning_failed.txt'):
-        low_quality_flag = True
-        #return create_effectors_html(effectors_prots,ORFs_file,working_directory)
-        #error_msg = 'Learning failed. It can be due to a small training set, or other reasons. For further details you can contact us.'
-        #fail(error_msg,error_path)
-    # making final output files and tables
-    
-    in_f = r'out_learning/concensus_predictions.csv'
-    out_f_normal = r'out_learning/concensus_predictions_with_annotation.csv'
-    out_f_pseudo = r'out_learning/pseudogenes.csv'
-    out_f_T3SS = r'out_learning/T3SS.csv'
-    annotations = ORFs_file
-    out_for_html_normal = r'out_learning/concensus_predictions_with_annotation_for_html.csv'
-    out_for_html_pseudo = r'out_learning/pseudogenes_predictions_with_annotation_for_html.csv'
-    out_T3SS_for_html = r'out_learning/T3SS_for_html.csv'
-    if organization:
-        gff_dir = f'{working_directory}/gff'
-        add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS,gff_dir)
-    else:
-        add_annotations_to_predictions(in_f,out_f_normal,out_f_pseudo,annotations,out_f_T3SS)
-    from csv_to_colored_xlsx_converter import convert_csv_to_colored_xlsx
-    convert_csv_to_colored_xlsx(out_f_normal)
-    convert_csv_to_colored_xlsx(out_f_pseudo)
-    if organization:
-        gff_dir = f'{working_directory}/gff'
-        add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,gff_dir,line_end='<br>')
-    else:
-        add_annotations_to_predictions(in_f,out_for_html_normal,out_for_html_pseudo,annotations,out_T3SS_for_html,line_end='<br>')
-    predicted_table, positives_table, T3SS_table = make_html_tables(out_for_html_normal,out_T3SS_for_html)
-    return predicted_table, positives_table, T3SS_table, low_quality_flag
-    '''
+
 
 import os
 if __name__ == '__main__':
@@ -326,4 +292,4 @@ if __name__ == '__main__':
         effectors_learn(args.error_path, args.input_ORFs_path, args.input_effectors_path, args.output_dir_path,
                         f'{args.output_dir_path}/tmp', args.queue, args.gff_file, args.full_genome_f, PIP=args.PIP,
                         hrp=args.hrp, mxiE=args.mxiE, exs=args.exs, tts=args.tts, homology_search=args.homology_search,
-                        signal=args.translocation_signal, signalp=args.signalp, MGE=args.mobile_genetics_elements)
+                        signal=args.translocation_signal, signalp=args.signalp)

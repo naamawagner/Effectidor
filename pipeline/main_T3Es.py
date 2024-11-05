@@ -114,14 +114,7 @@ def verify_ORFs(ORFs_path):
                f'such that every file will contain the ORFs of a single genome. '
     start_code = ['ATG', 'TGT', 'TTG']
     end_code = ['TAA', 'TAG', 'TGA']
-    ORFs_seqs = [rec.seq for rec in ORFs_recs]
-    coding_estimate = [seq for seq in ORFs_seqs if len(seq) % 3 == 0 and seq[:3] in start_code and seq[-3:] in end_code]
-    est_cod_percent = int(100*len(coding_estimate)/len(ORFs_recs))
-    if est_cod_percent < 40:
-        return f'The ORFs file contains only {str(est_cod_percent)}% of coding sequences with valid start and end '\
-               f'codons, and length divided by 3. Make sure this input contains <b>coding sequences</b>.'
-
-    # correct frame if needed and specified
+    # correct frame if needed and specified before verifying the input contains coding sequences
     corrected_recs = []
     for rec in ORFs_recs:
         header = rec.description
@@ -130,6 +123,13 @@ def verify_ORFs(ORFs_path):
         elif 'frame=3' in header:
             rec.seq = rec.seq[2:]
         corrected_recs.append(rec)
+    ORFs_seqs = [rec.seq for rec in corrected_recs]
+    coding_estimate = [seq for seq in ORFs_seqs if len(seq) % 3 == 0 and seq[:3] in start_code and seq[-3:] in end_code]
+    est_cod_percent = int(100*len(coding_estimate)/len(ORFs_recs))
+    if est_cod_percent < 40:
+        return f'The ORFs file contains only {str(est_cod_percent)}% of coding sequences with valid start and end '\
+               f'codons, and length divided by 3. Make sure this input contains <b>coding sequences</b>.'
+
     SeqIO.write(corrected_recs, ORFs_path, 'fasta')
 
 
@@ -544,7 +544,7 @@ def cleanup_ran_today(path=r'/bioseq/data/results/effectidor/'):
 
 def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path,
          gff_path, no_T3SS, identity_cutoff='50', coverage_cutoff='60', PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,
-         signal=False, signalp=False, MGE=False):
+         signal=False, signalp=False, MGE=True):
     '''
     try:
         if not cleanup_is_running() and not cleanup_ran_today():
@@ -574,13 +574,16 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {os.path.join(output_dir_path, "find_OGs.cmds")} ' \
               f'{output_dir_path} -q {queue} '
         OGs_job_number = subprocess.check_output(cmd, shell=True).decode('ascii').strip()
+        # make sure it was submitted successfully before proceeding
+        # TO COMPLETE
 
         if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
             currently_running = []
             for genome in os.listdir(f'{output_dir_path}/Effectidor_runs'):
                 genome_ORFs_path = os.path.join(f'{output_dir_path}/Effectidor_runs', genome, 'ORFs.fasta')
                 genome_output_path = os.path.join(f'{output_dir_path}/Effectidor_runs', genome)
-                parameters = f'{error_path} {genome_ORFs_path} {genome_output_path} --queue {queue}'
+                genome_error = os.path.join(f'{output_dir_path}/Effectidor_runs', genome, 'error.txt')
+                parameters = f'{genome_error} {genome_ORFs_path} {genome_output_path} --queue {queue}'
                 input_effectors_path = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'effectors.fasta')
                 if os.path.exists(input_effectors_path):
                     parameters += f' --input_effectors_path {input_effectors_path}'
@@ -617,15 +620,23 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                 cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {cmds_f} ' \
                       f'{os.path.join(output_dir_path, "Effectidor_runs", genome)} -q {queue}'
                 subprocess.check_output(cmd, shell=True)
+                # make sure it was submitted successfully before proceeding
+                # TO COMPLETE
                 currently_running.append(genome)
                 while len(currently_running) > 4:  # features can be extracted for up to 5 genomes at a time,
                     # to avoid overload the cluster.
-                    sleep(60)
+                    sleep(30)
+                    for Genome in currently_running:
+                        if os.path.exists(os.path.join(f'{output_dir_path}/Effectidor_runs', Genome, 'error.txt')):
+                            with open(os.path.join(f'{output_dir_path}/Effectidor_runs', Genome, 'error.txt')) as error:
+                                msg = error.read()
+                            error_msg = f'Oops :(\n In genome {Genome} {msg}'
+                            fail(error_msg, error_path)
                     currently_running = [genome for genome in currently_running if not
                                         os.path.exists(os.path.join(output_dir_path, "Effectidor_runs",
                                         genome, 'features.csv'))]
             while len(currently_running) > 0:  # wait until they all finish before proceeding with the next step.
-                sleep(60)
+                sleep(30)
                 currently_running = [genome for genome in currently_running if not os.path.exists(
                     os.path.join(output_dir_path, "Effectidor_runs", genome, 'features.csv'))]
 
@@ -884,7 +895,7 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--translocation_signal', help='extract translocation signal feature', action='store_true')
     parser.add_argument('--signalp', help='extract SignalP6 feature', action='store_true')
-    parser.add_argument('--mobile_genetics_elements', help='extract distance from mobile genetics elements', action='store_true')
+    # parser.add_argument('--mobile_genetics_elements', help='extract distance from mobile genetics elements', action='store_true')
     parser.add_argument('--PIP', help='look for PIP-box in promoters', action='store_true')
     parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
     parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
@@ -914,4 +925,4 @@ if __name__ == '__main__':
          args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS,
          identity_cutoff=args.identity_cutoff, coverage_cutoff=args.coverage_cutoff, PIP=PIP_flag, hrp=hrp_flag,
          mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=args.homology_search,
-         signal=args.translocation_signal, signalp=args.signalp, MGE=args.mobile_genetics_elements)
+         signal=args.translocation_signal, signalp=args.signalp)
