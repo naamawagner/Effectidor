@@ -1,23 +1,17 @@
 from Bio import SeqIO
 from sys import argv
 import os
+from protein_mmseq import protein_mmseqs_all_vs_all
 
 effectors = argv[1]
 bacterial_proteome = argv[2]
 effectors_prots = argv[3]
-log_file = argv[4]
 
 if not os.path.exists('blast_outputs'):
     os.makedirs('blast_outputs')
 
-def protein_blast_all_vs_all(query, dataset, out, e_val='0.0001'):
-    import subprocess
-    make_data_cmd=f"makeblastdb -in {dataset} -dbtype prot -out {dataset[:-4]}db"
-    make_blast_cmd=f'blastp -db {dataset[:-4]}db -query {query} -outfmt 6 -out {out} -evalue {e_val}'
-    subprocess.check_output(make_data_cmd,shell=True)
-    subprocess.check_output(make_blast_cmd,shell=True)
     
-def parse_blast_out(blast_out,e_val=10**(-10),min_identity=70):
+def parse_blast_out(blast_out,e_val=10**(-10),min_identity=0.7):
     blast_out_dic={}
     with open(blast_out,'r') as in_f:
         best_hits={}
@@ -42,17 +36,15 @@ def parse_blast_out(blast_out,e_val=10**(-10),min_identity=70):
                 out_f.write(f'{hit},{best_hits[hit]}\n')
     return blast_out_dic
 
-protein_blast_all_vs_all(effectors,bacterial_proteome,'blast_outputs/effectorsDB.blast')
-effectors_homologs = []
-k=70
-while len(effectors_homologs)<5 and k>30:
-    effectors_homologs = set()
-    homologs = list(parse_blast_out('blast_outputs/effectorsDB.blast',min_identity=k).values())
-    for h in homologs:
-        effectors_homologs = set.union(effectors_homologs,h)
-    with open(log_file,'a') as log:
-        log.write(f'k:{k},n:{len(effectors_homologs)}\n{effectors_homologs}\n\n')
-    k -= 10
+if not os.path.exists('tmp_mmseq'):
+    os.makedirs('tmp_mmseq')
+protein_mmseqs_all_vs_all(effectors,bacterial_proteome,'blast_outputs/effectorsDB.blast', 'tmp_mmseq')
+
+k=0.6
+effectors_homologs = set()
+homologs = list(parse_blast_out('blast_outputs/effectorsDB.blast',min_identity=k).values())
+for h in homologs:
+    effectors_homologs = set.union(effectors_homologs,h)
     
 
 recs = SeqIO.parse(bacterial_proteome,'fasta')

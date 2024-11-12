@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Eff3ctidor</title>
 
@@ -77,37 +76,35 @@
     In the tabular output there are:<br><br><b>On screen tables</b>
     <ol>
         <li>The positive set used to train the classifier. These samples are sorted according to their likelihood to encode T3Es.</li>
-        <li>Top 10 predictions. These prediction are the highest scoring putative T3Es, identified by Effectidor. Of note, the scores of these prediction should be taken into acount in comparison to the scores of the known T3Es given in the previous table.</li>
-        <li>Type 3 secretion system proteins. These proteins are identified on the basis of sequence similarity to our T3SS proteins dataset (see data). They are excluded from the ML process and therefore do not get a score, but are given as an extra output.</li>
+        <li>Top 10 predictions. These predictions are the highest scoring putative T3Es, identified by Effectidor. Of note, the scores of these predictions should be taken into account in comparison to the scores of the known T3Es given in the previous table.</li>
     </ol></p>
     <p><b>Downloadable files</b>
     <ol>
-        <li>Predictions file. All the ORFs in the genome (excluding T3SS proteins and pseudogenes) are sorted according to their score, reflecting their likelihood to encode T3Es. The label of each ORF is given, as well as the protein sequence and protein annotation (if available in the input data).</li>
-        <li>Pseudogenes file - an Excel file with all the predicted ORFs, annotated as pseudogenes.
-        <br>Highly scored samples are potentially of effector origin lost in evolution.
-        <br>This file will be empty if the input ORFs file contains no annotations.</li>
-        <li>Feature importance file. This table shows the features sorted by their contribution to the learning process, and their relative importance.</li>
-        <li>Raw features file. This file contains all the features and their values for each ORF in the data. These values were the input to the ML pipeline.</li>
+        <li>Predictions file. All the OGs in the genomes (excluding OGs that represent T3SS and flagella components) are sorted according to their score, reflecting their likelihood to encode T3Es. The label of each OG is given, as well as ORFs identity from each genome and protein annotation (if available in the input data).</li>
+        <li>Feature importance file. This table lists the features used for the ML, sorted by their contribution to the learning process, and their relative importance.</li>
+        <li>Report on type 3 secretion system and flagella proteins found in the input genomes. These proteins are identified on the basis of sequence similarity to our T3SS datasets (see data). They are excluded from the ML process and therefore do not get a score, but are given as an extra output. To each subsystem found in the data all the components and their loci in each genome are listed.</li>
+        <li>Raw features file. This file contains all the features and their values for each OG in the data. These values were the input to the ML pipeline.</li>
     </ol></p>
     <br><p>
-    The graphical output shows analysis of the features. The 10 most contributing features will be compared between the two classes - effectors and non-effectors, in violin plots.
+    The graphical output includes analysis of the features. The 10 most contributing features will be compared between the two classes - effectors and non-effectors, in violin plots.<br>
+        Additional graphical output include presence/absence maps of the T3Es and T3SS and flagella components found in the genomes.
     <br><br>You can see an example for the output in the running example <a href="/results/Example_run/output.html" target="_blank">here</a>.
     </p><br>
     </div>
     <h3 onclick="Open_interpretation()" style="cursor:pointer;">How do I interpret the results?</h3><br>
     <div id="interpretationQ" style="display:none;">
-    <p>The main results, the predictions file, contains the ORFs sorted by their likelihood to encode T3Es.
-    <br>To identify candidates to be novel T3Es, search for ORFs with a high score at the top rows of the table.
+    <p>The main results, the predictions file, contains the OGs sorted by their likelihood to encode T3Es.
+    <br>To identify candidates to be novel T3Es, search for OGs with a high score at the top rows of the table.
     <br>If you used an input Effectors file, look for samples that are not already known to be effectors. These samples will have a question mark (?) in the column "is_effector".
-    <br>If you did not used an input Effectors file, the samples marked with "yes" in the "is_effector" column are homologous to known T3Es, and the highly scored samples marked with a question mark (?) are potentially novel T3Es.
+    <br>If you did not use an input Effectors file, the samples marked with "yes" in the "is_effector" column are homologous to known T3Es, and the highly scored samples marked with a question mark (?) are potentially novel T3Es.
     <br>For your convenience, the highly scored samples are highlighted with dark green that becomes lighter as the score decreases.
-    <br>For your convenience, the amino acid sequence will be available for each ORF, as well as the annotation (if exists in the input file).
-    <br><br>In general, an ORF with a high score and an ambiguous annotation is a good candidate to be a novel T3E.</p>
+    <br>For each OG the annotation (if exists in the input file) is provided, and its members in each genome are specified.
+    <br><br>In general, an OG with a high score and an ambiguous annotation is a good candidate to be a novel T3E.</p>
     <br>
     </div>
     <h3 onclick="Open_evaluation()" style="cursor:pointer;">How is Effectidor evaluated and where can I see its predicting accuracy?</h3><br>
     <div id="evaluationQ" style="display:none;">
-    <p>In the learning process Effectidor randomly leaves 20% of the labeled data (effectors and non-effectors) aside, as a test set. Each learning algorithm is trained on the remaining 80% training data, using cross validation, and then evaluated on the untouched 20% test set.
+    <p>In the learning process Effectidor randomly leaves 20% of the labeled data (effectors and non-effectors) aside, as a test set. Each classification algorithm is trained on the remaining 80% training data, using cross validation, and then evaluated on the untouched 20% test set.
     <br>The measurement used to evaluate Effectidor's performance is the Area Under the Precision Recall Curve (AUPRC). The closer it is to 1, the more accurate the classifier is. You can see the resulting AUPRC achieved on the test set in the downloadable predictions file.
     </p><br>
     </div>
@@ -116,13 +113,13 @@
     <p>
     Effectidor has one obligatory input - an <b>ORFs file</b>.<br> This is a FASTA file including all the genome ORFs. See instructions for downloading this file <a href="instructions.html" target="_blank">here</a>.
     <br>Some of the ORFs in this file (effectors and non-effectors) will be used to train the machine-learning algorithms, and based on the trained classifier, the main output - prediction for each ORF - will be performed. 
-    <br>In addition, it is recommended to supply a known <b>Effectors file</b>, as appearing in the ORFs file. Alternatively, a homology search against an internal effectors dataset will be performed to constitute the "known effectors" ORFs for the learning process.
-    <br><br> In the advanced options you can supply data that will result in additional features to feed the machine-learning and improve the results. These data include:</p>
+    <br>In addition, it is recommended to supply a known <b>Effectors file</b>, as appearing in the ORFs file. Alternatively, a homology search against an internal effectors' dataset will be performed to constitute the "known effectors" ORFs for the learning process.
+    <br><br> In the advanced options you can supply data that will result in additional features to feed the machine-learning and improve the predictions. These data include:</p>
     <ol>
         <li><b>Host proteome</b> archive. Protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files with the proteome of a known host of the studied bacterium. Multiple files can be included. All these files should be compressed in a single <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip</a> archive.
         <br>This input will be used for homology searches. As effectors interact with host proteins for their function, we expect them to have eukaryotic domains, that will be recognized in this homology search.
         </li>
-        <li>Archive of <b>proteomes of closely related bacteria without T3SSs</b>. This archive may contain several proteome records, each in a seperate <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file. These FASTA files should be compressed in a single <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip</a> archive.
+        <li>Archive of <b>proteomes of closely related bacteria without T3SSs</b>. This archive may contain several proteome records, each in a separate <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file. These FASTA files should be compressed in a single <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip</a> archive.
         A homology search will be performed against each of these proteomes. As these bacteria are closely related to the studied bacterium, the vast majority of the proteins in the studied bacterium are expected to have an ortholog in these proteomes. Nevertheless, since they do not encode a T3SS, effectors are not expected to have orthologs in these proteomes. Thus, these features are usually very informative for the machine-learning.
         </li>
         <li>
@@ -137,7 +134,7 @@
     <h3 onclick="Open_running_time()" style="cursor:pointer;">What is the expected running time of Effectidor?</h3><br>
     <div id="running_timeQ" style="display:none;">
     <p>The running time depends on many factors, among them the input you supply and the load in our servers.
-    <br>It can take a few minutes and up to several hours. We will email you a link to the results upon submission, if you choose to supply your email address.
+    <br>It can take a few minutes and up to several hours. In extreme cases, for example, when analyzing many genomes simultaneously, it can take several days. We will email you a link to the results upon submission, and upon completion.
     </p><br>
     </div>
     <h3 onclick="Open_saving_time()" style="cursor:pointer;">How long will my results be saved in the servers?</h3><br>
@@ -147,14 +144,11 @@
     </div>
     <h3 onclick="Open_email()" style="cursor:pointer;">Why do you need my email?</h3><br>
     <div id="emailQ" style="display:none;">
-    <p>If you submit your email we will use it to send you a link to your results.<br>
-    In addition, in case of a bug we could contact you upon fixing it.</p><br>
+    <p>We will use it to send you a link to your results.<br>
     </div>
     <h3 onclick="Open_genomes()" style="cursor:pointer;">Can I use Effectidor to run the analysis on several genomes simultaneously?</h3><br>
     <div id="genomesQ" style="display:none;">
-    <p>As of today, Effectidor only works for one genome at a time.
-    <br>You can submit a different job for each genome, but you cannot run a common analysis for more than one genome.
-    <br>This may change in the future, stay tuned.</p>
+    <p>Yes! Effectidor V2 supports pan-genome analysis. The training and prediction are done on ortholog groups (OGs).</p>
     </div>
     </div></div>
     <div id="behind-footer"></div>

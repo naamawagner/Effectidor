@@ -79,6 +79,23 @@ function validate_read_files() {
         alert("GFF3 file is missing!");
         return false;
     }
+    if (ORFs.endsWith(".zip")) {
+        if (gff != '' && (!gff.endsWith(".zip"))) {
+            alert("For pan-genome analysis gff input must be given in a zip archive!");
+            return false;
+        } else if (genome != '' && (!genome.endsWith(".zip"))) {
+            alert("For pan-genome analysis full genome input must be given in a zip archive!");
+            return false;
+        }
+    } else {
+        if (gff != '' && (gff.endsWith(".zip"))) {
+            alert("For a single genome analysis gff input cannot be given in a zip archive!");
+            return false;
+        } else if (genome != '' && (genome.endsWith(".zip"))) {
+            alert("For a single genome analysis full genome input cannot be given in a zip archive!");
+            return false;
+        }
+    }
         
     return true;
 }

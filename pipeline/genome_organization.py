@@ -3,20 +3,17 @@ import csv
 from sys import argv
 import os
 from pip_box_features import parse_gff_to_CDS_loc
-ORFs_dir = argv[1]
+ORFs_f = argv[1]
 effectors_file = argv[2]
 working_directory = argv[3]
-gff_dir = argv[4]
-gff_files = [f'{gff_dir}/{file}' for file in os.listdir(gff_dir) if not file.startswith('_') and not file.startswith('.') and os.path.isfile(f'{gff_dir}/{file}')]
+gff_f = argv[4]
 os.chdir(working_directory)
-locus_dics=[fasta_parser.parse_ORFs(f'{ORFs_dir}/{ORFs_file}') for ORFs_file in os.listdir(ORFs_dir)]
+locus_dic=fasta_parser.parse_ORFs(ORFs_f)
 effectors_dict = fasta_parser.parse_ORFs(effectors_file,DNA=False)
 #%%
-locus_area_d,circulars = {},[]
-for gff_f in gff_files:
-    locus_area_d1,circulars1 = parse_gff_to_CDS_loc(gff_f,{k: v for d in locus_dics for k, v in d.items()})
-    locus_area_d.update(locus_area_d1)
-    circulars.extend(circulars1)
+
+locus_area_d,circulars = parse_gff_to_CDS_loc(gff_f,locus_dic)
+
     
 linear_contigs = []
 circular_contigs = []
@@ -71,10 +68,8 @@ def closest_effector(locus):
                     break
             if upstream_closest != 0 and downstream_closest != 0: # there is a neighbor effector
                 return min(upstream_closest,downstream_closest)
-            elif binary_l[gene_place] == 1: # there is no neighbor effector but this is an effector
-                return len(contig)
-            else: # this is not an effector nor it has a neighbor effector
-                return 5000
+            else: # it has no neighbor effector
+                return None #it will be filled with the median of this feature later (before learning)
     for i in range(len(linear_contigs)):#linear
         if locus in linear_contigs[i]:
             contig = linear_contigs[i]
@@ -90,16 +85,14 @@ def closest_effector(locus):
                 if binary_l[gene_place-i] == 1:
                     downstream_closest = i
                     break
-            if upstream_closest != 0 and downstream_closest != 0: # there is a neighbor effector
+            if upstream_closest != 0 and downstream_closest != 0: # there are neighbor effectors both upstream and downstream
                 return min(upstream_closest,downstream_closest)
-            elif upstream_closest != 0:
+            elif upstream_closest != 0: # there is a neighbor effector upstream
                 return upstream_closest
-            elif downstream_closest != 0:
+            elif downstream_closest != 0: # there is a neighbor effector downstream
                 return downstream_closest
-            elif binary_l[gene_place] == 1: # there is no neighbor effector but this is an effector
-                return len(contig)
-            else: # this is not an effector nor it has a neighbor effector
-                return 5000
+            else: # it has no neighbor effector
+                return None #it will be filled with the median of this feature later (before learning)
 
 
 def effectors_in_neighbors(locus,k_neighbors):
@@ -128,7 +121,7 @@ def effectors_in_neighbors(locus,k_neighbors):
             binary_l = binary_linear_lsts[i]
             gene_place = contig.index(locus)
             if len(contig)-1 <= k_neighbors:
-                return sum(binary_l[:gene_place])+sum(binary_l[gene_place:])
+                return sum(binary_l[:gene_place])+sum(binary_l[gene_place+1:])
             if gene_place >= k_neighbors: # enough genes upstream
                 down = sum(binary_l[gene_place-k_neighbors:gene_place])
             else:
@@ -146,12 +139,11 @@ with open(f'genome_organization_features.csv','w',newline='') as f:
     for k in [5,10,15,20,25,30]:
         header.append(f'effectors_in_closest_{str(k)}_ORFs')
     csv_writer.writerow(header)
-    for locus_dic in locus_dics:
-        for locus in locus_dic:
-            l=[locus]
-            l.append(closest_effector(locus))
-            for k in [5,10,15,20,25,30]:
-                l.append(effectors_in_neighbors(locus,k))
-            csv_writer.writerow(l)
+    for locus in locus_dic:
+        l=[locus]
+        l.append(closest_effector(locus))
+        for k in [5,10,15,20,25,30]:
+            l.append(effectors_in_neighbors(locus,k))
+        csv_writer.writerow(l)
 endfile = open('genome_organization_features.done','w')
 endfile.close()

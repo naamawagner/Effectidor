@@ -94,7 +94,9 @@ def upload_file(form, form_key_name, file_path, cgi_debug_path):
         f.write(content)
 
 
-def write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts):
+def write_running_parameters_to_html(cgi_debug_path, output_path, job_title, ORFs_name, effectors_name, T3Es_name,
+                                     host_name, non_T3SS_name, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts,
+                                     T3signal):
     with open(output_path, 'a') as f:
         write_to_debug_file(cgi_debug_path, f'24\n') 
         # regular params row
@@ -144,14 +146,6 @@ def write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs
             f.write(f'<b>bacterial proteomes without T3SS archive: </b>{non_T3SS_name}')
             f.write('</div></div>')
             write_to_debug_file(cgi_debug_path, f'37\n')
-        '''
-        if full == 'yes':
-            write_to_debug_file(cgi_debug_path, f'38\n')
-            f.write('<div class="row" style="font-size: 20px;">')
-            f.write('<div class="col-md-12">')
-            f.write(f'<b>including genome organization features.</b>')
-            f.write('</div></div>')
-            write_to_debug_file(cgi_debug_path, f'39\n')'''
         
         if gff_name:
             write_to_debug_file(cgi_debug_path, f'40\n')
@@ -193,19 +187,26 @@ def write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs
             f.write(f'<b>Cis regulatory elements:</b>{",".join(to_print)}')
             f.write('</div></div>')
             write_to_debug_file(cgi_debug_path, f'51\n')
+        if T3signal:
+            write_to_debug_file(cgi_debug_path, f'52\n')
+            f.write('<div class="row" style="font-size: 20px;">')
+            f.write('<div class="col-md-12">')
+            f.write(f'<b>Including Type III secretion signal prediction</b>')
+            f.write('</div></div>')
+            write_to_debug_file(cgi_debug_path, f'53\n')
         f.write('</div><br>')
-        write_to_debug_file(cgi_debug_path, f'52\n')
+        write_to_debug_file(cgi_debug_path, f'57\n')
 
 
 def write_cmds_file(cmds_file, run_number, parameters):
     # the queue does not like very long commands so I use a dummy delimiter (!@#) to break the commands for q_submitter
     new_line_delimiter = ';!@#'
     # the code contains features that are exclusive to Python3.6 (or higher)!
-    required_modules = ' '.join(['python/python-anaconda3.6.5'])
+    required_modules = ' '.join(['MMseqs2/May2024'])
     with open(cmds_file, 'w') as f:
         f.write(f'module load {required_modules}')
         f.write(new_line_delimiter)
-        cmd = " ".join(["python",f"{CONSTS.MAIN_SCRIPT}",parameters])+f'\teffectidor{run_number}\n'
+        cmd = " ".join(["python", f"{CONSTS.MAIN_SCRIPT}", parameters])+f'\teffectidor{run_number}\n'
         f.write(cmd)
 
 def run_cgi():
@@ -299,6 +300,8 @@ def run_cgi():
         write_to_debug_file(cgi_debug_path, f'10\n')
         effectors_homology = form['homology_search'].value.strip()
         translocation_signal = form['translocation_signal'].value.strip()
+        identity = form['identity_cutoff'].value.strip()
+        coverage = form['coverage_cutoff'].value.strip()
         if ORFs_name.endswith('zip'): #ZIP archive
             ORFs_path = os.path.join(wd, 'ORFs.zip')
         else: #FASTA
@@ -309,7 +312,10 @@ def run_cgi():
         parameters = f'{ORFs_path} {wd} --html_path {output_path} -q {CONSTS.QUEUE_NAME}'
         if form['effectors'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'11\n')
-            effectors_path = os.path.join(wd, 'effectors.fasta')
+            if effectors_name.endswith('zip'): # ZIP archive
+                effectors_path = os.path.join(wd, 'effectors.zip')
+            else: # FASTA
+                effectors_path = os.path.join(wd, 'effectors.fasta')
             upload_file(form, 'effectors', effectors_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'effectors file was saved to disk successfully\n\n')
             
@@ -318,7 +324,7 @@ def run_cgi():
             if effectors_homology == 'yes':
                 parameters += f' --homology_search'
         if translocation_signal == 'yes':
-            write_to_debug_file(cgi_debug_path,'include translocation signal')
+            write_to_debug_file(cgi_debug_path, 'include translocation signal')
             parameters += ' --translocation_signal'
             
         if form['T3Es'].value: # not empty string / empy bytes - the file was supplied by the user
@@ -331,8 +337,7 @@ def run_cgi():
             
         if form['host'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'13\n')
-            os.makedirs(f'{wd}/blast_data')
-            host_path = os.path.join(f'{wd}/blast_data', 'host.zip')
+            host_path = os.path.join(wd, 'host.zip')
             upload_file(form, 'host', host_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path, f'host file was saved to disk successfully\n\n')
             
@@ -345,21 +350,22 @@ def run_cgi():
             write_to_debug_file(cgi_debug_path, f'no_T3SS file was saved to disk successfully\n\n')
         
             parameters += f' --no_T3SS {no_T3SS_path}'
-            
-        PIP, hrp, mxiE, exs, tts = False,False,False,False,False
+
+        parameters += f' --identity_cutoff {identity}'
+        parameters += f' --coverage_cutoff {coverage}'
+        PIP, hrp, mxiE, exs, tts = False, False, False, False, False
         if form['gff'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'16\n')
             if gff_name.endswith('.zip'):
                 gff_path = os.path.join(wd, 'genome_features.zip')
             else:
                 gff_path = os.path.join(wd, 'genome.gff3')
-            upload_file(form,'gff',gff_path,cgi_debug_path)
+            upload_file(form,'gff', gff_path, cgi_debug_path)
             write_to_debug_file(cgi_debug_path,'gff file was saved to disc successfully\n\n')
             
             parameters += f' --gff_path {gff_path}'
         
             write_to_debug_file(cgi_debug_path, f'17\n')
-            parameters += ' --full_genome'
             
         if form['genome'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'15\n')
@@ -367,8 +373,8 @@ def run_cgi():
                 genome_path = os.path.join(wd, 'genome_sequence.zip')
             else:
                 genome_path = os.path.join(wd, 'genome.fasta')
-            upload_file(form,'genome',genome_path,cgi_debug_path)
-            write_to_debug_file(cgi_debug_path,'genome file was saved to disc successfully\n\n')
+            upload_file(form, 'genome', genome_path, cgi_debug_path)
+            write_to_debug_file(cgi_debug_path, 'genome file was saved to disc successfully\n\n')
             
             parameters += f' --genome_path {genome_path}'
             if 'PIP-box' in form:
@@ -391,8 +397,13 @@ def run_cgi():
                 write_to_debug_file(cgi_debug_path, f'22\n')
                 parameters += ' --tts'
                 tts = True
+        T3signal = False
+        if translocation_signal == 'yes':
+            T3signal = True
         write_to_debug_file(cgi_debug_path, f'23\n')   
-        write_running_parameters_to_html(cgi_debug_path,output_path, job_title, ORFs_name, effectors_name, T3Es_name, host_name, non_T3SS_name, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts)
+        write_running_parameters_to_html(cgi_debug_path, output_path, job_title, ORFs_name, effectors_name, T3Es_name,
+                                         host_name, non_T3SS_name, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts,
+                                         T3signal)
         write_to_debug_file(cgi_debug_path, f'{ctime()}: Running parameters were written to html successfully.\n')
 
         cmds_file = os.path.join(wd, 'qsub.cmds')
@@ -429,6 +440,8 @@ def run_cgi():
                 notification_content += f'GFF file: {gff_name}\n'
             if genome_f_name:
                 notification_content += f'genome file: {genome_f_name}\n'
+            notification_content += f'Minimal identity percentage of orthologs and paralogs: {identity}\n'
+            notification_content += f'Minimal coverage percentage of orthologs and paralogs: {coverage}\n'
             notification_content += f'\nYou can track the progress of your job at:\n{os.path.join(CONSTS.WEBSERVER_URL, "results", run_number, "output.html")}\n\n'
 
             # Send the user a notification email for their submission
