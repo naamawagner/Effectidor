@@ -115,7 +115,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         N_terminal_file_path = os.path.join(working_directory, 'N_terminals.faa')
         SeqIO.write(N_terminals, N_terminal_file_path, 'fasta')
         write_sh_file(tmp_dir, N_terminal_file_path, f'{working_directory}/Embedding_pred.csv')
-
+    
     
     if not effectors_file:
         subprocess.check_output(['python', f'{scripts_dir}/find_effectors.py', f'{blast_datasets_dir}/T3Es.faa', all_prots, effectors_prots])
