@@ -1,10 +1,10 @@
 import sys
-# sys.path.append('/bioseq/effectidor/auxiliaries')
 import os
 import logging
 import Bio.SeqUtils
 import effectidor_CONSTANTS as CONSTS  # from /effectidor/auxiliaries
 from time import sleep, time
+sys.path.append('/lsweb/josef_sites/effectidor/auxiliaries')
 from auxiliaries import fail, update_html, append_to_html  # from /effectidor/auxiliaries
 from Bio import SeqIO
 from T3Es_wrapper import effectors_learn
