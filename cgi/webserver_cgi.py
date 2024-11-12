@@ -96,7 +96,7 @@ def upload_file(form, form_key_name, file_path, cgi_debug_path):
 
 def write_running_parameters_to_html(cgi_debug_path, output_path, job_title, ORFs_name, effectors_name, T3Es_name,
                                      host_name, non_T3SS_name, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts,
-                                     T3signal, sigp):
+                                     T3signal):
     with open(output_path, 'a') as f:
         write_to_debug_file(cgi_debug_path, f'24\n') 
         # regular params row
@@ -194,13 +194,6 @@ def write_running_parameters_to_html(cgi_debug_path, output_path, job_title, ORF
             f.write(f'<b>Including Type III secretion signal prediction</b>')
             f.write('</div></div>')
             write_to_debug_file(cgi_debug_path, f'53\n')
-        if sigp:
-            write_to_debug_file(cgi_debug_path, f'54\n')
-            f.write('<div class="row" style="font-size: 20px;">')
-            f.write('<div class="col-md-12">')
-            f.write(f'<b>Including SignalP6 prediction</b>')
-            f.write('</div></div>')
-            write_to_debug_file(cgi_debug_path, f'56\n')
         f.write('</div><br>')
         write_to_debug_file(cgi_debug_path, f'57\n')
 
@@ -307,7 +300,6 @@ def run_cgi():
         write_to_debug_file(cgi_debug_path, f'10\n')
         effectors_homology = form['homology_search'].value.strip()
         translocation_signal = form['translocation_signal'].value.strip()
-        signalp = form['signalp'].value.strip()
         identity = form['identity_cutoff'].value.strip()
         coverage = form['coverage_cutoff'].value.strip()
         if ORFs_name.endswith('zip'): #ZIP archive
@@ -334,9 +326,6 @@ def run_cgi():
         if translocation_signal == 'yes':
             write_to_debug_file(cgi_debug_path, 'include translocation signal')
             parameters += ' --translocation_signal'
-        if signalp == 'yes':
-            write_to_debug_file(cgi_debug_path, 'include signalp')
-            parameters += ' --signalp'
             
         if form['T3Es'].value: # not empty string / empy bytes - the file was supplied by the user
             write_to_debug_file(cgi_debug_path, f'12\n')
@@ -408,15 +397,13 @@ def run_cgi():
                 write_to_debug_file(cgi_debug_path, f'22\n')
                 parameters += ' --tts'
                 tts = True
-        sigp, T3signal = False, False
+        T3signal = False
         if translocation_signal == 'yes':
             T3signal = True
-        if signalp == 'yes':
-            sigp = True
         write_to_debug_file(cgi_debug_path, f'23\n')   
         write_running_parameters_to_html(cgi_debug_path, output_path, job_title, ORFs_name, effectors_name, T3Es_name,
                                          host_name, non_T3SS_name, gff_name, genome_f_name, PIP, hrp, mxiE, exs, tts,
-                                         T3signal, sigp)
+                                         T3signal)
         write_to_debug_file(cgi_debug_path, f'{ctime()}: Running parameters were written to html successfully.\n')
 
         cmds_file = os.path.join(wd, 'qsub.cmds')
