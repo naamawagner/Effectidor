@@ -6,7 +6,6 @@ import csv
 import sys
 import effectidor_CONSTANTS
 from protein_mmseq import protein_mmseqs_all_vs_all
-sys.path.append('/bioseq/effectidor/auxiliaries')
 
 all_prots = argv[1]
 effectors_prots = argv[2]
