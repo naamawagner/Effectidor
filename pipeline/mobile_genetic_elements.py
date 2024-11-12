@@ -17,29 +17,30 @@ def parse_gff_for_MGE(gff_path: str) -> tuple[dict, dict, dict]:
             if line.startswith('#') or line.strip() == '':
                 continue
             parts: list = line.strip().split('\t')
-            attributes_dict: dict = {key_value.split('=')[0]: key_value.split('=')[1] for
-                                     key_value in parts[-1].split(';') if '=' in key_value}
-            sequence_id: str = parts[0]
-            if parts[2] == 'CDS':
-                product: str = attributes_dict.get('product', '').lower()
-                locus_tag: str = attributes_dict.get('locus_tag', 'Unknown')
-                if any(element in product for element in mobile_element) and not any(
-                        non_mge in product for non_mge in exclude_element):
-                    if sequence_id not in mobile_genetic_elements:
-                        mobile_genetic_elements[sequence_id] = {}
-                    mobile_genetic_elements[sequence_id][locus_tag] = {
-                        'MGE': product,
-                        'start': int(parts[3]),
-                        'end': int(parts[4])
-                    }
-                if sequence_id not in orfs:
-                    orfs[sequence_id] = dict()
-                orfs[sequence_id][locus_tag] = {'start': int(parts[3]), 'end': int(parts[4])}
+            if len(parts) > 2:
+                attributes_dict: dict = {key_value.split('=')[0]: key_value.split('=')[1] for
+                                         key_value in parts[-1].split(';') if '=' in key_value}
+                sequence_id: str = parts[0]
+                if parts[2] == 'CDS':
+                    product: str = attributes_dict.get('product', '').lower()
+                    locus_tag: str = attributes_dict.get('locus_tag', 'Unknown')
+                    if any(element in product for element in mobile_element) and not any(
+                            non_mge in product for non_mge in exclude_element):
+                        if sequence_id not in mobile_genetic_elements:
+                            mobile_genetic_elements[sequence_id] = {}
+                        mobile_genetic_elements[sequence_id][locus_tag] = {
+                            'MGE': product,
+                            'start': int(parts[3]),
+                            'end': int(parts[4])
+                        }
+                    if sequence_id not in orfs:
+                        orfs[sequence_id] = dict()
+                    orfs[sequence_id][locus_tag] = {'start': int(parts[3]), 'end': int(parts[4])}
 
-            if sequence_id not in genomic_components:  # for new genomic component we need to capture its length and circular status
-                length = int(parts[4])
-                is_circular = bool(attributes_dict.get('Is_circular', 'false').capitalize())
-                genomic_components[sequence_id] = {'length': length, 'is_circular': is_circular}
+                if sequence_id not in genomic_components:  # for new genomic component we need to capture its length and circular status
+                    length = int(parts[4])
+                    is_circular = bool(attributes_dict.get('Is_circular', 'false').capitalize())
+                    genomic_components[sequence_id] = {'length': length, 'is_circular': is_circular}
 
     return mobile_genetic_elements, orfs, genomic_components
 
