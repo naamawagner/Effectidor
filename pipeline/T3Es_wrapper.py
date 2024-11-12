@@ -72,7 +72,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     import shutil
     from add_annotations_to_predictions import add_annotations_to_predictions,make_html_tables,create_annotations_f
     import sys
-    #sys.path.append('/bioseq/effectidor/auxiliaries')
+    sys.path.append('/lsweb/josef_sites/effectidor/auxiliaries')
     from auxiliaries import fail
     import effectidor_CONSTANTS
     low_quality_flag = False
