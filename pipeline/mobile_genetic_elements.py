@@ -6,8 +6,6 @@ def parse_gff_for_MGE(gff_path: str) -> tuple[dict, dict, dict]:
     mobile_element = {'integrase', 'recombinase', 'transposase'}
     exclude_element = {'reca', 'recb', 'recc', 'recd', 'rada', 'ruvc', 'recf', 'recbcd',
                        'uvrd'}
-    # Talk to tal, pretty much Rec a-z should be excluded,
-    # but it's not the official names for most of them.
     mobile_genetic_elements = dict()
     genomic_components = dict()
     orfs = dict()
