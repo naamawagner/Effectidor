@@ -819,9 +819,9 @@ def edit_failure_html(CONSTS, error_msg, html_path, run_number):
 
 
 def add_closing_html_tags(html_path, CONSTS, run_number):
-    FORMER_MSG = 'Effectidor is now processing your request. This page will be automatically updated every {' \
-                 'CONSTS.RELOAD_INTERVAL} seconds (until the job is done). You can also reload it manually. Once the ' \
-                 'job has finished, the output will appear below. '
+    FORMER_MSG = f'Effectidor is now processing your request. This page will be automatically updated every ' \
+                 f'{CONSTS.RELOAD_INTERVAL} seconds (until the job is done). You can also reload it manually. Once the ' \
+                 f'job has finished, the output will appear below. '
     update_html(html_path, FORMER_MSG, '')  # remove "web server is now processing your request" message
     update_html(html_path, 'progress-bar-striped active', 'progress-bar-striped')  # stop_progress_bar
 
