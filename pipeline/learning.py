@@ -326,7 +326,7 @@ try:
     labeled.loc[:, f_names] = labeled[f_names].astype(float)
     for i in range(len(best_features)):
         fig = plt.figure(figsize=(8, 6))
-        ax = sns.violinplot(x="is_effector", y=best_features[i], data=labeled)
+        ax = sns.violinplot(x="is_effector", y=best_features[i], data=labeled, cut=0)
         y_label = ' '.join(best_features[i].split('_'))
         if len(y_label) > 45:
             y_lable_l = best_features[i].split('_')
@@ -452,7 +452,7 @@ except:
     labeled[f_names] = labeled[f_names].astype(float)
     for i in range(len(best_features)):
         fig = plt.figure(figsize=(8, 6))
-        ax = sns.violinplot(x="is_effector", y=best_features[i], data=labeled)
+        ax = sns.violinplot(x="is_effector", y=best_features[i], data=labeled, cut=0)
         y_label = ' '.join(best_features[i].split('_'))
         if len(y_label) > 45:
             y_lable_l = best_features[i].split('_')
