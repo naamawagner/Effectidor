@@ -32,7 +32,7 @@ def run_mmseqs(query_files_directory, output_mmseqs, bacterial_proteome, tmp_mms
 def get_mmseqs_results_dictionary(mmseqs_results_file):
     mmseq_results_dict = {}  # {T3SS_protein: (bacterial_protein, bit_score)}
     df = pd.read_csv(mmseqs_results_file, sep='\t',
-                     names=COLUMN_NAMES, header=None)
+                     names=COLUMN_NAMES, header=None, dtype={'bacterial_protein': str})
     filtered_df = df[(df['e_value'] < E_VALUE_CUT_OFF) & (
         df['query_coverage_percentage'] > QUERY_COVERAGE_PERCENTAGE_CUT_OFF)]
 

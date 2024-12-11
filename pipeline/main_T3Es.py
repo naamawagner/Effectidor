@@ -22,6 +22,13 @@ scripts_dir = CONSTS.EFFECTIDOR_EXEC
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('main')
 
+ILLEGAL_CHARS = '\\;:,^`~\'\"'
+
+
+def has_illegal_chars(s):
+    # Check if the first word in the string (which is the record ID) contains illegal characters
+    record_id = s.split(' ')[0]
+    return any(char in ILLEGAL_CHARS for char in record_id)
 
 def verify_fasta_format(fasta_path, Type, input_name):
     logger.info(f'Validating FASTA format:{fasta_path}')
@@ -43,7 +50,11 @@ def verify_fasta_format(fasta_path, Type, input_name):
             line_number += 1
             if not line.startswith('>'):
                 return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA ' \
-                       f'format</a>. First line in fasta {input_name} starts with "{line[0]}" instead of ">". '
+                       f'format</a>. First line in fasta {input_name} starts with {line[0]} instead of ">". '
+            if Type == 'DNA':
+                if has_illegal_chars(line):
+                    return f'Illegal format. First line in fasta {input_name} contains an illegal character in its ' \
+                           f'first word (one of: {ILLEGAL_CHARS}).'
             previous_line_was_header = True
             putative_end_of_file = False
             curated_content = f'>{line[1:]}'.replace("|", "_")
@@ -165,6 +176,7 @@ def verify_zip(file, name):
     if not os.path.exists(f'{"/".join(file.split("/")[:-1])}/zip_tmp'):
         os.makedirs(f'{"/".join(file.split("/")[:-1])}/zip_tmp')
     shutil.unpack_archive(file, '/'.join(file.split('/')[:-1]) + '/zip_tmp')
+    logger.info('Validating zip: created zip_tmp')
     flag = False
     for f in os.listdir(f'{"/".join(file.split("/")[:-1])}/zip_tmp'):
         new_name = f.replace(' ', '_')
@@ -178,6 +190,7 @@ def verify_zip(file, name):
                 return f'In {name}:<br>{error_msg}'
             flag = True
             subprocess.check_output(f'rm {"/".join(file.split("/")[:-1])}/zip_tmp/{f}', shell=True)
+            logger.info(f'Validating zip: removed {f}')
     if not flag:
         return f'{name} contains no valid files. Make sure to include protein fasta files in this archive!'
 
@@ -479,9 +492,11 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                 shutil.copy(input_T3Es_path, f'{output_dir_path}/Effectidor_runs/{genome}')
     if host_proteome:
         error_msg = verify_zip(host_proteome, 'Host data')
+        logger.info(f'called verify_zip {host_proteome} error_msg = {error_msg}')
         if error_msg:
             fail(error_msg, error_path)
         os.makedirs(f'{output_dir_path}/blast_data/temp_extract', exist_ok=True)
+        logger.info('creating temp_extract')
         shutil.unpack_archive(host_proteome, f'{output_dir_path}/blast_data/temp_extract')
         recs = []
         for f in os.listdir(f'{output_dir_path}/blast_data/temp_extract'):
@@ -492,8 +507,10 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                     recs.append(rec)
         SeqIO.write(recs, f'{output_dir_path}/blast_data/host.faa', 'fasta')
         shutil.rmtree(f'{output_dir_path}/blast_data/temp_extract')
+        logger.info('created host.faa and removed temp_extract')
 
     if no_T3SS_path:
+        logger.info(f'calling verify_zip {no_T3SS_path}')
         error_msg = verify_zip(no_T3SS_path, 'Close bacteria without T3SS data')
         if error_msg:
             fail(error_msg, error_path)
@@ -514,12 +531,14 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         for genome in os.listdir(f'{output_dir_path}/Effectidor_runs'):
             os.makedirs(os.path.join(output_dir_path, 'Effectidor_runs', genome, 'blast_data'), exist_ok=True)
             for f in os.listdir(f'{output_dir_path}/blast_data'):
+                logger.info(f'copying {f} to Effectidor_runs')
                 shutil.copy(f'{output_dir_path}/blast_data/{f}',
                             os.path.join(output_dir_path, 'Effectidor_runs', genome, 'blast_data'))
             # shutil.copytree(f'{output_dir_path}/blast_data',f'{output_dir_path}/Effectidor_runs/{genome}',dirs_exist_ok=True)
+    logger.info('finished validate_input')
 
 
-def cleanup_is_running(queues=('pupkolab', 'pupkoweb')):
+def cleanup_is_running(queues=('pupkoweb')):
     for q in queues:
         try:
             if subprocess.check_output(f'qstat {q} | grep cleanup_effec', shell=True):
@@ -643,7 +662,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         else:
             effectors_learn(error_path, ORFs_path, effectors_path, output_dir_path, tmp_dir, queue, gff_path,
                             genome_path, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts,
-                            homology_search=homology_search, signal=signal, signalp=signalp ,MGE=MGE)
+                            homology_search=homology_search, signal=signal, signalp=signalp, MGE=MGE)
         # add a check for failed features jobs...
         while not os.path.exists(os.path.join(output_dir_path, 'clean_orthologs_table.csv')):
             # make sure the find_OGs job was finished before proceeding
@@ -652,10 +671,13 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
 
         annotations_df = pd.read_csv(f'{output_dir_path}/OGs_annotations.csv')
         features_data = pd.read_csv(f'{output_dir_path}/OGs_features.csv')
-        positives_size = features_data['is_effector'].value_counts()['effector']
+        try:
+            positives_size = features_data['is_effector'].value_counts()['effector']
+        except KeyError:
+            positives_size = 0
         if positives_size == 0:
-            error_msg = 'No effectors were found in your data! If you know your data should contain type III ' \
-                        'effectors please supply these data. '
+            error_msg = 'No effectors were found in your data based on homology! If you know your data should contain '\
+                        'type III effectors please supply them. '
             fail(error_msg, error_path)
         elif positives_size < 3:
             effectors = features_data[features_data['is_effector'] == 'effector']
@@ -688,17 +710,14 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         if os.path.exists(f'{output_dir_path}/out_learning/learning_failed.txt'):
             low_quality_flag = True
 
+        T3SS_data = pd.read_csv(os.path.join(output_dir_path, 'T3SS.csv'), dtype=str)
+        T3SS_Table = T3SS_data.dropna()
+        T3SS_table = T3SS_Table.to_html(index=False, justify='left', escape=False)
         if html_path:
             # shutil.make_archive(final_zip_path, 'zip', output_dir_path)
-            T3SS_data = pd.read_csv(os.path.join(output_dir_path, 'T3SS.csv'))
-            T3SS_Table = T3SS_data.dropna()
-            T3SS_table = T3SS_Table.to_html(index=False, justify='left', escape=False)
             finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table,
                           low_quality_flag, output_dir_path)
         else:
-            T3SS_data = pd.read_csv(os.path.join(output_dir_path, 'T3SS.csv'))
-            T3SS_Table = T3SS_data.dropna()
-            T3SS_table = T3SS_Table.to_html(index=False, justify='left', escape=False)
             with open(f'{output_dir_path}/output.html', 'w') as out:
                 out.write(f'positives:\n{positives_table}\n<br>\npredicted:\n{predicted_table}<br>T3SS and flagella components:<br>{T3SS_table}')
 

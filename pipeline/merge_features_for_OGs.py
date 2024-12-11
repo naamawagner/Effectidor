@@ -45,7 +45,7 @@ if os.path.exists(Effectidor_features_d):
             content = pseudo_f.read()
             if content != '':
                 pseudogenes.extend(content.split('\n'))
-    T3SS_DFs = [pd.read_csv(os.path.join(Effectidor_features_d, genome, 'T3SS.csv'), index_col='Subsystem_T3SS Protein')
+    T3SS_DFs = [pd.read_csv(os.path.join(Effectidor_features_d, genome, 'T3SS.csv'), index_col='Subsystem_T3SS Protein', dtype={'Bacterial Protein ID': str})
                 for genome in genomes]
     for i in range(len(T3SS_DFs)):
         T3SS_DFs[i].columns = [genomes[i]]
@@ -55,7 +55,7 @@ if os.path.exists(Effectidor_features_d):
 else:
     with open('pseudogenes.txt') as pseudo_f:
         pseudogenes = pseudo_f.read().split('\n')
-    merged_T3SS_df = pd.read_csv('T3SS.csv', index_col='Subsystem_T3SS Protein')
+    merged_T3SS_df = pd.read_csv('T3SS.csv', index_col='Subsystem_T3SS Protein', dtype={'Bacterial Protein ID': str})
 with open(os.path.join(working_directory, 'pseudogenes.txt'), 'w') as pseudo_f:
     pseudo_f.write('\n'.join(pseudogenes))
 
@@ -63,7 +63,7 @@ T3SS_loci_to_remove = merged_T3SS_df.values
 flattened_T3SS_loci = pd.Series(reduce(lambda a, b: np.hstack((a, b)), T3SS_loci_to_remove))
 flattened_T3SS_loci_no_nan = list(flattened_T3SS_loci.dropna())
 T3SS_OGs_to_remove = set([flatten_ortho_dict[locus] for locus in flattened_T3SS_loci_no_nan])
-OGs_table = pd.read_csv('clean_orthologs_table.csv', index_col='OG_name')
+OGs_table = pd.read_csv('clean_orthologs_table.csv', index_col='OG_name', dtype=str)
 OGs_no_T3SS = OGs_table.drop(index=list(T3SS_OGs_to_remove))
 OGs_no_T3SS.to_csv('clean_orthologs_table_noT3SS.csv')
 

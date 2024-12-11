@@ -235,12 +235,12 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         failed_str = ', '.join(failed_jobs)
         error_msg = f'The following jobs have failed:\n\n{failed_str}'
         fail(error_msg, error_path)
-    merged_df = pd.read_csv(files_to_merge[0])
+    merged_df = pd.read_csv(files_to_merge[0], dtype={'locus': str})
     for f in files_to_merge[1:]:
-        df1 = pd.read_csv(f)
+        df1 = pd.read_csv(f, dtype={'locus': str})
         merged_df = merged_df.merge(df1)
     merged_df = merged_df.merge(label_df)
-    merged_df.to_csv('features.csv',index=False)
+    merged_df.to_csv('features.csv', index=False)
 
 
 import os
