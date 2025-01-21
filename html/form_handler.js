@@ -86,6 +86,9 @@ function validate_read_files() {
         } else if (genome != '' && (!genome.endsWith(".zip"))) {
             alert("For pan-genome analysis full genome input must be given in a zip archive!");
             return false;
+        } else if (effectors != '' && (!effectors.endsWith(".zip"))) {
+            alert("For pan-genome analysis effectors input must be given in a zip archive!");
+            return false;
         }
     } else {
         if (gff != '' && (gff.endsWith(".zip"))) {
@@ -93,6 +96,9 @@ function validate_read_files() {
             return false;
         } else if (genome != '' && (genome.endsWith(".zip"))) {
             alert("For a single genome analysis full genome input cannot be given in a zip archive!");
+            return false;
+        } else if (effectors != '' && (effectors.endsWith(".zip"))) {
+            alert("For a single genome analysis effectors input cannot be given in a zip archive!");
             return false;
         }
     }

@@ -48,6 +48,9 @@ def verify_fasta_format(fasta_path, Type, input_name):
         try:
             line = f.readline()
             line_number += 1
+            while line == '\n':  # skip empty lines
+                line = f.readline()
+                line_number += 1
             if not line.startswith('>'):
                 return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA ' \
                        f'format</a>. First line in fasta {input_name} starts with {line[0]} instead of ">". '
@@ -112,7 +115,7 @@ def verify_fasta_format(fasta_path, Type, input_name):
 def verify_ORFs(ORFs_path):
     logger.info(f'Validating ORFs:{ORFs_path}')
     ORFs_recs = list(SeqIO.parse(ORFs_path, 'fasta'))
-    if len(ORFs_recs) < 900:
+    if len(ORFs_recs) < 800:
         return f'The ORFs file contains only {str(len(ORFs_recs))} records. Make sure this file contains all the ' \
                f'ORFs (open reading frames) in the genome - Effectidor is designed to analyze full genomes and not ' \
                f'a sample of genes. Also, make sure this file contains ORFs and not full genome sequence! The full ' \
@@ -312,6 +315,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         ORFs_genomes = []
         os.makedirs(f'{output_dir_path}/ORFs_tmp')
         shutil.unpack_archive(ORFs_path, f'{output_dir_path}/ORFs_tmp')
+        number_of_genomes = 0
         for file in os.listdir(f'{output_dir_path}/ORFs_tmp'):
             if os.path.isfile(f'{output_dir_path}/ORFs_tmp/{file}') and not file.startswith(
                     '_') and not file.startswith('.'):
@@ -331,6 +335,10 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                 os.makedirs(os.path.join(output_dir_path, 'Effectidor_runs', genome_name), exist_ok=True)
                 shutil.move(os.path.join(output_dir_path, 'ORFs_tmp', file),
                             os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'ORFs.fasta'))
+                number_of_genomes += 1
+        if number_of_genomes == 0:
+            error_msg = 'No files were found in the ORFs input! Make sure the files in the ZIP archive are not inside directories.'
+            fail(error_msg, error_path)
         shutil.rmtree(f'{output_dir_path}/ORFs_tmp', ignore_errors=True)
         ORFs_set = set(ORFs_genomes)
     else:
@@ -365,6 +373,9 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                             os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'ORFs.fasta'), genome_name)
                         if error_msg:
                             fail(error_msg, error_path)
+            if len(gff_genomes) == 0:
+                error_msg = 'No files were found in the GFF input! Make sure the files in the ZIP archive are not inside directories.'
+                fail(error_msg, error_path)
             shutil.rmtree(f'{output_dir_path}/gff_tmp', ignore_errors=True)
             gff_set = set(gff_genomes)
             if not gff_set == ORFs_set:
@@ -408,6 +419,9 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                                 os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'ORFs.fasta'))
                             if error_msg:
                                 fail(f'In genome {genome_name}:<br>{error_msg}', error_path)
+                if len(full_genome_names) == 0:
+                    error_msg = 'No files were found in the full genome input! Make sure the files in the ZIP archive are not inside directories.'
+                    fail(error_msg, error_path)
                 shutil.rmtree(f'{output_dir_path}/full_genome_tmp', ignore_errors=True)
                 full_genome_set = set(full_genome_names)
                 if not gff_set == full_genome_set == ORFs_set:
@@ -704,8 +718,8 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
             predicted_table, positives_table = make_html_tables(
                 f'{output_dir_path}/out_learning/consensus_predictions_with_annotations.csv',
                 f'{output_dir_path}/OG_effector_homologs.csv')
-        if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
-            subprocess.check_output(['python', os.path.join(scripts_dir, 'phyletic_patterns.py'), output_dir_path])
+            if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
+                subprocess.check_output(['python', os.path.join(scripts_dir, 'phyletic_patterns.py'), output_dir_path])
         low_quality_flag = False
         if os.path.exists(f'{output_dir_path}/out_learning/learning_failed.txt'):
             low_quality_flag = True
