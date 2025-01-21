@@ -38,7 +38,7 @@ python /groups/pupko/yairshimony/microbializer_prod/pipeline/main.py --contigs_d
 {coverage_cutoff}\tMicrobializer_for_Effectidor'''
 with open('search_OGs.cmds', 'w') as cmds_f:
     cmds_f.write(cmds_file_content)
-cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} search_OGs.cmds {working_directory}'
+cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} search_OGs.cmds {working_directory} --memory 4'
 subprocess.call(cmd, shell=True)
 
 Microbializer_output_f = 'M1CR0B1AL1Z3R_output_OGs/05a_final_orthologs_table/final_orthologs_table.csv'

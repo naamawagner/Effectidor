@@ -170,7 +170,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
                 f'{os.path.join(scripts_dir, "q_submitter.py")} --cpu 3 {working_directory}/signalp.cmds {tmp_dir} -q {queue}',
                 shell=True)
     if not os.path.exists(f'{working_directory}/physical_features.done'):
-        subprocess.call(f'{os.path.join(scripts_dir, "q_submitter.py")} {working_directory}/features_jobs.cmds {tmp_dir} -q {queue}', shell=True)
+        subprocess.call(f'{os.path.join(scripts_dir, "q_submitter.py")} {working_directory}/features_jobs.cmds {tmp_dir} -q {queue} --memory 4', shell=True)
     if signal:
         if not os.path.exists(f'{working_directory}/Embedding_pred.csv.done'):
             cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {os.path.join(tmp_dir,"Embedding.cmds")} {tmp_dir} -q {queue} --cpu 10 --memory 15'
