@@ -42,7 +42,7 @@ def parse_blast_out(blast_out, e_val=10**(-10), min_identity=0.7, min_coverage=5
 
 if not os.path.exists('tmp_mmseq'):
     os.makedirs('tmp_mmseq')
-protein_mmseqs_all_vs_all(effectors,bacterial_proteome,'blast_outputs/effectorsDB.blast', 'tmp_mmseq')
+protein_mmseqs_all_vs_all(effectors, bacterial_proteome, 'blast_outputs/effectorsDB.blast', 'tmp_mmseq')
 
 k = 0.6
 effectors_homologs = set()
