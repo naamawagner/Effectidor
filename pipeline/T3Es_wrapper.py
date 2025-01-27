@@ -62,8 +62,8 @@ def write_sh_file(tmp_dir,path_to_fasta,path_for_output_csv,queue='power-pupko')
         out.write(content)
 
 def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir, queue, gff_file, full_genome_f,
-                    PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False, signal=False,
-                    signalp=False, MGE=True, coverage=50):
+                    PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False, MGE=True,
+                    coverage=50):
     import pandas as pd
     import subprocess
     import os
@@ -102,19 +102,20 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     # translate the input fasta files
     subprocess.check_output(['python',f'{scripts_dir}/translate_fasta.py',ORFs_file,effectors_file,all_prots,effectors_prots])
 
-    if signal: #make N-terminal sequences for Signal search
-        #os.makedirs(signal_prot_dir, exist_ok=True)
-        recs = SeqIO.parse(all_prots,'fasta')
-        N_terminals = []
-        for rec in recs:
-            ID = rec.id
-            N_seq = rec.seq[:100]
-            rec.seq = N_seq
-            rec.description = ID
-            N_terminals.append(rec)
-        N_terminal_file_path = os.path.join(working_directory, 'N_terminals.faa')
-        SeqIO.write(N_terminals, N_terminal_file_path, 'fasta')
-        write_sh_file(tmp_dir, N_terminal_file_path, f'{working_directory}/Embedding_pred.csv')
+
+    # if signal: #make N-terminal sequences for Signal search
+    #     #os.makedirs(signal_prot_dir, exist_ok=True)
+    #     recs = SeqIO.parse(all_prots,'fasta')
+    #     N_terminals = []
+    #     for rec in recs:
+    #         ID = rec.id
+    #         N_seq = rec.seq[:100]
+    #         rec.seq = N_seq
+    #         rec.description = ID
+    #         N_terminals.append(rec)
+    #     N_terminal_file_path = os.path.join(working_directory, 'N_terminals.faa')
+    #     SeqIO.write(N_terminals, N_terminal_file_path, 'fasta')
+    #     write_sh_file(tmp_dir, N_terminal_file_path, f'{working_directory}/Embedding_pred.csv')
     
     
     if not effectors_file:
@@ -130,60 +131,46 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     subprocess.check_output(['python', f'{scripts_dir}/find_non_effectors.py', all_prots, effectors_prots])
     subprocess.check_output(['python', f'{scripts_dir}/find_T3SS_components.py', working_directory, all_prots, 'T3SS_data'])
     # creating the features extraction commands
-    with open(f'{working_directory}/features_jobs.cmds','w') as jobs_f:
-        # sequence features
-        jobs_f.write(f'''module load MMseqs2/May2024; python {scripts_dir}/sequence_features.py {ORFs_file} {effectors_prots} {working_directory}!@#\
-                        touch {os.path.join(tmp_dir,"physical_features.done")}\tsequence_features\n''')
-        # sequence similarity features
-        jobs_f.write(f'''module load MMseqs2/May2024; python {scripts_dir}/homology.py {ORFs_file} {all_prots} {blast_datasets_dir} {working_directory}!@#\
-                        touch {os.path.join(tmp_dir,"homology_features.done")}\thomology\n''')
-        if gff_file:
-            # genome organization features
-            jobs_f.write(f'''module load MMseqs2/May2024; python {scripts_dir}/genome_organization.py {ORFs_file} {effectors_prots} {working_directory} {gff_file}!@#\
-                        touch {os.path.join(tmp_dir,"genome_organization_features.done")}\tgenome_organization\n''')
-            if MGE:
-                jobs_f.write(
-                    f'''module load MMseqs2/May2024; python {scripts_dir}/mobile_genetic_elements.py {gff_file} {working_directory}/mobile_genetic_elements.csv!@#\
-                    touch {os.path.join(tmp_dir, "mobile_genetic_elements.csv.done")}\tmobile_genetic_elements\n''')
-            if full_genome_f:
-                # regulatory elements features
-                cmds = f'module load MMseqs2/May2024; python {scripts_dir}/pip_box_features.py {ORFs_file} {working_directory} {gff_file} {full_genome_f}'
-                if PIP:
-                    cmds += ' --PIP'
-                if hrp:
-                    cmds += ' --hrp'
-                if mxiE:
-                    cmds += ' --mxiE'
-                if exs:
-                    cmds += ' --exs'
-                if tts:
-                    cmds += ' --tts'
-                cmds += f'!@#touch {os.path.join(tmp_dir,"pip_box_features.done")}\tcis_regulatory_elements\n'
-                jobs_f.write(cmds)
-        # signal peptide
-    if signalp:
-        with open(f'{working_directory}/signalp.cmds','w') as sig_f:
-            sig_f.write(f'''module load MMseqs2/May2024; python {scripts_dir}/signal_peptide_features.py {ORFs_file} {all_prots} {working_directory}!@#\
-                            touch {os.path.join(tmp_dir,"signal_p_features.done")}\tsignalP\n''')
-        if not os.path.exists(f'{working_directory}/signal_p_features.done'):
-            subprocess.call(
-                f'{os.path.join(scripts_dir, "q_submitter.py")} --cpu 3 {working_directory}/signalp.cmds {tmp_dir} -q {queue}',
-                shell=True)
+    Features_cmds = []
+    # sequence features
+    Features_cmds.append(f'python {scripts_dir}/sequence_features.py {ORFs_file} {effectors_prots} {working_directory}')
+    # sequence similarity features
+    Features_cmds.append(f'python {scripts_dir}/homology.py {ORFs_file} {all_prots} {blast_datasets_dir} {working_directory}')
+    if gff_file:
+        # genome organization features
+        Features_cmds.append(f'python {scripts_dir}/genome_organization.py {ORFs_file} {effectors_prots} {working_directory} {gff_file}')
+        if MGE:
+            # mobile genetic elements features
+            Features_cmds.append(f'python {scripts_dir}/mobile_genetic_elements.py {gff_file} {working_directory}')
+        if full_genome_f:
+            # regulatory elements features
+            cmd = f'python {scripts_dir}/pip_box_features.py {ORFs_file} {working_directory} {gff_file} {full_genome_f}'
+            if PIP:
+                cmds += ' --PIP'
+            if hrp:
+                cmds += ' --hrp'
+            if mxiE:
+                cmds += ' --mxiE'
+            if exs:
+                cmds += ' --exs'
+            if tts:
+                cmds += ' --tts'
+            Features_cmds.append(cmd)
     if not os.path.exists(f'{working_directory}/physical_features.done'):
-        subprocess.call(f'{os.path.join(scripts_dir, "q_submitter.py")} {working_directory}/features_jobs.cmds {tmp_dir} -q {queue} --memory 4', shell=True)
-    if signal:
-        if not os.path.exists(f'{working_directory}/Embedding_pred.csv.done'):
-            cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {os.path.join(tmp_dir,"Embedding.cmds")} {tmp_dir} -q {queue} --cpu 10 --memory 15'
+        for cmd in Features_cmds:
             subprocess.call(cmd, shell=True)
+    # if signal:
+    #     if not os.path.exists(f'{working_directory}/Embedding_pred.csv.done'):
+    #         cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {os.path.join(tmp_dir,"Embedding.cmds")} {tmp_dir} -q {queue} --cpu 10 --memory 15'
+    #         subprocess.call(cmd, shell=True)
+
     # TO COMPLETE: make sure the jobs were submitted before proceeding
     create_annotations_f(ORFs_file, gff_file, 'annotations.csv', 'pseudogenes.txt')
     x = sum([item.endswith('done') for item in os.listdir(working_directory)])
     # amount_of_expected_results = 3
     amount_of_expected_results = 2
-    if signal:
-        amount_of_expected_results += 1
-    if signalp:
-        amount_of_expected_results += 1
+    # if signal:
+    #     amount_of_expected_results += 1
     if gff_file:
         amount_of_expected_results += 1
         if MGE:
@@ -194,10 +181,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     while x < amount_of_expected_results:
         print('number of expected outputs is '+str(amount_of_expected_results)+' , number of existing outputs is '+str(x)+', waiting for additional '+str(amount_of_expected_results-x)+' outputs')
         time.sleep(60)
-        num_finished_jobs = sum([item.endswith('done') for item in os.listdir(tmp_dir)])
         x = sum([item.endswith('done') for item in os.listdir(working_directory)])
-        if x < num_finished_jobs:
-            break
         
     effectors = SeqIO.to_dict(SeqIO.parse(effectors_prots, 'fasta')).keys()
     non_effectors = SeqIO.to_dict(SeqIO.parse('non_effectors.faa', 'fasta')).keys()
@@ -214,12 +198,9 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
 
     files_to_merge = ['physical_features.csv', 'homology_features.csv']
     done_files = ['physical_features.done', 'homology_features.done']
-    if signalp:
-        files_to_merge.append('signal_p_features.csv')
-        done_files.append('signal_p_features.done')
-    if signal:
-        files_to_merge.append('Embedding_pred.csv')
-        done_files.append('Embedding_pred.csv.done')
+    # if signal:
+    #     files_to_merge.append('Embedding_pred.csv')
+    #     done_files.append('Embedding_pred.csv.done')
     if gff_file:
         files_to_merge.append('genome_organization_features.csv')
         done_files.append('genome_organization_features.done')
@@ -229,8 +210,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         if full_genome_f:
             files_to_merge.append('pip_box_features.csv')
             done_files.append('pip_box_features.done')
-    failed_jobs = [done_job.split('.')[0] for done_job in done_files if not os.path.exists(done_job) and os.path.exists(
-        os.path.join(tmp_dir, done_job))]
+    failed_jobs = [done_job.split('.')[0] for done_job in done_files if not os.path.exists(done_job)]
     if len(failed_jobs) > 0:
         failed_str = ', '.join(failed_jobs)
         error_msg = f'The following jobs have failed:\n\n{failed_str}'
@@ -274,9 +254,7 @@ if __name__ == '__main__':
         parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
         parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
         parser.add_argument('--tts', help='look for tts-box in promoters', action='store_true')
-        parser.add_argument('--translocation_signal', help='extract translocation signal feature', action='store_true')
-        parser.add_argument('--signalp', help='extract SignalP6 feature', action='store_true')
-        parser.add_argument('--mobile_genetics_elements', help='extract distance from mobile genetics elements', action='store_true')
+        # parser.add_argument('--translocation_signal', help='extract translocation signal feature', action='store_true')
         parser.add_argument('--homology_search',
                             help='search additional effectors based on homology to internal dataset',
                             action='store_true')
@@ -293,4 +271,4 @@ if __name__ == '__main__':
         effectors_learn(args.error_path, args.input_ORFs_path, args.input_effectors_path, args.output_dir_path,
                         f'{args.output_dir_path}/tmp', args.queue, args.gff_file, args.full_genome_f, PIP=args.PIP,
                         hrp=args.hrp, mxiE=args.mxiE, exs=args.exs, tts=args.tts, homology_search=args.homology_search,
-                        signal=args.translocation_signal, signalp=args.signalp, coverage=args.coverage)
+                        coverage=args.coverage)
