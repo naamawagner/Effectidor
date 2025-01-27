@@ -577,7 +577,7 @@ def cleanup_ran_today(path=r'/bioseq/data/results/effectidor/'):
 
 def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path,
          gff_path, no_T3SS, identity_cutoff='50', coverage_cutoff='60', PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,
-         signal=False, signalp=False, MGE=True):
+         signal=False, signalp=False, MGE=True, effectors_coverage='50'):
     '''
     try:
         if not cleanup_is_running() and not cleanup_ran_today():
@@ -644,6 +644,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                     parameters += ' --translocation_signal'
                 if signalp:
                     parameters += ' --signalp'
+                parameters += f' --coverage {effectors_coverage}'
 
                 job_cmd = f'module load MMseqs2/May2024;!@#python {os.path.join(scripts_dir, "T3Es_wrapper.py")} ' \
                           f'{parameters}\tEffectidor_features_{genome}\n '
@@ -676,7 +677,8 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         else:
             effectors_learn(error_path, ORFs_path, effectors_path, output_dir_path, tmp_dir, queue, gff_path,
                             genome_path, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts,
-                            homology_search=homology_search, signal=signal, signalp=signalp, MGE=MGE)
+                            homology_search=homology_search, signal=signal, signalp=signalp, MGE=MGE,
+                            coverage=effectors_coverage)
         # add a check for failed features jobs...
         while not os.path.exists(os.path.join(output_dir_path, 'clean_orthologs_table.csv')):
             # make sure the find_OGs job was finished before proceeding
@@ -940,6 +942,7 @@ if __name__ == '__main__':
                         default='50')
     parser.add_argument('--coverage_cutoff', help='coverage percentage cutoff for orthologs and paralogs search',
                         default='60')
+    parser.add_argument('--effectors_coverage', help='coverage percentage cutoff for effectors homologs', default='60')
 
     args = parser.parse_args()
 
@@ -958,4 +961,4 @@ if __name__ == '__main__':
          args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS,
          identity_cutoff=args.identity_cutoff, coverage_cutoff=args.coverage_cutoff, PIP=PIP_flag, hrp=hrp_flag,
          mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=args.homology_search,
-         signal=args.translocation_signal, signalp=args.signalp)
+         signal=args.translocation_signal, signalp=args.signalp, effectors_coverage=args.effectors_coverage)

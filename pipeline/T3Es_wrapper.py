@@ -63,7 +63,7 @@ def write_sh_file(tmp_dir,path_to_fasta,path_for_output_csv,queue='power-pupko')
 
 def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tmp_dir, queue, gff_file, full_genome_f,
                     PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False, signal=False,
-                    signalp=False, MGE=True):
+                    signalp=False, MGE=True, coverage=50):
     import pandas as pd
     import subprocess
     import os
@@ -118,10 +118,10 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     
     
     if not effectors_file:
-        subprocess.check_output(['python', f'{scripts_dir}/find_effectors.py', f'{blast_datasets_dir}/T3Es.faa', all_prots, effectors_prots])
+        subprocess.check_output(['python', f'{scripts_dir}/find_effectors.py', f'{blast_datasets_dir}/T3Es.faa', all_prots, effectors_prots, coverage])
     elif homology_search:
         effectors_prots2 = 'homology_found_effectors.faa'
-        subprocess.check_output(['python', f'{scripts_dir}/find_effectors.py', f'{blast_datasets_dir}/T3Es.faa', all_prots, effectors_prots2])
+        subprocess.check_output(['python', f'{scripts_dir}/find_effectors.py', f'{blast_datasets_dir}/T3Es.faa', all_prots, effectors_prots2, coverage])
         eff1 = SeqIO.to_dict(SeqIO.parse(effectors_prots, 'fasta'))
         eff2 = SeqIO.to_dict(SeqIO.parse(effectors_prots2, 'fasta'))
         eff1.update(eff2)
@@ -280,6 +280,7 @@ if __name__ == '__main__':
         parser.add_argument('--homology_search',
                             help='search additional effectors based on homology to internal dataset',
                             action='store_true')
+        parser.add_argument('--coverage', help='minimal coverage with effector homolog', default='50')
         parser.add_argument('-v', '--verbose', help='Increase output verbosity', action='store_true')
 
         args = parser.parse_args()
@@ -292,4 +293,4 @@ if __name__ == '__main__':
         effectors_learn(args.error_path, args.input_ORFs_path, args.input_effectors_path, args.output_dir_path,
                         f'{args.output_dir_path}/tmp', args.queue, args.gff_file, args.full_genome_f, PIP=args.PIP,
                         hrp=args.hrp, mxiE=args.mxiE, exs=args.exs, tts=args.tts, homology_search=args.homology_search,
-                        signal=args.translocation_signal, signalp=args.signalp)
+                        signal=args.translocation_signal, signalp=args.signalp, coverage=args.coverage)
