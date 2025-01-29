@@ -1,47 +1,3 @@
-def create_effectors_html(effectors_file,ORFs_file,out_dir):
-    from Bio import SeqIO
-    import csv
-    import pandas as pd
-    recs = SeqIO.parse(ORFs_file,'fasta')
-    locus_annotation={}
-    for rec in recs:
-        is_locus = False
-        annotation = ''
-        header = rec.description
-        if 'pseudo=true' in header:
-            annotation = 'pseudogene'
-        header_l = header.split('[')
-        for a in header_l:
-            if 'locus_tag=' in a:
-                locus = a.split('=')[1].strip().strip(']')
-                is_locus = True
-            elif 'protein=' in a:
-                if annotation == 'pseudogene':
-                    annotation += ' '+a.split('=')[1].strip().strip(']')
-                else:
-                    annotation = a.split('=')[1].strip().strip(']')
-        if is_locus:
-            locus_annotation[locus] = annotation
-        else:
-            locus_annotation[rec.id] = annotation
-    locus_protein={}
-    effectors_recs = SeqIO.parse(effectors_file,'fasta')
-    for effector in effectors_recs:
-        protein = str(effector.seq)
-        protein_l = [protein[70*i:70*(i+1)] for i in range(len(protein)//70+1)]
-        if protein_l[-1]=='':
-            protein_l = protein_l[:-1]
-        protein_n = '<br>'.join(protein_l)
-        locus_protein[effector.id] = protein_n
-    with open(f'{out_dir}/effectors_for_html.csv','w',newline='') as out_f:
-        writer = csv.writer(out_f)
-        writer.writerow(['Locus tag','Annotation','Protein sequence'])
-        for locus in locus_protein:
-            writer.writerow([locus,locus_annotation[locus],protein_n])
-    data = pd.read_csv(f'{out_dir}/effectors_for_html.csv')
-    effectors_table = data.to_html(index=False,justify='left',escape=False)
-    return effectors_table,None,None, False
-            
 def write_sh_file(tmp_dir,path_to_fasta,path_for_output_csv,queue='power-pupko'):
     content = f'''export HOME=/groups/pupko/yairshimony!@#\
     # Print some information about the job!@#\
@@ -70,7 +26,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     import time
     from Bio import SeqIO
     import shutil
-    from add_annotations_to_predictions import add_annotations_to_predictions,make_html_tables,create_annotations_f
+    from add_annotations_to_predictions import add_annotations_to_predictions, make_html_tables, create_annotations_f
     import sys
     sys.path.append('/lsweb/josef_sites/effectidor/auxiliaries')
     from auxiliaries import fail
