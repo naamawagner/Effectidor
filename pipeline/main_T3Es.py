@@ -78,6 +78,10 @@ def verify_fasta_format(fasta_path, Type, input_name):
                                f' lines {line_number - 1} and {line_number} start with ">". '
                     else:
                         previous_line_was_header = True
+                        if Type == 'DNA':
+                            if has_illegal_chars(line):
+                                return f'Illegal format. Line {line_number} in fasta {input_name} contains an illegal' \
+                                       f' character in its first word (one of: {ILLEGAL_CHARS}).'
                         curated_content += f'>{line[1:]}\n'.replace("|", "_")
                         continue
                 else:  # not a header
@@ -126,7 +130,7 @@ def verify_ORFs(ORFs_path):
                f'and only the ORFs of one genome. This number cannot exceed 10,000 ORFs per genome. If it contains ' \
                f'data of multiple genomes, separate them to different files (compressed together in a ZIP archive) ' \
                f'such that every file will contain the ORFs of a single genome. '
-    start_code = ['ATG', 'TGT', 'TTG']
+    start_code = ['ATG', 'GTG', 'TTG']
     end_code = ['TAA', 'TAG', 'TGA']
     # correct frame if needed and specified before verifying the input contains coding sequences
     corrected_recs = []
@@ -337,7 +341,8 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                             os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'ORFs.fasta'))
                 number_of_genomes += 1
         if number_of_genomes == 0:
-            error_msg = 'No files were found in the ORFs input! Make sure the files in the ZIP archive are not inside directories.'
+            error_msg = 'No files were found in the ORFs input! Make sure the files in the ZIP archive are not inside ' \
+                        'directories. '
             fail(error_msg, error_path)
         shutil.rmtree(f'{output_dir_path}/ORFs_tmp', ignore_errors=True)
         ORFs_set = set(ORFs_genomes)
@@ -374,7 +379,8 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                         if error_msg:
                             fail(error_msg, error_path)
             if len(gff_genomes) == 0:
-                error_msg = 'No files were found in the GFF input! Make sure the files in the ZIP archive are not inside directories.'
+                error_msg = 'No files were found in the GFF input! Make sure the files in the ZIP archive are not ' \
+                            'inside directories. '
                 fail(error_msg, error_path)
             shutil.rmtree(f'{output_dir_path}/gff_tmp', ignore_errors=True)
             gff_set = set(gff_genomes)
@@ -420,7 +426,8 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                             if error_msg:
                                 fail(f'In genome {genome_name}:<br>{error_msg}', error_path)
                 if len(full_genome_names) == 0:
-                    error_msg = 'No files were found in the full genome input! Make sure the files in the ZIP archive are not inside directories.'
+                    error_msg = 'No files were found in the full genome input! Make sure the files in the ZIP archive ' \
+                                'are not inside directories. '
                     fail(error_msg, error_path)
                 shutil.rmtree(f'{output_dir_path}/full_genome_tmp', ignore_errors=True)
                 full_genome_set = set(full_genome_names)
@@ -552,7 +559,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
     logger.info('finished validate_input')
 
 
-def cleanup_is_running(queues=('pupkoweb')):
+def cleanup_is_running(queues=('pupkolab', 'pupkoweb')):
     for q in queues:
         try:
             if subprocess.check_output(f'qstat {q} | grep cleanup_effec', shell=True):
@@ -576,8 +583,8 @@ def cleanup_ran_today(path=r'/bioseq/data/results/effectidor/'):
 
 
 def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path,
-         gff_path, no_T3SS, identity_cutoff='50', coverage_cutoff='60', PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,
-         signal=False, signalp=False, MGE=True):
+         gff_path, no_T3SS, identity_cutoff='50', coverage_cutoff='60', PIP=False, hrp=False, mxiE=False, exs=False,
+         tts=False, homology_search=False, signal=False, signalp=False, MGE=True, effectors_coverage='50'):
     '''
     try:
         if not cleanup_is_running() and not cleanup_ran_today():
@@ -644,6 +651,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                     parameters += ' --translocation_signal'
                 if signalp:
                     parameters += ' --signalp'
+                parameters += f' --coverage {effectors_coverage}'
 
                 job_cmd = f'module load MMseqs2/May2024;!@#python {os.path.join(scripts_dir, "T3Es_wrapper.py")} ' \
                           f'{parameters}\tEffectidor_features_{genome}\n '
@@ -676,7 +684,8 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         else:
             effectors_learn(error_path, ORFs_path, effectors_path, output_dir_path, tmp_dir, queue, gff_path,
                             genome_path, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts,
-                            homology_search=homology_search, signal=signal, signalp=signalp, MGE=MGE)
+                            homology_search=homology_search, signal=signal, signalp=signalp, MGE=MGE,
+                            coverage=effectors_coverage)
         # add a check for failed features jobs...
         while not os.path.exists(os.path.join(output_dir_path, 'clean_orthologs_table.csv')):
             # make sure the find_OGs job was finished before proceeding
@@ -810,20 +819,20 @@ def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_
                 <br>
                 <h3><b>feature importance</b></h3>
                 <br>
-                <a href='out_learning/feature_importance.png'><img src='out_learning/feature_importance.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/feature_importance.png'><img src='out_learning/feature_importance.png' style="max-width: 100%;" ></a>
                 <br><br>
                 <h3><b>best features comparison - effectors vs non-effectors:</b></h3>
                 <br>
-                <a href='out_learning/0.png'><img src='out_learning/0.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/1.png'><img src='out_learning/1.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/2.png'><img src='out_learning/2.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/3.png'><img src='out_learning/3.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/4.png'><img src='out_learning/4.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/5.png'><img src='out_learning/5.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/6.png'><img src='out_learning/6.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/7.png'><img src='out_learning/7.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/8.png'><img src='out_learning/8.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/9.png'><img src='out_learning/9.png' style="max-width: 100%;" /></a>
+                <a href='out_learning/0.png'><img src='out_learning/0.png' style="max-width: 100%;" ></a>
+                <a href='out_learning/1.png'><img src='out_learning/1.png' style="max-width: 100%;" ></a>
+                <a href='out_learning/2.png'><img src='out_learning/2.png' style="max-width: 100%;" ></a>
+                <a href='out_learning/3.png'><img src='out_learning/3.png' style="max-width: 100%;" ></a>
+                <a href='out_learning/4.png'><img src='out_learning/4.png' style="max-width: 100%;" ></a>
+                <a href='out_learning/5.png'><img src='out_learning/5.png' style="max-width: 100%;" ></a>
+                <a href='out_learning/6.png'><img src='out_learning/6.png' style="max-width: 100%;" ></a>
+                <a href='out_learning/7.png'><img src='out_learning/7.png' style="max-width: 100%;" ></a>
+                <a href='out_learning/8.png'><img src='out_learning/8.png' style="max-width: 100%;" ></a>
+                <a href='out_learning/9.png'><img src='out_learning/9.png' style="max-width: 100%;" ></a>
                 </div>
                 ''')
     else:
@@ -940,6 +949,7 @@ if __name__ == '__main__':
                         default='50')
     parser.add_argument('--coverage_cutoff', help='coverage percentage cutoff for orthologs and paralogs search',
                         default='60')
+    parser.add_argument('--effectors_coverage', help='coverage percentage cutoff for effectors homologs', default='50')
 
     args = parser.parse_args()
 
@@ -958,4 +968,4 @@ if __name__ == '__main__':
          args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS,
          identity_cutoff=args.identity_cutoff, coverage_cutoff=args.coverage_cutoff, PIP=PIP_flag, hrp=hrp_flag,
          mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=args.homology_search,
-         signal=args.translocation_signal, signalp=args.signalp)
+         signal=args.translocation_signal, signalp=args.signalp, effectors_coverage=args.effectors_coverage)
