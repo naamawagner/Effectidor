@@ -35,13 +35,13 @@ export PATH=$CONDA_PREFIX/bin:$PATH!@#!@#\
 python /groups/pupko/yairshimony/microbializer_prod/pipeline/main.py --contigs_dir \
 {working_directory}/genomes_for_Microbializer/ --output_dir output_OGs --add_orphan_genes_to_ogs --only_calc_ogs \
 --inputs_fasta_type orfs --bypass_number_of_genomes_limit --identity_cutoff {identity_cutoff} --coverage_cutoff \
-{coverage_cutoff}\tMicrobializer_for_Effectidor'''
+{coverage_cutoff} --account_name pupkoweb-users -q pupkoweb\tMicrobializer_for_Effectidor'''
 with open('search_OGs.cmds', 'w') as cmds_f:
     cmds_f.write(cmds_file_content)
 cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} search_OGs.cmds {working_directory} --memory 4'
 subprocess.call(cmd, shell=True)
 
-Microbializer_output_f = 'M1CR0B1AL1Z3R_output_OGs/05a_final_orthologs_table/final_orthologs_table.csv'
+Microbializer_output_f = 'M1CR0B1AL1Z3R_output_OGs/05a_orthogroups/orthogroups.csv'
 while not os.path.exists(Microbializer_output_f):
     # while the job hasn't finished
     time.sleep(60)
@@ -52,7 +52,7 @@ shutil.copy(Microbializer_output_f, working_directory)
 # subprocess.call("rm -r M1CR0B1AL1Z3R_output_OGs",shell=True)
 # subprocess.call("rm -r output_OGs",shell=True)
 
-with open('final_orthologs_table.csv') as ortho_table:
+with open('orthogroups.csv') as ortho_table:
     ortho_reader = csv.reader(ortho_table)
     header = next(ortho_reader)
     with open(os.path.join(working_directory, 'clean_orthologs_table.csv'), 'w', newline='') as out_F:
