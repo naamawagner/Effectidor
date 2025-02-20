@@ -29,12 +29,12 @@ else:
 
 
 # Run Microbializer block
-cmds_file_content = f'''source /groups/pupko/yairshimony/miniconda3/etc/profile.d/conda.sh!@#\
-conda activate /groups/pupko/yairshimony/miniconda3/envs/microbializer!@#\
+cmds_file_content = f'''source /lsweb/pupko/microbializer/miniconda3/etc/profile.d/conda.sh!@#\
+conda activate /lsweb/pupko/microbializer/miniconda3/envs/microbializer!@#\
 export PATH=$CONDA_PREFIX/bin:$PATH!@#!@#\
-python /groups/pupko/yairshimony/microbializer_prod/pipeline/main.py --contigs_dir \
-{working_directory}/genomes_for_Microbializer/ --output_dir output_OGs --add_orphan_genes_to_ogs --only_calc_ogs \
---inputs_fasta_type orfs --bypass_number_of_genomes_limit --identity_cutoff {identity_cutoff} --coverage_cutoff \
+python /lsweb/pupko/microbializer/pipeline/main.py --contigs_dir \
+{working_directory}/genomes_for_Microbializer/ --output_dir output_OGs --add_orphan_genes_to_ogs true --only_calc_ogs true \
+--inputs_fasta_type orfs --bypass_number_of_genomes_limit true --identity_cutoff {identity_cutoff} --coverage_cutoff \
 {coverage_cutoff} --account_name pupkoweb-users -q pupkoweb\tMicrobializer_for_Effectidor'''
 with open('search_OGs.cmds', 'w') as cmds_f:
     cmds_f.write(cmds_file_content)
