@@ -22,7 +22,7 @@ scripts_dir = CONSTS.EFFECTIDOR_EXEC
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('main')
 
-ILLEGAL_CHARS = '\\;:,^`~\'\"'
+ILLEGAL_CHARS = ':;,\'\"'
 
 
 def has_illegal_chars(s):
@@ -56,8 +56,9 @@ def verify_fasta_format(fasta_path, Type, input_name):
                        f'format</a>. First line in fasta {input_name} starts with {line[0]} instead of ">". '
             if Type == 'DNA':
                 if has_illegal_chars(line):
-                    return f'Illegal format. First line in fasta {input_name} contains an illegal character in its ' \
-                           f'first word (one of: {ILLEGAL_CHARS}).'
+                    line = re.sub(f'[{ILLEGAL_CHARS}]', '_', line)
+                    # return f'Illegal format. First line in fasta {input_name} contains an illegal character in its ' \
+                    #        f'first word (one of: {ILLEGAL_CHARS}).'
             previous_line_was_header = True
             putative_end_of_file = False
             curated_content = f'>{line[1:]}'.replace("|", "_")
@@ -80,8 +81,9 @@ def verify_fasta_format(fasta_path, Type, input_name):
                         previous_line_was_header = True
                         if Type == 'DNA':
                             if has_illegal_chars(line):
-                                return f'Illegal format. Line {line_number} in fasta {input_name} contains an illegal' \
-                                       f' character in its first word (one of: {ILLEGAL_CHARS}).'
+                                line = re.sub(f'[{ILLEGAL_CHARS}]', '_', line)
+                                # return f'Illegal format. Line {line_number} in fasta {input_name} contains an illegal' \
+                                #        f' character in its first word (one of: {ILLEGAL_CHARS}).'
                         curated_content += f'>{line[1:]}\n'.replace("|", "_")
                         continue
                 else:  # not a header
