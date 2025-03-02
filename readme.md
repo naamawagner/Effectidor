@@ -25,13 +25,13 @@ python pipeline/main_T3Es.py <b><i>ORFs</i></b> <b><i>output_dir_path</i></b> <b
 
 Additional optional flags:
 
---homology_search - if you supplied the input_effectors_path input, this flag will indicate that this input is partial and that additional T3Es should be added based on homology to the T3Es data, if found.
+--homology_search - if you supplied the <b><i>input_effectors_path</i></b> input, this flag will indicate that this input is partial (per genome) and that additional T3Es should be added based on homology to the T3Es data, if found in the genome.
 
---translocation_signal - to add a prediction of the type III secretion signal using an embedding model. Increases the accuracy with a price of longer running time.
+--translocation_signal - to add a prediction of the type III secretion signal using a pre-trained embedding model. Increases the accuracy with a price of longer running time.
 
 One of the following regulatory elements (that will be searched in the promoters, if you use a GFF+full genome inputs):
-1. --PIP
-2. --hrp
-3. --mxiE
-4. --exs
-5. --tts
+1. --PIP (for PIP-box)
+2. --hrp (for Hrp-box)
+3. --mxiE (for MxiE-box)
+4. --exs (for exs-box)
+5. --tts (for tts-box)
