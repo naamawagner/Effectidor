@@ -27,7 +27,7 @@ def create_annotations_f(ORFs_f, gff_f='', out_f='', pseudo_f=''):
                                     annot = fe.split('=')[1]
                             if 'pseudo=true' in row[-1]:
                                 pseudo_genes.append(locus)
-                                #annot = 'pseudogene ' + annot
+                                # annot = 'pseudogene ' + annot
                             locus_annotation[locus] = annot
     else:  # get the annotations from the fasta file
         recs = SeqIO.parse(ORFs_f, 'fasta')
@@ -123,7 +123,6 @@ def add_annotations_to_predictions(in_f, out_f_normal, out_f_pseudo, annotations
             if rec.id not in locus_annotation:
                 locus_annotation[rec.id] = annotation
             locus_prot[rec.id] = protein_n
-    #print(locus_annotation)
     with open(in_f) as f:
         reader = csv.reader(f)
         with open(out_f_normal, 'w', newline='') as out_normal:
@@ -149,7 +148,7 @@ def add_annotations_to_predictions(in_f, out_f_normal, out_f_pseudo, annotations
                             writer_normal.writerow(row)
 
 
-def make_html_tables(predictions_f, effector_homolog, T3SS=''):
+def make_html_tables(predictions_f, effector_homolog):
     data = pd.read_csv(predictions_f)
     predicted = data[data.is_effector == '?']
     positives = data[data.is_effector == 'yes']
@@ -164,7 +163,5 @@ def make_html_tables(predictions_f, effector_homolog, T3SS=''):
         index=False, justify='left', escape=False)
     positives_table = positives.merge(effector_homolog_df, how='left').to_html(
         index=False, justify='left', escape=False)
-    # T3SS_data = pd.read_csv(T3SS)
-    # T3SS_table = T3SS_data.to_html(index=False,justify='left',escape=False)
     return predicted_table, positives_table
     

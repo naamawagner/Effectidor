@@ -6,9 +6,10 @@ effectors_file = argv[2]
 all_prots = argv[3]
 effectors_prots = argv[4]
 
-def translate_fasta(ORFs_fasta,prots_fasta):
+
+def translate_fasta(ORFs_fasta, prots_fasta):
     prots = []
-    recs = SeqIO.parse(ORFs_fasta,'fasta')
+    recs = SeqIO.parse(ORFs_fasta, 'fasta')
     for rec in recs:
         if len(rec.seq.translate(to_stop=True)) > 10:
             header = rec.description
@@ -21,9 +22,12 @@ def translate_fasta(ORFs_fasta,prots_fasta):
                 rec.description = locus
             else:
                 rec.description = rec.id
+            if rec.seq[:3] in ['GTG', 'TTG']:  # Alternative start codons
+                rec.seq = 'ATG'+rec.seq[3:]
             rec.seq = rec.seq.translate(to_stop=True)
             prots.append(rec)
     SeqIO.write(prots, prots_fasta, 'fasta')
+
 
 translate_fasta(ORFs_file, all_prots)
 if effectors_file:

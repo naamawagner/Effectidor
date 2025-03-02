@@ -35,7 +35,8 @@ def parse_gff_for_MGE(gff_path: str) -> tuple[dict, dict, dict]:
                         orfs[sequence_id] = dict()
                     orfs[sequence_id][locus_tag] = {'start': int(parts[3]), 'end': int(parts[4])}
 
-                if sequence_id not in genomic_components:  # for new genomic component we need to capture its length and circular status
+                if sequence_id not in genomic_components:  # for new genomic component we need to capture its length
+                    # and circular status
                     length = int(parts[4])
                     is_circular = bool(attributes_dict.get('Is_circular', 'false').capitalize())
                     genomic_components[sequence_id] = {'length': length, 'is_circular': is_circular}

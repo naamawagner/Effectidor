@@ -1,4 +1,4 @@
-def convert_csv_to_colored_xlsx(path_to_csv, data_col='b', from_col='a', to_col='e'):
+def convert_csv_to_colored_xlsx(path_to_csv, data_col='b', from_col='a'):
     """
     :param path_to_csv: csv file to convert to a formatted xlsx
     :param number_of_loci: how many loci were analyzed
@@ -53,12 +53,3 @@ def convert_csv_to_colored_xlsx(path_to_csv, data_col='b', from_col='a', to_col=
                                                                      'font_color': font_color})})
 
     writer.close()
-
-'''
-if __name__ == '__main__':
-    # test
-    path_to_csv = 'concensus_predictions_full.csv'
-    number_of_loci = 4305
-    convert_csv_to_colored_xlsx(path_to_csv, number_of_loci)
-
-'''

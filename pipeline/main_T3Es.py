@@ -2,10 +2,7 @@ import sys
 import os
 import logging
 import Bio.SeqUtils
-import effectidor_CONSTANTS as CONSTS  # from /effectidor/auxiliaries
 from time import sleep, time
-sys.path.append('/lsweb/josef_sites/effectidor/auxiliaries')
-from auxiliaries import fail, update_html, append_to_html  # from /effectidor/auxiliaries
 from Bio import SeqIO
 from T3Es_wrapper import effectors_learn
 import shutil
@@ -14,10 +11,12 @@ import subprocess
 import pandas as pd
 from add_annotations_to_predictions import make_html_tables
 from csv_to_colored_xlsx_converter import convert_csv_to_colored_xlsx
+import fasta_parser
+from merge_features_for_OGs import get_ortho_dict
 
-data_dir = CONSTS.EFFECTIDOR_DATA
+scripts_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/data'
 blast_datasets_dir = f'{data_dir}/blast_data'
-scripts_dir = CONSTS.EFFECTIDOR_EXEC
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('main')
@@ -25,10 +24,17 @@ logger = logging.getLogger('main')
 ILLEGAL_CHARS = '\\;:,^`~\'\"'
 
 
+def fail(error_msg, error_file_path):
+    with open(error_file_path, 'w') as error_f:
+        error_f.write(error_msg + '\n')
+    raise Exception(error_msg)
+
+
 def has_illegal_chars(s):
     # Check if the first word in the string (which is the record ID) contains illegal characters
     record_id = s.split(' ')[0]
     return any(char in ILLEGAL_CHARS for char in record_id)
+
 
 def verify_fasta_format(fasta_path, Type, input_name):
     logger.info(f'Validating FASTA format:{fasta_path}')
@@ -94,7 +100,7 @@ def verify_fasta_format(fasta_path, Type, input_name):
                 for rec in recs:
                     seq = str(rec.seq)
                     if len(seq) == 0:
-                        return f'FASTA file {os.path.basename(fasta_path)} in {input_name} input contains empty records!'
+                        return f'FASTA file {os.path.basename(fasta_path)} in {input_name} input contains empty records'
                     AGCT_count = seq.count('A') + seq.count('G') + seq.count('T') + seq.count('C') + seq.count('N')
                     if AGCT_count >= 0.95 * len(seq):
                         f = AGCT_count * 100 / len(seq)
@@ -126,7 +132,7 @@ def verify_ORFs(ORFs_path):
                f'and only the ORFs of one genome. This number cannot exceed 10,000 ORFs per genome. If it contains ' \
                f'data of multiple genomes, separate them to different files (compressed together in a ZIP archive) ' \
                f'such that every file will contain the ORFs of a single genome. '
-    start_code = ['ATG', 'TGT', 'TTG']
+    start_code = ['ATG', 'GTG', 'TTG']
     end_code = ['TAA', 'TAG', 'TGA']
     # correct frame if needed and specified before verifying the input contains coding sequences
     corrected_recs = []
@@ -192,7 +198,8 @@ def verify_zip(file, name):
             if error_msg:
                 return f'In {name}:<br>{error_msg}'
             flag = True
-            subprocess.check_output(f'rm {"/".join(file.split("/")[:-1])}/zip_tmp/{f}', shell=True)
+            # subprocess.check_output(f'rm {"/".join(file.split("/")[:-1])}/zip_tmp/{f}', shell=True)
+            os.remove(os.path.join("/".join(file.split("/")[:-1]), 'zip_tmp', f))
             logger.info(f'Validating zip: removed {f}')
     if not flag:
         return f'{name} contains no valid files. Make sure to include protein fasta files in this archive!'
@@ -308,10 +315,108 @@ def validate_genome_and_gff(gff_f, genome_f, ORFs_f):
                 and genome files and re-submit the job. '''
 
 
+def validate_OGs_table(OGs_table, ORFs_f, output_dir_path):
+    logger.info(f'Validating OGs table: {OGs_table}, {ORFs_f}')
+    genomes_orthogroup_dict = get_ortho_dict(OGs_table)
+    logger.info('1')
+    flatten_ortho_dict = {key: genomes_orthogroup_dict[dic_name][key] for dic_name in genomes_orthogroup_dict
+                          for key in genomes_orthogroup_dict[dic_name]}
+    logger.info('2')
+    table = pd.read_csv(OGs_table)
+    logger.info(f'Have read table successfully')
+    if os.path.exists(os.path.join(output_dir_path, 'Effectidor_runs')):
+        logger.info(f'multiple genomes run')
+        genomes = os.listdir(os.path.join(output_dir_path, 'Effectidor_runs'))
+        header = list(table.columns)
+        for i in range(1, len(header)):
+            header[i] = header[i].replace(' ', '_')
+        table.columns = header
+        table.to_csv(OGs_table, index=False)
+        OGs_genomes = set(header[1:])
+        ORFs_genomes = set(genomes)
+        if not OGs_genomes == ORFs_genomes:
+            genomes_not_in_OGs = ORFs_genomes.difference(OGs_genomes)
+            if genomes_not_in_OGs:
+                return f'The following genomes are not found in the OGs input: {", ".join(genomes_not_in_OGs)}'
+
+        for genome in genomes:
+            locus_dic = fasta_parser.parse_ORFs(os.path.join(output_dir_path, 'Effectidor_runs', genome, 'ORFs.fasta'))
+            for locus in locus_dic:
+                if locus not in flatten_ortho_dict:
+                    return f'The OGs table does not hold locus {locus} from genome {genome}!'
+    else:
+        logger.info(f'single genome run')
+        header = list(table.columns)
+        if len(header) > 2:
+            return 'The OGs table seems to hold data of more than one genome, while the analysis is on a single genome'
+        header[1] = 'genome_ORFs'
+        table.columns = header
+        table.to_csv(OGs_table, index=False)
+        locus_dic = fasta_parser.parse_ORFs(ORFs_f)
+        for locus in locus_dic:
+            if locus not in flatten_ortho_dict:
+                return f'The OGs table does not hold locus {locus}'
+
+
+def validate_file_type(f, allowed_types):
+    if not any([f.endswith(f'.{t}') for t in allowed_types]):
+        return 'input not of the allowed types!'
+
+
 def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path,
-                   no_T3SS_path, error_path):
+                   no_T3SS_path, error_path, OG_input_f):
     logger.info('Validating input...')
+    ORFs_types = ['zip', 'txt', 'fasta', 'fna']
+    error_msg = validate_file_type(ORFs_path, ORFs_types)
+    if error_msg:
+        error_msg = f'ORFs {error_msg} The allowed types for this input are {", ".join(ORFs_types)}'
+        fail(error_msg, error_path)
+    if effectors_path:
+        error_msg = validate_file_type(effectors_path, ORFs_types)
+        if error_msg:
+            error_msg = f'effectors {error_msg} The allowed types for this input are {", ".join(ORFs_types)}'
+            fail(error_msg, error_path)
+    if input_T3Es_path:
+        allowed_types_T3Es = ['txt', 'fasta', 'faa']
+        error_msg = validate_file_type(input_T3Es_path, allowed_types_T3Es)
+        if error_msg:
+            error_msg = f'T3Es {error_msg} The allowed types for this input are {", ".join(allowed_types_T3Es)}'
+            fail(error_msg, error_path)
+    zip_input = ['zip']
+    if host_proteome:
+        error_msg = validate_file_type(host_proteome, zip_input)
+        if error_msg:
+            error_msg = f'Host {error_msg} The allowed types for this input are {", ".join(zip_input)}'
+            fail(error_msg, error_path)
+    if genome_path:
+        error_msg = validate_file_type(genome_path, ORFs_types)
+        if error_msg:
+            error_msg = f'genome {error_msg} The allowed types for this input are {", ".join(ORFs_types)}'
+            fail(error_msg, error_path)
+    if gff_path:
+        gff_types = ['gff', 'zip', 'txt']
+        error_msg = validate_file_type(gff_path, gff_types)
+        if error_msg:
+            error_msg = f'GFF {error_msg} The allowed types for this input are {", ".join(gff_types)}'
+            fail(error_msg, error_path)
+    if no_T3SS_path:
+        error_msg = validate_file_type(no_T3SS_path, zip_input)
+        if error_msg:
+            error_msg = f'no_T3SS {error_msg} The allowed types for this input are {", ".join(zip_input)}'
+            fail(error_msg, error_path)
+
     if ORFs_path.endswith('.zip'):
+        logger.info('multiple genomes run')
+        if gff_path:
+            if not gff_path.endswith('.zip'):
+                error_msg = 'ORFs input in ZIP and GFF input not! Both inputs must be of the same type (zip for ' \
+                            'pan genome, single file otherwise)'
+                fail(error_msg, error_path)
+        if genome_path:
+            if not genome_path.endswith('.zip'):
+                error_msg = 'ORFs input in ZIP and genome input not! Both inputs must be of the same type (zip for ' \
+                            'pan genome, single file otherwise)'
+                fail(error_msg, error_path)
         ORFs_genomes = []
         os.makedirs(f'{output_dir_path}/ORFs_tmp')
         shutil.unpack_archive(ORFs_path, f'{output_dir_path}/ORFs_tmp')
@@ -337,11 +442,25 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                             os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'ORFs.fasta'))
                 number_of_genomes += 1
         if number_of_genomes == 0:
-            error_msg = 'No files were found in the ORFs input! Make sure the files in the ZIP archive are not inside directories.'
+            error_msg = 'No files were found in the ORFs input! Make sure the files in the ZIP archive are not inside ' \
+                        'directories.'
             fail(error_msg, error_path)
+        logger.info('deleting temp ORFs')
         shutil.rmtree(f'{output_dir_path}/ORFs_tmp', ignore_errors=True)
+        logger.info('deleted temp ORFs')
         ORFs_set = set(ORFs_genomes)
     else:
+        logger.info('single genomes run')
+        if gff_path:
+            if gff_path.endswith('.zip'):
+                error_msg = 'ORFs input is a single file and GFF input is in a zip archive! Both inputs must be of ' \
+                            'the same type (zip for pan genome, single files otherwise)'
+                fail(error_msg, error_path)
+        if genome_path:
+            if genome_path.endswith('.zip'):
+                error_msg = 'ORFs input is a single file and genome input is in a zip archive! Both inputs must be ' \
+                            'of the same type (zip for pan genome, single file otherwise)'
+                fail(error_msg, error_path)
         error_msg = verify_fasta_format(ORFs_path, 'DNA', 'input ORFs')
         if error_msg:
             error_msg = f'Illegal fasta file in ORFs input: {error_msg}<br>This input is expected to hold a ' \
@@ -353,7 +472,9 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         error_msg = verify_ORFs(ORFs_path)
         if error_msg:
             fail(error_msg, error_path)
-
+    error_msg = validate_OGs_table(OG_input_f, ORFs_path, output_dir_path)
+    if error_msg:
+        fail(error_msg, error_path)
     if gff_path:
         # gff
         if gff_path.endswith('.zip'):
@@ -489,8 +610,9 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
         if error_msg:
             fail(error_msg, error_path)
         os.makedirs(f'{output_dir_path}/blast_data', exist_ok=True)
-        cmd = f'cp {blast_datasets_dir}/*.faa {output_dir_path}/blast_data/'
-        subprocess.check_output(cmd, shell=True)
+        for f in os.listdir(blast_datasets_dir):
+            if f.endswith('.faa'):
+                shutil.copy(os.path.join(blast_datasets_dir, f), os.path.join(output_dir_path, 'blast_data'))
         eff1_recs = SeqIO.parse(f'{output_dir_path}/blast_data/T3Es.faa', 'fasta')
         eff_l = list(eff1_recs)
         seqs = [rec.seq for rec in eff_l]
@@ -552,44 +674,12 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
     logger.info('finished validate_input')
 
 
-def cleanup_is_running(queues=('pupkoweb')):
-    for q in queues:
-        try:
-            if subprocess.check_output(f'qstat {q} | grep cleanup_effec', shell=True):
-                # a cleanup is currently running.
-                return True
-        except:
-            pass
-    # none of the queues is running cleanup (none of them returned True)
-    return False
+def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, genome_path,
+         gff_path, no_T3SS, OG_input_f, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,
+         signal=False, effectors_coverage='50'):
 
-
-def cleanup_ran_today(path=r'/bioseq/data/results/effectidor/'):
-    for f in os.listdir(path):
-        if f.endswith('.ER'):
-            f_path = os.path.join(path, f)
-            ctime = os.stat(f_path).st_ctime
-            if time() - ctime < 60 * 60 * 24:
-                return True
-    # cleanup did not run today
-    return False
-
-
-def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, html_path, queue, genome_path,
-         gff_path, no_T3SS, identity_cutoff='50', coverage_cutoff='60', PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,
-         signal=False, signalp=False, MGE=True, effectors_coverage='50'):
-    '''
-    try:
-        if not cleanup_is_running() and not cleanup_ran_today():
-            subprocess.call(f'/opt/pbs/bin/qsub /bioseq/effectidor/auxiliaries/remove_old_files.pbs',shell=True)
-    except:
-        pass
-    '''
     error_path = f'{output_dir_path}/error.txt'
     try:
-        if html_path:
-            run_number = initialize_html(CONSTS, output_dir_path, html_path)
-            # final_zip_path = f'{os.path.split(output_dir_path)[0]}/{CONSTS.WEBSERVER_NAME}_{run_number}'
 
         os.makedirs(output_dir_path, exist_ok=True)
 
@@ -597,34 +687,21 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         os.makedirs(tmp_dir, exist_ok=True)
 
         validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path,
-                       gff_path, no_T3SS, error_path)
-
-        find_OGs_cmd = f'module load MMseqs2/May2024;!@#python ' \
-                       f'{os.path.join(scripts_dir, "find_OGs_in_genomes.py")} ' \
-                       f'{output_dir_path} {identity_cutoff} {coverage_cutoff}\tfind_OGs_effectidor\n'
-        with open(os.path.join(output_dir_path, 'find_OGs.cmds'), 'w') as out_f:
-            out_f.write(find_OGs_cmd)
-        cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {os.path.join(output_dir_path, "find_OGs.cmds")} ' \
-              f'{output_dir_path} -q {queue} '
-        OGs_job_number = subprocess.check_output(cmd, shell=True).decode('ascii').strip()
-        # make sure it was submitted successfully before proceeding
-        # TO COMPLETE
+                       gff_path, no_T3SS, error_path, OG_input_f)
 
         if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
-            currently_running = []
             for genome in os.listdir(f'{output_dir_path}/Effectidor_runs'):
                 genome_ORFs_path = os.path.join(f'{output_dir_path}/Effectidor_runs', genome, 'ORFs.fasta')
                 genome_output_path = os.path.join(f'{output_dir_path}/Effectidor_runs', genome)
                 genome_error = os.path.join(f'{output_dir_path}/Effectidor_runs', genome, 'error.txt')
-                parameters = f'{genome_error} {genome_ORFs_path} {genome_output_path} --queue {queue}'
+                parameters = f'{genome_error} {genome_ORFs_path} {genome_output_path}'
                 input_effectors_path = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'effectors.fasta')
                 if os.path.exists(input_effectors_path):
                     parameters += f' --input_effectors_path {input_effectors_path}'
                 if gff_path:
                     gff_file = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'genome.gff3')
                     parameters += f' --gff_file {gff_file}'
-                    if MGE:
-                        parameters += ' --mobile_genetics_elements'
+                    # parameters += ' --mobile_genetics_elements'
                 if genome_path:
                     full_genome_f = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'genome.fasta')
                     parameters += f' --full_genome_f {full_genome_f}'
@@ -642,48 +719,22 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                     parameters += ' --homology_search'
                 if signal:
                     parameters += ' --translocation_signal'
-                if signalp:
-                    parameters += ' --signalp'
                 parameters += f' --coverage {effectors_coverage}'
 
-                job_cmd = f'module load MMseqs2/May2024;!@#python {os.path.join(scripts_dir, "T3Es_wrapper.py")} ' \
-                          f'{parameters}\tEffectidor_features_{genome}\n '
-                cmds_f = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'features_wrapper.cmds')
-                with open(cmds_f, 'w') as job_f:
-                    job_f.write(job_cmd)
-                cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {cmds_f} ' \
-                      f'{os.path.join(output_dir_path, "Effectidor_runs", genome)} -q {queue}'
+                cmd = f'python {os.path.join(scripts_dir, "T3Es_wrapper.py")} {parameters}'
                 subprocess.check_output(cmd, shell=True)
-                # make sure it was submitted successfully before proceeding
-                # TO COMPLETE
-                currently_running.append(genome)
-                while len(currently_running) > 4:  # features can be extracted for up to 5 genomes at a time,
-                    # to avoid overload the cluster.
-                    sleep(30)
-                    for Genome in currently_running:
-                        if os.path.exists(os.path.join(f'{output_dir_path}/Effectidor_runs', Genome, 'error.txt')):
-                            with open(os.path.join(f'{output_dir_path}/Effectidor_runs', Genome, 'error.txt')) as error:
-                                msg = error.read()
-                            error_msg = f'Oops :(\n In genome {Genome} {msg}'
-                            fail(error_msg, error_path)
-                    currently_running = [genome for genome in currently_running if not
-                                        os.path.exists(os.path.join(output_dir_path, "Effectidor_runs",
-                                        genome, 'features.csv'))]
-            while len(currently_running) > 0:  # wait until they all finish before proceeding with the next step.
-                sleep(30)
-                currently_running = [genome for genome in currently_running if not os.path.exists(
-                    os.path.join(output_dir_path, "Effectidor_runs", genome, 'features.csv'))]
 
         else:
-            effectors_learn(error_path, ORFs_path, effectors_path, output_dir_path, tmp_dir, queue, gff_path,
-                            genome_path, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts,
-                            homology_search=homology_search, signal=signal, signalp=signalp, MGE=MGE,
-                            coverage=effectors_coverage)
+            effectors_learn(error_path, ORFs_path, effectors_path, output_dir_path, tmp_dir, gff_path, genome_path,
+                            PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts, homology_search=homology_search,
+                            signal=signal, coverage=effectors_coverage)
+
         # add a check for failed features jobs...
         while not os.path.exists(os.path.join(output_dir_path, 'clean_orthologs_table.csv')):
             # make sure the find_OGs job was finished before proceeding
             sleep(60)
-        subprocess.check_output(['python', os.path.join(scripts_dir, 'merge_features_for_OGs.py'), output_dir_path])
+        subprocess.check_output(['python', os.path.join(scripts_dir, 'merge_features_for_OGs.py'), output_dir_path,
+                                 OG_input_f])
 
         annotations_df = pd.read_csv(f'{output_dir_path}/OGs_annotations.csv')
         features_data = pd.read_csv(f'{output_dir_path}/OGs_features.csv')
@@ -729,168 +780,15 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         T3SS_data = pd.read_csv(os.path.join(output_dir_path, 'T3SS.csv'), dtype=str)
         T3SS_Table = T3SS_data.dropna()
         T3SS_table = T3SS_Table.to_html(index=False, justify='left', escape=False)
-        if html_path:
-            # shutil.make_archive(final_zip_path, 'zip', output_dir_path)
-            finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table,
-                          low_quality_flag, output_dir_path)
-        else:
-            with open(f'{output_dir_path}/output.html', 'w') as out:
-                out.write(f'positives:\n{positives_table}\n<br>\npredicted:\n{predicted_table}<br>T3SS and flagella components:<br>{T3SS_table}')
+
+        with open(f'{output_dir_path}/output.html', 'w') as out:
+            out.write(f'positives:\n{positives_table}\n<br>\npredicted:\n{predicted_table}<br>T3SS and flagella components:<br>{T3SS_table}')
 
     except Exception as e:
         logger.info(f'SUCCEEDED = False')
         logger.info(e)
         logger.info(f"""ORFs_path: {ORFs_path}\noutput_dir_path: {output_dir_path}\n
                     effectors_path:{effectors_path}\nhost_proteome:{host_proteome}""")
-        if html_path:
-            error_msg = e.args[-1]
-            if os.path.exists(error_path):
-                with open(error_path) as f:
-                    error_msg = f.read()
-            edit_failure_html(CONSTS, error_msg, html_path, run_number)
-            add_closing_html_tags(html_path, CONSTS, run_number)
-
-
-def finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table, low_confidence_flag,
-                  output_dir_path):
-    succeeded = not os.path.exists(error_path)
-    logger.info(f'SUCCEEDED = {succeeded}')
-    if succeeded:
-        edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_table,
-                          low_confidence_flag, output_dir_path)
-    else:
-        edit_failure_html(CONSTS, error_path, html_path, run_number)
-    add_closing_html_tags(html_path, CONSTS, run_number)
-
-
-def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_table,
-                      low_confidence_flag, output_dir_path):
-    update_html(html_path, 'RUNNING', 'FINISHED')
-    if low_confidence_flag:
-        append_to_html(html_path, f'''
-                       <div class="container" style="{CONSTS.CONTAINER_STYLE}" align="justify"><h3>
-                       <font color="red">WARNING: The predictions might be of low quality.
-                       </font></h3><br>
-                       </div>
-                       ''')
-    if predicted_table:
-        append_to_html(html_path, f'''
-                <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='left'>
-                <a href='out_learning/consensus_predictions_with_annotations_and_ortho_table.xlsx' target='_blank'>Download predictions file</a>
-                <br>
-                <a href='T3SS.csv' target='_blank'>Download T3SS and flagella components' details</a>
-                <br>
-                <a href='out_learning/feature_importance.csv' target='_blank'>Download feature importance file</a>
-                <br>
-                <a href='OGs_features.csv' target='_blank'>Download features file</a>
-                <br><br>
-                <h3><b>Positive samples that were used to train the model</b></h3>
-                {positives_table}
-                <br>
-                <h3><b>Top 10 predictions, among unlabeled samples</b></h3>
-                {predicted_table}
-                </div>
-                <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='center'>
-                ''')
-        if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
-            append_to_html(html_path, f'''
-                <br>
-                <h3><b>T3Es presence/absence map</b></h3>
-                <br>
-                <a href='T3Es_presence_absence.png'><img src='T3Es_presence_absence.png' style="max-width: 100%;" /></a>
-                <br>
-                <h3><b>T3SS and flagella components presence/absence map</b></h3>
-                <a href='T3SS_presence_absence.png'><img src='T3SS_presence_absence.png' style="max-width: 100%;" /></a>
-                ''')
-        else:
-            append_to_html(html_path, f'''
-            <br>
-            <h3><b>T3SS and flagella components</b></h3>
-            {T3SS_table}
-            ''')
-        append_to_html(html_path, f'''
-                <br>
-                <h3><b>feature importance</b></h3>
-                <br>
-                <a href='out_learning/feature_importance.png'><img src='out_learning/feature_importance.png' style="max-width: 100%;" /></a>
-                <br><br>
-                <h3><b>best features comparison - effectors vs non-effectors:</b></h3>
-                <br>
-                <a href='out_learning/0.png'><img src='out_learning/0.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/1.png'><img src='out_learning/1.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/2.png'><img src='out_learning/2.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/3.png'><img src='out_learning/3.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/4.png'><img src='out_learning/4.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/5.png'><img src='out_learning/5.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/6.png'><img src='out_learning/6.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/7.png'><img src='out_learning/7.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/8.png'><img src='out_learning/8.png' style="max-width: 100%;" /></a>
-                <a href='out_learning/9.png'><img src='out_learning/9.png' style="max-width: 100%;" /></a>
-                </div>
-                ''')
-    else:
-        append_to_html(html_path, f'''
-                <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='left'> Unfortunately, we could not 
-                train a satisfying classifier due to small positive set.<br>The effectors found based on homology are 
-                listed in the table bellow:<br> {positives_table} <br>
-                <a href='clean_orthologs_table_with_pseudo.csv' target='_blank'>Download the OGs table</a>
-                <br>
-                <a href='T3SS.csv' target='_blank'>Download T3SS and flagella components' details</a>
-                </div>
-                ''')
-
-
-def edit_failure_html(CONSTS, error_msg, html_path, run_number):
-    update_html(html_path, 'RUNNING', 'FAILED')
-    append_to_html(html_path,
-                   f'<div class="container" style="{CONSTS.CONTAINER_STYLE}" align="justify"><h3><br>'
-                   f'<font color="red">{error_msg}</font></h3><br><br>'
-                   f'Please make sure your input is OK and then try to re-run your job or '
-                   f'<a href="mailto:{CONSTS.ADMIN_EMAIL}?subject={CONSTS.WEBSERVER_NAME}%20Run%20Number:%20{run_number}">'
-                   f'contact us'
-                   f'</a> '
-                   f'for further information.<br>'
-                   f'</div><br>')
-
-
-def add_closing_html_tags(html_path, CONSTS, run_number):
-    FORMER_MSG = f'Effectidor is now processing your request. This page will be automatically updated every ' \
-                 f'{CONSTS.RELOAD_INTERVAL} seconds (until the job is done). You can also reload it manually. Once the ' \
-                 f'job has finished, the output will appear below. '
-    update_html(html_path, FORMER_MSG, '')  # remove "web server is now processing your request" message
-    update_html(html_path, 'progress-bar-striped active', 'progress-bar-striped')  # stop_progress_bar
-
-    append_to_html(html_path, f'''
-            <hr>
-                <h4 class=footer>
-                    <p align='center'>Questions and comments are welcome! Please
-                        <span class="admin_link"> 
-                        <a href="mailto:{CONSTS.ADMIN_EMAIL}?subject={CONSTS.WEBSERVER_NAME.upper()}%20Run%20Number%20{run_number}">contact us</a> 
-                        </span>
-                    </p>
-                </h4>
-                <div id="bottom_links" align="center"><span class="bottom_link">
-                <a href="{CONSTS.WEBSERVER_URL}" target="_blank">Home</a>  
-            </span>
-        </div>
-        <br><br><br>
-    </body>
-</html>''')
-
-    # have to be last thing that is done
-    sleep(2 * CONSTS.RELOAD_INTERVAL)
-    update_html(html_path, CONSTS.RELOAD_TAGS, f'<!--{CONSTS.RELOAD_TAGS}-->')  # stop refresh
-
-
-def initialize_html(CONSTS, output_dir_path, html_path):
-    path_tokens = output_dir_path.split('/')
-    # e.g., "/bioseq/data/results/sincopa/12345678/outputs"
-    run_number = path_tokens[path_tokens.index(CONSTS.WEBSERVER_NAME) + 1]
-
-    update_html(html_path, 'QUEUED', 'RUNNING')
-    # update_html(html_path, CONSTS.PROGRESS_BAR_ANCHOR, CONSTS.PROGRESS_BAR_TAG)  # add progress bar
-
-    return run_number
 
 
 if __name__ == '__main__':
@@ -902,11 +800,13 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('input_ORFs_path',
-                        help='A path to a DNA ORFs file.',
+                        help='A path to a DNA ORFs file. Can be either a fasta file or zip holding multiple fasta files.',
                         type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
     parser.add_argument('output_dir_path',
                         help='A path to a folder in which the output files will be created.',
                         type=lambda path: path.rstrip('/'))
+    parser.add_argument('OGs_table_path', help='A path to the OGs table - csv file.',
+                        type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
     parser.add_argument('--input_effectors_path', default='',
                         help='A path to a DNA fasta with positive samples. '
                              'All samples in this file should be in the input ORFs file as well.')
@@ -918,31 +818,20 @@ if __name__ == '__main__':
                         help='A path to a zip archive with protein fasta files with related bacteria non T3SS '
                              'proteomes.')
     parser.add_argument('--genome_path', default='',
-                        help='A path to a fasta file with full genome record.')
+                        help='A path to a fasta file with full genome record. Can be either a fasta file or zip holding multiple fasta files.')
     parser.add_argument('--gff_path', default='',
-                        help='A path to a GFF file.')
-    parser.add_argument('--html_path', default=None,
-                        help='A path to an html file that will be updated during the run.')
-
+                        help='A path to a GFF file. Can be either a GFF file or zip holding multiple GFF files.')
     parser.add_argument('-v', '--verbose', help='Increase output verbosity', action='store_true')
 
     parser.add_argument('--homology_search', help='search additional effectors based on homology to internal dataset',
                         action='store_true')
     parser.add_argument('--translocation_signal', help='extract translocation signal feature', action='store_true')
-    parser.add_argument('--signalp', help='extract SignalP6 feature', action='store_true')
-    # parser.add_argument('--mobile_genetics_elements', help='extract distance from mobile genetics elements', action='store_true')
     parser.add_argument('--PIP', help='look for PIP-box in promoters', action='store_true')
     parser.add_argument('--hrp', help='look for hrp-box in promoters', action='store_true')
     parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
     parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
     parser.add_argument('--tts', help='look for tts-box in promoters', action='store_true')
-    parser.add_argument('-q', '--queue_name', help='The cluster to which the job(s) will be submitted to',
-                        default='power-pupko')
-    parser.add_argument('--identity_cutoff', help='identity percentage cutoff for orthologs and paralogs search',
-                        default='50')
-    parser.add_argument('--coverage_cutoff', help='coverage percentage cutoff for orthologs and paralogs search',
-                        default='60')
-    parser.add_argument('--effectors_coverage', help='coverage percentage cutoff for effectors homologs', default='60')
+    parser.add_argument('--effectors_coverage', help='coverage percentage cutoff for effectors homologs', default='50')
 
     args = parser.parse_args()
 
@@ -950,7 +839,7 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
-    # if args.full_genome:
+
     PIP_flag = args.PIP
     hrp_flag = args.hrp
     mxiE_flag = args.mxiE
@@ -958,7 +847,6 @@ if __name__ == '__main__':
     tts_flag = args.tts
 
     main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path,
-         args.host_proteome_path, args.html_path, args.queue_name, args.genome_path, args.gff_path, args.no_T3SS,
-         identity_cutoff=args.identity_cutoff, coverage_cutoff=args.coverage_cutoff, PIP=PIP_flag, hrp=hrp_flag,
-         mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=args.homology_search,
-         signal=args.translocation_signal, signalp=args.signalp, effectors_coverage=args.effectors_coverage)
+         args.host_proteome_path, args.genome_path, args.gff_path, args.no_T3SS, args.OGs_table_path,
+         PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=args.homology_search,
+         signal=args.translocation_signal, effectors_coverage=args.effectors_coverage)

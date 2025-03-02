@@ -9,14 +9,15 @@ import fasta_parser
 
 #%%
 
+
 def parse_gff(gff_f, locus_dic):
     CDS_l = []
     RNA = []
     with open(gff_f) as in_f:
         for line in in_f:
-            if line.startswith('#'): #header
+            if line.startswith('#'):  # header
                 continue
-            
+
             line_l = line.strip().split('\t')
             if len(line_l) > 2:
                 if line_l[2] == 'CDS':
@@ -66,6 +67,7 @@ def parse_gff(gff_f, locus_dic):
     RNA_set = set(RNA).difference(set(CDS_l))
     return set(CDS_l), RNA_set
 
+
 def parse_gff_to_CDS_loc(gff_f, locus_dic):
     regions = []
     circulars = []
@@ -73,11 +75,11 @@ def parse_gff_to_CDS_loc(gff_f, locus_dic):
     locus_area_d = {}
     with open(gff_f) as in_f:
         for line in in_f:
-            if line.startswith('#'): #header
+            if line.startswith('#'):  # header
                 line_l = line.split()
                 if 'sequence-region' in line_l[0]:
                     regions.append(line_l[1])
-                    locus_area_d[line_l[1]] = {}            
+                    locus_area_d[line_l[1]] = {}
             line_l = line.strip().split('\t')
             if len(line_l) > 2:
                 if line_l[2] == 'region' or line_l[2] == "chromosome" or line_l[2] == "plasmid":
@@ -87,7 +89,7 @@ def parse_gff_to_CDS_loc(gff_f, locus_dic):
                         linears.append(line_l[0])
                 if line_l[2] == 'CDS':
                     region = line_l[0]
-                    area = [(int(line_l[3])-1,int(line_l[4]))]
+                    area = [(int(line_l[3])-1, int(line_l[4]))]
                     if line_l[6] == '+':
                         area.append(1)
                     elif line_l[6] == '-':
@@ -117,9 +119,10 @@ def parse_gff_to_CDS_loc(gff_f, locus_dic):
                                 locus_tag = locus
                                 if region not in locus_area_d:
                                     locus_area_d[region] = {}
-                                locus_area_d[region][locus_tag]=area
+                                locus_area_d[region][locus_tag] = area
                                 break
-    return locus_area_d,circulars
+    return locus_area_d, circulars
+
 
 def get_promoters(gene_area_dic, circular_contigs, genome_f, promoter_length=700):
     promoters_d = {}
@@ -136,7 +139,7 @@ def get_promoters(gene_area_dic, circular_contigs, genome_f, promoter_length=700
                         promoter = genome[region_dic].seq[-to_add:]+genome[region_dic].seq[:start]
                     else:
                         promoter = genome[region_dic].seq[:start]
-            else: #-1 reverse
+            else:  # -1 reverse
                 start, end = gene_area_dic[region_dic][gene][0][0], gene_area_dic[region_dic][gene][0][1]
                 if len(genome[region_dic].seq)-end >= promoter_length:
                     promoter = genome[region_dic].seq[end:end+promoter_length].reverse_complement()
@@ -149,7 +152,8 @@ def get_promoters(gene_area_dic, circular_contigs, genome_f, promoter_length=700
                         promoter = genome[region_dic].seq[end:].reverse_complement()
             promoters_d[gene] = promoter
     return promoters_d
-                       
+
+
 hrp_box = '[GT]GGA[AG]C[CT][ATGC]{15,16}CCAC[ATGC]{2}A'
 hrp_one_mismatch = '[ATGC]GGA[AG]C[CT][ATGC]{15,16}CCAC[ATGC]{2}A|[GT][ATGC]GA[AG]C[CT][ATGC]{15,16}CCAC[ATGC]{2}A\
                     |[GT]G[ATGC]A[AG]C[CT][ATGC]{15,16}CCAC[ATGC]{2}A|[GT]GG[ATGC][AG]C[CT][ATGC]{15,16}CCAC[ATGC]{2}A\
@@ -157,6 +161,7 @@ hrp_one_mismatch = '[ATGC]GGA[AG]C[CT][ATGC]{15,16}CCAC[ATGC]{2}A|[GT][ATGC]GA[A
                     |[GT]GGA[AG]C[ATGC]{16,17}CCAC[ATGC]{2}A|[GT]GGA[AG]C[CT][ATGC]{16,17}CAC[ATGC]{2}A\
                     |[GT]GGA[AG]C[CT][ATGC]{15,16}C[ATGC]AC[ATGC]{2}A|[GT]GGA[AG]C[CT][ATGC]{15,16}CC[ATGC]C[ATGC]{2}A\
                     |[GT]GGA[AG]C[CT][ATGC]{15,16}CCA[ATGC]{3}A|[GT]GGA[AG]C[CT][ATGC]{15,16}CCAC[ATGC]{3}'
+
 
 def create_box_one_mismatch(box_list):
     box_one_mismatch = []
@@ -169,6 +174,7 @@ def create_box_one_mismatch(box_list):
     box_one_mismatch = '|'.join(box_one_mismatch)
     return box_one_mismatch
 
+
 exs_box = '[AT]{3}[AC][AT]{2}[AC]{3}C[GT][GTA]CC[GA]A[AT][ATC][CT]TG[GA][TC]A'
 exs_box_l = ['[AT]']*3+['[AC]']+['[AT]']*2+['[AC]']*3+['C', '[GT]', '[GTA]']+['C']*2+['[GA]', 'A', '[AT]', '[ATC]', '[CT]', 'T', 'G', '[GA]', '[TC]', 'A']
 exs_box_one_mismatch = create_box_one_mismatch(exs_box_l)
@@ -179,31 +185,31 @@ pip_box_one_mismatch = create_box_one_mismatch(pip_box_l)
 
 mxiE_box = 'G[TG]AT[CT]GT{4}[ACT]T[AT]A[ATCG]AG'
 mxiE_box_l = ['G', '[TG]', 'A', 'T', '[CT]', 'G']+['T']*4+['[ACT]', 'T', '[AT]', 'A', '[ATCG]', 'A', 'G']
-mxiE_box_one_mismatch = create_box_one_mismatch(mxiE_box_l)  
+mxiE_box_one_mismatch = create_box_one_mismatch(mxiE_box_l)
 
 tts_box = 'GTCAG[TCG]T[TCAG]{4}G[AT][AC]AG[CGT][TAC][ATCG]{3}[CTG]{2}[ATCG]{4}A'
 tts_box_l = ['G', 'T', 'C', 'A', 'G', '[TGC]', 'T']+['[ATGC]']*4+['G', '[AT]', '[AC]', 'A', 'G', '[CGT]', '[TAC]']+['[ATGC]']*3+['[CTG]']*2+['[ATGC]']*4+['A']
 tts_box_one_mismatch = create_box_one_mismatch(tts_box_l)
 
 
-def existence_upstream_to_AUG(locus, pattern, promoter_dic,promoter_length=700):
+def existence_upstream_to_AUG(locus, pattern, promoter_dic, promoter_length=700):
     promoter = promoter_dic[locus][-promoter_length:]
     if re.search(pattern, str(promoter), re.I):
         return 1
     else:
         return 0
-                
-    
+
+
 def main(ORFs_file, working_directory, gff_f, genome_f, PIP=False, hrp=False, mxiE=False, exs=False, tts=False):
-    os.chdir(working_directory)
+    # os.chdir(working_directory)
     locus_dic = fasta_parser.parse_ORFs(ORFs_file)
     locus_area_d, circulars = parse_gff_to_CDS_loc(gff_f, locus_dic)
     if tts:
         promoters_d = get_promoters(locus_area_d, circulars, genome_f, promoter_length=1000)
     else:
         promoters_d = get_promoters(locus_area_d, circulars, genome_f)
-        
-    with open(f'pip_box_features.csv', 'w', newline='') as f:
+
+    with open(os.path.join(working_directory, 'pip_box_features.csv'), 'w', newline='') as f:
         csv_writer = csv.writer(f)
         header = ['locus']
         if PIP:
@@ -221,22 +227,17 @@ def main(ORFs_file, working_directory, gff_f, genome_f, PIP=False, hrp=False, mx
             l = [locus]
             if PIP:
                 l.append(existence_upstream_to_AUG(locus, pip_box, promoters_d))
-                #l.append(existence_upstream_to_AUG(locus,pip_box_one_mismatch))
             if hrp:
                 l.append(existence_upstream_to_AUG(locus, hrp_box, promoters_d))
-                #l.append(existence_upstream_to_AUG(locus,hrp_one_mismatch))
             if mxiE:
                 l.append(existence_upstream_to_AUG(locus, mxiE_box, promoters_d))
-                #l.append(existence_upstream_to_AUG(locus,mxiE_box_one_mismatch))
             if exs:
                 l.append(existence_upstream_to_AUG(locus, exs_box, promoters_d))
-                #l.append(existence_upstream_to_AUG(locus,exs_box_one_mismatch))
             if tts:
                 l.append(existence_upstream_to_AUG(locus, tts_box, promoters_d, promoter_length=1000))
-                #l.append(existence_upstream_to_AUG(locus,tts_box_one_mismatch))
-                
+
             csv_writer.writerow(l)
-    endfile = open('pip_box_features.done', 'w')
+    endfile = open(os.path.join(working_directory, 'pip_box_features.done'), 'w')
     endfile.close()
 
 if __name__ == '__main__':
@@ -260,7 +261,7 @@ if __name__ == '__main__':
         parser.add_argument('--mxiE', help='look for mxiE-box in promoters', action='store_true')
         parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
         parser.add_argument('--tts',help='look for tts-box in promoters', action='store_true')
-        
+
         args = parser.parse_args()
         ORFs_file = args.input_ORFs_path
         working_directory = args.output_dir_path

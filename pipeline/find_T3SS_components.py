@@ -4,7 +4,6 @@ import subprocess
 import pandas as pd
 from Bio import SeqIO
 
-RUN_WITH_CONDA = False
 E_VALUE_CUT_OFF = 1e-10
 QUERY_COVERAGE_PERCENTAGE_CUT_OFF = 0.3
 FLAGELLA_SYSTEM = "Flagellar"
@@ -21,12 +20,7 @@ def run_mmseqs(query_files_directory, output_mmseqs, bacterial_proteome, tmp_mms
         output_path = os.path.join(
             output_mmseqs, query_file.split(".")[0] + ".m8")
         mmseqs_command = f"mmseqs easy-search {query_file_path} {bacterial_proteome} {output_path} {tmp_mmseqs} --format-output {MMSEQS_OUTPUT_FORMAT} --threads 1"
-        if RUN_WITH_CONDA:
-            conda_activate_command = ". ~/miniconda3/etc/profile.d/conda.sh; conda activate test;"
-            mmseqs_command = conda_activate_command + mmseqs_command
-            subprocess.run(mmseqs_command, shell=True)
-        else:
-            subprocess.run(mmseqs_command, shell=True)
+        subprocess.run(mmseqs_command, shell=True)
 
 
 def get_mmseqs_results_dictionary(mmseqs_results_file):

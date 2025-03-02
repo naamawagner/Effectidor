@@ -47,11 +47,12 @@ def create_phyletic_patterns(in_file, phyletic_csv, phyletic_text, gene_order, s
 
 
 # generating clustered presence/absence map
-# working_directory = r'C:\Users\TalPNB2\Downloads'
 
 
-def create_presence_absence_map(phyletic_csv, x_label, out_fig_path, colors=['silver', 'lightseagreen'],
+def create_presence_absence_map(phyletic_csv, x_label, out_fig_path, colors=None,
                                 base_font_size=10, col_cluster=True):
+    if colors is None:
+        colors = ['silver', 'lightseagreen']
     df = pd.read_csv(phyletic_csv)
     df.set_index(df.columns[0], inplace=True)
 
