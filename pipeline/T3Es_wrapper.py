@@ -42,6 +42,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     all_prots = os.path.join(working_directory, 'translated_ORFs.faa')
     effectors_prots = os.path.join(working_directory, 'translated_effectors.faa')
     blast_datasets_dir = os.path.join(data_dir, 'blast_data')
+    chaperones = os.path.join(data_dir, 'chaperones.faa')
 
     os.makedirs(tmp_dir, exist_ok=True)
     if not os.path.exists(f'{working_directory}/blast_data/T3Es.faa'):  # if no input for effectors homology search
@@ -104,6 +105,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
                              working_directory])
     subprocess.check_output(
         ['python', f'{scripts_dir}/find_T3SS_components.py', working_directory, all_prots, 'T3SS_data'])
+    subprocess.check_output(['python', f'{scripts_dir}/find_chaperones.py', all_prots, working_directory, chaperones])
     # creating the features extraction commands
     Features_cmds = [f'python {scripts_dir}/sequence_features.py {ORFs_file} {working_directory}',
                      f'python {scripts_dir}/homology.py {ORFs_file} {all_prots} {blast_datasets_dir} {working_directory}']

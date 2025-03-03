@@ -46,10 +46,20 @@ def main():
         merged_T3SS_df = reduce(lambda left, right: pd.merge(left, right, left_index=True, right_index=True,
                                                              how='outer'), T3SS_DFs)
         merged_T3SS_df.to_csv('T3SS.csv')
+        chaperones_DFs = [
+            pd.read_csv(os.path.join(Effectidor_features_d, genome, 'chaperones.csv'), index_col='chaperone',
+                        dtype={'bacterial_protein': str})
+            for genome in genomes]
+        for i in range(len(chaperones_DFs)):
+            chaperones_DFs[i].columns = [genomes[i]]
+        merged_chaperones_df = reduce(lambda left, right: pd.merge(left, right, left_index=True, right_index=True,
+                                                             how='outer'), chaperones_DFs)
+        merged_chaperones_df.to_csv('chaperones.csv')
     else:
         with open('pseudogenes.txt') as pseudo_f:
             pseudogenes = pseudo_f.read().split('\n')
         merged_T3SS_df = pd.read_csv('T3SS.csv', index_col='Subsystem_T3SS Protein', dtype={'Bacterial Protein ID': str})
+        merged_chaperones_df = pd.read_csv('chaperones.csv', index_col='chaperone', dtype={'bacterial_protein': str})
     with open(os.path.join(working_directory, 'pseudogenes.txt'), 'w') as pseudo_f:
         pseudo_f.write('\n'.join(pseudogenes))
 
@@ -59,10 +69,19 @@ def main():
     T3SS_OGs_to_remove = set([flatten_ortho_dict[locus] for locus in flattened_T3SS_loci_no_nan])
     OGs_table = pd.read_csv(ortho_f, index_col=0, dtype=str)
     OGs_no_T3SS = OGs_table.drop(index=list(T3SS_OGs_to_remove))
-    OGs_no_T3SS.to_csv(os.path.join(working_directory, 'clean_orthologs_table_noT3SS.csv'))
+
+    chaperon_loci_to_remove = merged_chaperones_df.values
+    flattened_chaperon_loci = pd.Series(reduce(lambda a, b: np.hstack((a, b)), chaperon_loci_to_remove))
+    flattened_chaperon_loci_no_nan = list(flattened_chaperon_loci.dropna())
+    chaperon_OGs_to_remove = set([flatten_ortho_dict[locus] for locus in flattened_chaperon_loci_no_nan])
+    OGs_no_chaperon = OGs_no_T3SS.drop(index=list(chaperon_OGs_to_remove))
+
+    OGs_no_chaperon.to_csv(os.path.join(working_directory, 'clean_orthologs_table_noT3SS.csv'))
+
+    genomes_orthogroup_dict = get_ortho_dict(os.path.join(working_directory, 'clean_orthologs_table_noT3SS.csv'))
 
 
-    with open(ortho_f) as in_f:
+    with open(os.path.join(working_directory, 'clean_orthologs_table_noT3SS.csv')) as in_f:
         with open(os.path.join(working_directory, 'clean_orthologs_table_with_pseudo.csv'), 'w') as out_f:
             header = next(in_f)
             header = header.replace(f'{header.split(",")[0]},', 'OG,')

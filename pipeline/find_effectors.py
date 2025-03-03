@@ -21,9 +21,9 @@ with open(effectors, 'w') as effectors_f:
     effectors_f.write(replaced_pipes)
 effectors_recs = SeqIO.parse(effectors, 'fasta')
 effectors_lens = {effector_rec.id: len(effector_rec.seq) for effector_rec in effectors_recs}
-    
 
-def parse_blast_out(blast_out, e_val=10**(-10), min_identity=0.7, minimal_coverage=50.0):
+
+def parse_blast_out(blast_out, lens_dic, e_val=10**(-10), min_identity=0.7, minimal_coverage=50.0):
     blast_out_dic = {}
     with open(blast_out, 'r') as in_f:
         best_hits = {}
@@ -33,13 +33,13 @@ def parse_blast_out(blast_out, e_val=10**(-10), min_identity=0.7, minimal_covera
             hit = row[1]
             e_value = float(row[-2])
             identity = float(row[2])
-            coverage = (float(row[3])/effectors_lens[prot_id])*100
+            coverage = (float(row[3])/lens_dic[prot_id])*100
             prot_id = prot_id.replace('^', '|')
             if e_value <= e_val and identity >= min_identity and coverage >= minimal_coverage:
                 if prot_id not in blast_out_dic:
-                    blast_out_dic[prot_id] = {hit}
+                    blast_out_dic[prot_id] = [hit]
                 else:
-                    blast_out_dic[prot_id].add(hit)
+                    blast_out_dic[prot_id].append(hit)
                 if hit not in best_hits:
                     best_hits[hit] = float(row[-1])
                 else:
@@ -59,8 +59,8 @@ protein_mmseqs_all_vs_all(effectors, bacterial_proteome,
 
 k = 0.6
 effectors_homologs = set()
-homologs = list(parse_blast_out(os.path.join(running_d, 'blast_outputs/effectorsDB.blast'), min_identity=k,
-                                minimal_coverage=min_coverage).values())
+homologs = list(set(l) for l in parse_blast_out(os.path.join(running_d, 'blast_outputs/effectorsDB.blast'),
+                                                effectors_lens, min_identity=k, minimal_coverage=min_coverage).values())
 for h in homologs:
     effectors_homologs = set.union(effectors_homologs, h)
     
