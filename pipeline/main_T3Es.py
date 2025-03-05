@@ -772,7 +772,9 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                 f'{output_dir_path}/out_learning/consensus_predictions_with_annotations.csv',
                 f'{output_dir_path}/OG_effector_homologs.csv')
             if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
-                subprocess.check_output(['python', os.path.join(scripts_dir, 'phyletic_patterns.py'), output_dir_path])
+                num_genomes = len(os.listdir(f'{output_dir_path}/Effectidor_runs'))
+                if num_genomes > 1:
+                    subprocess.check_output(['python', os.path.join(scripts_dir, 'phyletic_patterns.py'), output_dir_path])
         low_quality_flag = False
         if os.path.exists(f'{output_dir_path}/out_learning/learning_failed.txt'):
             low_quality_flag = True
