@@ -1,0 +1,83 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Eff3ctidor</title>
+
+    <link rel="shortcut icon" type="image/x-icon" href="/pics/logo.gif" />
+
+    <meta charset="utf-8">
+    <script src="jquery-3.7.1.min.js"></script>
+    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="bootstrap-3.0.3/dist/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="css/general.css">
+    <script src="handle_FAQ.js"></script>
+</head>
+<body>
+    <div class="row" id="jumbo">
+            <div class="col-md-1">
+            </div>
+            <div class="col-md-10" align="center">
+                 <img src="pics/logo.gif" id="nav_bar_image" style="height: 120px;"><br>
+                 <span id="sub-title">A machine-learning based type III effectors predictor</span><br>
+				 <span style="font-size:22px">Prof. Tal Pupko Lab - The Shmunis School of Biomedicine and Cancer Research</span>
+                 <br><br>
+            </div>
+   </div>
+   <nav class="navbar navbar-expand-lg bg-body-tertiary" role="navigation">
+	    <div class="container-fluid" id="nav_container">
+                    <div style="display:table; margin:0 auto;">
+                        <ul class="nav navbar-nav"  id="menu-nav">
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="index.html">Home</a></li>
+                            <li class="nav-item active" style="padding: 0px 20px;"><a href="tutorial.html">Tutorials</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="FAQ.html">FAQ</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="data.html">Data</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="credits.html">Credits</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="https://effectidor.tau.ac.il/results/examples/Example_run/output.html">Example run</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;float: right"><a href="https://english.tau.ac.il/" id="tau-link" target="_blank"><img src=pics/TAU_LOGO.png id="tau-logo"></a></li>
+                        </ul>
+                    </div>
+           </div>
+    </nav>     <!-- Static navbar -->
+    <div class="container">
+    <div class="col-md-1"></div>
+    <br>
+    <div class="col-md-10">
+        <h2>Input options</h2>
+        <p align="justify">
+        For every run of Effectidor you need to supply an ORFs input.<br>
+        To analyze a single genome, watch the following <a href="tutorial_videos/input_1_ORFs_single_genome.mp4" target="_blank">video</a>.<br>
+        To analyze a pan-genome, watch the following <a href="tutorial_videos/input_2_ORFs_multiple_genomes.mp4" target="_blank">video</a>.<br><br>
+        Additional input may include known effectors from the analyzed genomes.<br>
+            Instructions for creating this input are found in <a href="tutorial_videos/input_3_input_effectors.mp4" target="_blank">this video</a>.<br><br>
+        </p>
+        <h3>Advanced input options</h3>
+        <h5>The following videos explain the advanced options:</h5>
+        <p>
+            <a href="tutorial_videos/input_4_secretion_signal_orthologs_paralogs.mp4" target="_blank">Secretion signal feature and parameters to compute orthologs and paralogs</a>.<br>
+            <a href="tutorial_videos/input_5_effectors_homology.mp4" target="_blank">Effectors data from exterior taxa</a>.<br>
+            <a href="tutorial_videos/input_6_host_proteome.mp4" target="_blank">Host proteome</a>.<br>
+            <a href="tutorial_videos/input_7_bacteria_without_T3SS.mp4" target="_blank">Proteomes of closely related bacteria without the T3SS</a>.<br>
+            If you wish to include genome organization and/or regulatory elements features, watch the following video:<br>
+            <a href="tutorial_videos/input_8_gff3_full_genome_regulatory_elements.mp4" target="_blank">GFF and full genome options</a>.<br>
+        </p>
+        <br>
+        <h2>Output interpretation</h2>
+        <p align="justify">
+        Effector predictions:
+            <a href="tutorial_videos/output_1_predictions.mp4" target="_blank">Predictions video</a>.<br>
+        <a href="tutorial_videos/output_2_T3SS_and_flagella.mp4" target="_blank">T3SS and flagella video</a>.<br><br>
+        Interpretation of the predictions using the features outputs:<br>
+            <a href="tutorial_videos/output_3_features.mp4" target="_blank">Features video</a>.<br><br>
+        </p>
+
+    </div></div>
+    <div id="behind-footer"></div>
+    <div class="row" style="color: #cccccc; text-align: center; font-family: Calibri;" id="nav_container">
+        <h4>
+                Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank" style="color: #0d6efd;">Pupko Group</a>
+        </h4>
+    </div>
+</body>
+</html>
