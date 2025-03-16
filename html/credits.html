@@ -8,68 +8,42 @@
     <link rel="shortcut icon" type="image/x-icon" href="/pics/logo.gif" />
 
     <meta charset="utf-8">
-    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
-    
-    <!--files for the select tag-->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/i18n/defaults-*.min.js"></script>
-
-    <!--files for the checkbox tag (toggle)-->
-    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+    <script src="jquery-3.7.1.min.js"></script>
+    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="bootstrap-3.0.3/dist/js/bootstrap.min.js"></script>
 
     <link rel="stylesheet" href="css/general.css">
 </head>
 <body>
-    <nav role="navigation" class="navbar navbar-fixed-top">
-        <div class="jumbotron" id="jumbo">
-            <div class="container">            
-                <div class="row" id="title-row" align="center">
-                    <div class="col-md-1">
-                    </div>
-                    <div class="col-md-10" align="center">
-                        <!--<span id="server-title">Effectidor</span><br>-->
-                        <img src="pics/logo.gif" id="nav_bar_image" style="height: 120px;"><br>
-                        <span id="sub-title">A machine learning based type 3 effectors predictor</span>
-                        <br><br>
-                    </div>
-                </div>
-            </div>       
-        </div>
-        <div class="jumbotron" id="nav_container">
-                <div class="row">
+    <div class="row" id="jumbo">
+            <div class="col-md-1">
+            </div>
+            <div class="col-md-10" align="center">
+                 <img src="pics/logo.gif" id="nav_bar_image" style="height: 120px;"><br>
+                 <span id="sub-title">A machine-learning based type III effectors predictor</span><br>
+				 <span style="font-size:22px">Prof. Tal Pupko Lab - The Shmunis School of Biomedicine and Cancer Research</span>
+                 <br><br>
+            </div>
+   </div>
+   <nav class="navbar navbar-expand-lg bg-body-tertiary" role="navigation">
+	    <div class="container-fluid" id="nav_container">
                     <div style="display:table; margin:0 auto;">
-                        <ul class="nav navbar-nav" id="menu-nav">
-                            <li style="display:table-cell; padding: 0px 10px;">
-                                <a href="index.html">Home</a>
-                            </li>
-                            <li style="display:table-cell; padding: 0px 10px;">
-                                <a href="FAQ.html">FAQ</a>
-                            </li>
-                            <li style="display:table-cell; padding: 0px 10px;">
-                                <a href="data.html">Data</a>
-                            </li>
-                            <li class="active" style="display:table-cell; padding: 0px 10px;">
-                                <a href="credits.html">Credits</a>
-                            </li>
-                            <li style="float: right">
-                                <a href="https://english.tau.ac.il/" id="tau-link" target="_blank">
-                                    <img src=pics/TAU_LOGO.png id="tau-logo">
-                                </a>
-                            </li>
+                        <ul class="nav navbar-nav"  id="menu-nav">
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="index.html">Home</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="tutorial.html">Tutorials</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="FAQ.html">FAQ</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="data.html">Data</a></li>
+                            <li class="nav-item active" style="padding: 0px 20px;"><a href="credits.html">Credits</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="https://effectidor.tau.ac.il/results/examples/Example_run/output.html">Example run</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;float: right"><a href="https://english.tau.ac.il/" id="tau-link" target="_blank"><img src=pics/TAU_LOGO.png id="tau-logo"></a></li>
                         </ul>
                     </div>
-                </div>
-        </div>
-    </nav>
-    <div id="behind-nav-bar-results"></div>
+           </div>
+    </nav>     <!-- Static navbar -->
     <div class="container" id="credits_container">
     <div class="col-md-1">
                 </div>
+        <br>
         <div class="col-md-10" align="justify">
             <h2>When citing Effectidor please refer to:</h2>
             <b>Effectidor: an automated machine-learning-based web server for the prediction of type-III secretion system effectors</b><br>
@@ -96,14 +70,12 @@
             <br>
 
         </div>
+        </div>
     <div id="behind-footer"></div>
-    <div>
-    <nav role="navigation" class="navbar-inverse navbar-fixed-bottom ng-binding" style="color: #cccccc; text-align: center; font-family: Calibri;">
+    <div class="row" style="color: #cccccc; text-align: center; font-family: Calibri;" id="nav_container">
         <h4>
-                Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank">Pupko Group</a>
+                Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank" style="color: #0d6efd;">Pupko Group</a>
         </h4>
-    </nav>
-    </div>
     </div>
 </body>
 </html>

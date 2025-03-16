@@ -1,75 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Eff3ctidor</title>
 
     <link rel="shortcut icon" type="image/x-icon" href="/pics/logo.gif" />
 
     <meta charset="utf-8">
-    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
-    
-    <!--files for the select tag-->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/i18n/defaults-*.min.js"></script>
+    <script src="jquery-3.7.1.min.js"></script>
+    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="bootstrap-5.3.3-dist/js/bootstrap.min.js"></script>
 
-    <!--files for the checkbox tag (toggle)-->
-    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
 
     <link rel="stylesheet" href="css/general.css">
     <script src="handle_FAQ.js"></script>
 </head>
 <body>
-    <nav role="navigation" class="navbar navbar-fixed-top">
-        <div class="jumbotron" id="jumbo">
-            <div class="container">            
-                <div class="row" id="title-row" align="center">
-                    <div class="col-md-1">
-                    </div>
-                    <div class="col-md-10" align="center">
-                        <!--<span id="server-title">Effectidor</span><br>-->
-                        <img src="pics/logo.gif" id="nav_bar_image" style="height: 120px;"><br>
-                        <span id="sub-title">A machine learning based type 3 effectors predictor</span>
-                        <br><br>
-                    </div>
-                </div>
-            </div>       
-        </div>
-        <div class="jumbotron" id="nav_container">
-                <div class="row">
+    <div class="row" id="jumbo">
+            <div class="col-md-1">
+            </div>
+            <div class="col-md-10" align="center">
+                 <img src="pics/logo.gif" id="nav_bar_image" style="height: 120px;"><br>
+                 <span id="sub-title">A machine-learning based type III effectors predictor</span><br>
+				 <span style="font-size:22px">Prof. Tal Pupko Lab - The Shmunis School of Biomedicine and Cancer Research</span>
+                 <br><br>
+            </div>
+   </div>
+   <nav class="navbar navbar-expand-lg bg-body-tertiary" role="navigation">
+	    <div class="container-fluid" id="nav_container">
                     <div style="display:table; margin:0 auto;">
-                        <ul class="nav navbar-nav" id="menu-nav">
-                            <li style="display:table-cell; padding: 0px 10px;">
-                                <a href="index.html">Home</a>
-                            </li>
-                            <li class="active" style="display:table-cell; padding: 0px 10px;">
-                                <a href="FAQ.html">FAQ</a>
-                            </li>
-                            <li style="display:table-cell; padding: 0px 10px;">
-                                <a href="data.html">Data</a>
-                            </li>
-                            <li style="display:table-cell; padding: 0px 10px;">
-                                <a href="credits.html">Credits</a>
-                            </li>
-                            <li style="float: right">
-                                <a href="https://english.tau.ac.il/" id="tau-link" target="_blank">
-                                    <img src=pics/TAU_LOGO.png id="tau-logo">
-                                </a>
-                            </li>
+                        <ul class="nav navbar-nav"  id="menu-nav">
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="index.html">Home</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="tutorial.html">Tutorials</a></li>
+                            <li class="nav-item active" style="padding: 0px 20px;"><a href="FAQ.html">FAQ</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="data.html">Data</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="credits.html">Credits</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="https://effectidor.tau.ac.il/results/examples/Example_run/output.html">Example run</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;float: right"><a href="https://english.tau.ac.il/" id="tau-link" target="_blank"><img src=pics/TAU_LOGO.png id="tau-logo"></a></li>
                         </ul>
                     </div>
-                </div>
-        </div>
-    </nav>
-    <div id="behind-nav-bar-results"></div>
+           </div>
+        </nav>     <!-- Static navbar -->
+        
     <div class="container">
         <div class="col-md-1"></div>
     <div class="col-md-10">
+    <br>
     <h3 onclick="Open_output()" style="cursor:pointer;">What is Effectidor's output?</h3><br>
     <div id="outputQ" style="display:none;">
     <p>Effectidor produces both tabular and graphical outputs.
@@ -80,10 +57,10 @@
     </ol></p>
     <p><b>Downloadable files</b>
     <ol>
-        <li>Predictions file. All the OGs in the genomes (excluding OGs that represent T3SS and flagella components) are sorted according to their score, reflecting their likelihood to encode T3Es. The label of each OG is given, as well as ORFs identity from each genome and protein annotation (if available in the input data).</li>
-        <li>Feature importance file. This table lists the features used for the ML, sorted by their contribution to the learning process, and their relative importance.</li>
-        <li>Report on type 3 secretion system and flagella proteins found in the input genomes. These proteins are identified on the basis of sequence similarity to our T3SS datasets (see data). They are excluded from the ML process and therefore do not get a score, but are given as an extra output. To each subsystem found in the data all the components and their loci in each genome are listed.</li>
-        <li>Raw features file. This file contains all the features and their values for each OG in the data. These values were the input to the ML pipeline.</li>
+        <li>Predictions file (<a href="tutorial_videos/output_1_predictions.mp4" target="_blank">tutorial video</a>). All the OGs in the genomes (excluding OGs that represent T3SS and flagella components) are sorted according to their score, reflecting their likelihood to encode T3Es. The label of each OG is given, as well as ORFs identity from each genome and protein annotation (if available in the input data).</li>
+        <li>Feature importance file (<a href="tutorial_videos/output_3_features.mp4" target="_blank">tutorial video</a>). This table lists the features used for the ML, sorted by their contribution to the learning process, and their relative importance.</li>
+        <li>Report on type 3 secretion system and flagella proteins found in the input genomes (<a href="tutorial_videos/output_2_T3SS_and_flagella.mp4" target="_blank">tutorial video</a>). These proteins are identified on the basis of sequence similarity to our T3SS datasets (see data). They are excluded from the ML process and therefore do not get a score, but are given as an extra output. To each subsystem found in the data all the components and their loci in each genome are listed.</li>
+        <li>Raw features file (<a href="tutorial_videos/output_3_features.mp4" target="_blank">tutorial video</a>). This file contains all the features and their values for each OG in the data. These values were the input to the ML pipeline.</li>
     </ol></p>
     <br><p>
     The graphical output includes analysis of the features. The 10 most contributing features will be compared between the two classes - effectors and non-effectors, in violin plots.<br>
@@ -99,7 +76,9 @@
     <br>If you did not use an input Effectors file, the samples marked with "yes" in the "is_effector" column are homologous to known T3Es, and the highly scored samples marked with a question mark (?) are potentially novel T3Es.
     <br>For your convenience, the highly scored samples are highlighted with dark green that becomes lighter as the score decreases.
     <br>For each OG the annotation (if exists in the input file) is provided, and its members in each genome are specified.
-    <br><br>In general, an OG with a high score and an ambiguous annotation is a good candidate to be a novel T3E.</p>
+    <br><br>In general, an OG with a high score and an ambiguous annotation is a good candidate to be a novel T3E.
+        <br>a tutorial video for the predictions output is available <a href="tutorial_videos/output_1_predictions.mp4">here</a>.
+    </p>
     <br>
     </div>
     <h3 onclick="Open_evaluation()" style="cursor:pointer;">How is Effectidor evaluated and where can I see its predicting accuracy?</h3><br>
@@ -111,25 +90,28 @@
     <h3 onclick="Open_input()" style="cursor:pointer;">What input does Effectidor require and what is it used for?</h3><br>
     <div id="inputQ" style="display:none;">
     <p>
-    Effectidor has one obligatory input - an <b>ORFs file</b>.<br> This is a FASTA file including all the genome ORFs. See instructions for downloading this file <a href="instructions.html" target="_blank">here</a>.
+    Effectidor has one obligatory input - an <b>ORFs file</b>.<br> This is a FASTA file including all the genome ORFs. See instructions for downloading this file <a href="instructions.html" target="_blank">here</a> and tutorial video for a single genome <a href="tutorial_videos/input_1_ORFs_single_genome.mp4" target="_blank">here</a>, and for pan-genome <a href="tutorial_videos/input_2_ORFs_multiple_genomes.mp4" target="_blank">here</a>.
     <br>Some of the ORFs in this file (effectors and non-effectors) will be used to train the machine-learning algorithms, and based on the trained classifier, the main output - prediction for each ORF - will be performed. 
-    <br>In addition, it is recommended to supply a known <b>Effectors file</b>, as appearing in the ORFs file. Alternatively, a homology search against an internal effectors' dataset will be performed to constitute the "known effectors" ORFs for the learning process.
+    <br>In addition, it is possible to supply a known <b>Effectors file</b>, as appearing in the ORFs file. Alternatively, a homology search against an internal effectors' dataset will be performed to constitute the "known effectors" ORFs for the learning process. You can see a tutorial video for creating this input <a href="tutorial_videos/input_3_input_effectors.mp4" target="_blank">here</a>
     <br><br> In the advanced options you can supply data that will result in additional features to feed the machine-learning and improve the predictions. These data include:</p>
     <ol>
         <li><b>Host proteome</b> archive. Protein <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files with the proteome of a known host of the studied bacterium. Multiple files can be included. All these files should be compressed in a single <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip</a> archive.
         <br>This input will be used for homology searches. As effectors interact with host proteins for their function, we expect them to have eukaryotic domains, that will be recognized in this homology search.
+            <br> a tutorial video for this input is available <a href="tutorial_videos/input_6_host_proteome.mp4" target="_blank">here</a>.
         </li>
         <li>Archive of <b>proteomes of closely related bacteria without T3SSs</b>. This archive may contain several proteome records, each in a separate <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> file. These FASTA files should be compressed in a single <a href="https://support.microsoft.com/en-us/windows/zip-and-unzip-files-8d28fa72-f2f9-712f-67df-f80cf89fd4e5" target="_blank">zip</a> archive.
         A homology search will be performed against each of these proteomes. As these bacteria are closely related to the studied bacterium, the vast majority of the proteins in the studied bacterium are expected to have an ortholog in these proteomes. Nevertheless, since they do not encode a T3SS, effectors are not expected to have orthologs in these proteomes. Thus, these features are usually very informative for the machine-learning.
+            <br> a tutorial video for this input is available <a href="tutorial_videos/input_7_bacteria_without_T3SS.mp4" target="_blank">here</a>.
         </li>
         <li>
         <b><a href="http://gmod.org/wiki/GFF3" target="_blank">GFF3</a> file(s)</b>. These files will be used to compute genome organization features.
+            <br> a tutorial video for this input is available <a href="tutorial_videos/input_8_gff3_full_genome_regulatory_elements.mp4" target="_blank">here</a>.
         </li>
         <li>
         <b>Full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files</b>. The full genome will be used to search for regulatory elements in the promoter region of each ORF. Speciffically, we allow searching for the following motifs: PIP-box, relevant for <i>Xanthomonas</i>, <i>Ralstonia</i>, and <i>Acidovorax</i>. hrp-box, relevant for <i>Pseudomonas syringae</i> and plant pathogens of the Enterobacteria family. mxiE-box, relevant for <i>Shigella</i>. exs-box, relevant for <i>Pseudomonas aeruginosa</i>. tts-box which is relevant for rhizobia.
+            <br> a tutorial video for this input is available <a href="tutorial_videos/input_8_gff3_full_genome_regulatory_elements.mp4" target="_blank">here</a>.
         </li>
     </ol>
-    </p>
     </div>
     <h3 onclick="Open_running_time()" style="cursor:pointer;">What is the expected running time of Effectidor?</h3><br>
     <div id="running_timeQ" style="display:none;">
@@ -137,7 +119,7 @@
     <br>It can take a few minutes and up to several hours. In extreme cases, for example, when analyzing many genomes simultaneously, it can take several days. We will email you a link to the results upon submission, and upon completion.
     </p><br>
     </div>
-    <h3 onclick="Open_saving_time()" style="cursor:pointer;">How long will my results be saved in the servers?</h3><br>
+    <h3 onclick="Open_saving_time()" style="cursor:pointer;">For how long will my results be saved in the servers?</h3><br>
     <div id="saving_timeQ" style="display:none;">
     <p>The results will be saved in our servers for 3 months.
     <br>After 3 months they will be permanently deleted from our servers.</p><br>
@@ -153,10 +135,10 @@
     </div></div>
     <div id="behind-footer"></div>
     </container>
-    <nav role="navigation" class="navbar-inverse navbar-fixed-bottom ng-binding" style="color: #cccccc; text-align: center; font-family: Calibri;">
+    <div class="row" style="color: #cccccc; text-align: center; font-family: Calibri;" id="nav_container">
         <h4>
-                Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank">Pupko Group</a>
+                Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank" style="color: #0d6efd;">Pupko Group</a>
         </h4>
-    </nav>
-</doby>
+    </div>
+</body>
 </html>

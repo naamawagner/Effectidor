@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -7,68 +8,42 @@
     <link rel="shortcut icon" type="image/x-icon" href="/pics/logo.gif" />
 
     <meta charset="utf-8">
-    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
-    
-    <!--files for the select tag-->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/i18n/defaults-*.min.js"></script>
-
-    <!--files for the checkbox tag (toggle)-->
-    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+    <script src="jquery-3.7.1.min.js"></script>
+    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="bootstrap-3.0.3/dist/js/bootstrap.min.js"></script>
 
     <link rel="stylesheet" href="css/general.css">
     <script src="handle_FAQ.js"></script>
 </head>
 <body>
-    <nav role="navigation" class="navbar navbar-fixed-top">
-        <div class="jumbotron" id="jumbo">
-            <div class="container">            
-                <div class="row" id="title-row" align="center">
-                    <div class="col-md-1">
-                    </div>
-                    <div class="col-md-10" align="center">
-                        <!--<span id="server-title">Effectidor</span><br>-->
-                        <img src="pics/logo.gif" id="nav_bar_image" style="height: 120px;"><br>
-                        <span id="sub-title">A machine learning based type 3 effectors predictor</span>
-                        <br><br>
-                    </div>
-                </div>
-            </div>       
-        </div>
-        <div class="jumbotron" id="nav_container">
-                <div class="row">
+    <div class="row" id="jumbo">
+            <div class="col-md-1">
+            </div>
+            <div class="col-md-10" align="center">
+                 <img src="pics/logo.gif" id="nav_bar_image" style="height: 120px;"><br>
+                 <span id="sub-title">A machine-learning based type III effectors predictor</span><br>
+				 <span style="font-size:22px">Prof. Tal Pupko Lab - The Shmunis School of Biomedicine and Cancer Research</span>
+                 <br><br>
+            </div>
+   </div>
+   <nav class="navbar navbar-expand-lg bg-body-tertiary" role="navigation">
+	    <div class="container-fluid" id="nav_container">
                     <div style="display:table; margin:0 auto;">
-                        <ul class="nav navbar-nav" id="menu-nav">
-                            <li style="display:table-cell; padding: 0px 10px;">
-                                <a href="index.html">Home</a>
-                            </li>
-                            <li style="display:table-cell; padding: 0px 10px;">
-                                <a href="FAQ.html">FAQ</a>
-                            </li>
-                            <li class="active" style="display:table-cell; padding: 0px 10px;">
-                                <a href="data.html">Data</a>
-                            </li>
-                            <li style="display:table-cell; padding: 0px 10px;">
-                                <a href="credits.html">Credits</a>
-                            </li>
-                            <li style="float: right">
-                                <a href="https://english.tau.ac.il/" id="tau-link" target="_blank">
-                                    <img src=pics/TAU_LOGO.png id="tau-logo">
-                                </a>
-                            </li>
+                        <ul class="nav navbar-nav"  id="menu-nav">
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="index.html">Home</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="tutorial.html">Tutorials</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="FAQ.html">FAQ</a></li>
+                            <li class="nav-item active" style="padding: 0px 20px;"><a href="data.html">Data</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="credits.html">Credits</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="https://effectidor.tau.ac.il/results/examples/Example_run/output.html">Example run</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;float: right"><a href="https://english.tau.ac.il/" id="tau-link" target="_blank"><img src=pics/TAU_LOGO.png id="tau-logo"></a></li>
                         </ul>
                     </div>
-                </div>
-        </div>
-    </nav>
-    <div id="behind-nav-bar-results"></div>
+           </div>
+    </nav>     <!-- Static navbar -->
     <div class="container">
     <div class="col-md-1"></div>
+    <br>
     <div class="col-md-10">
         <p align="justify">
         Effectidor identifies T3SS and flagella proteins in the input genome(s) based on internal datasets of the different T3SS subtypes. These proteins are excluded from the analysis of Effectidor and are reported separately.<br>
@@ -123,19 +98,20 @@
 
         <br>Older versions:<br>
         <b><a href="T3Es_data/T3Es8.faa" target="_blank">T3Es version 1.08</a></b> (August 2023) - removed False T3E - HrpA.<br>
-        <b><a href="T3Es_data/T3Es7.faa" target="_blank">T3Es version 1.07</a></b> (July 2023) - added newly validated T3E of <i>Ralstonia</i>, RipBT [<a href="https://bsppjournals.onlinelibrary.wiley.com/doi/10.1111/mpp.13342" target="_blank">REF</a>].<br>
-        <b><a href="T3Es_data/T3Es6.faa" target="_blank">T3Es version 1.06</a></b> (June 2023) - added newly validated T3Es from <i>Xanthomonas</i>: XopBB, XopBC, XopBD, XopBE, XopBF, XopBG [<a href="https://www.frontiersin.org/articles/10.3389/fpls.2023.1155341/full" target="_blank">REF</a>].<br>
-        <b><a href="T3Es_data/T3Es5.faa" target="_blank">T3Es version 1.05</a></b> (January 2023) - added validated T3Es from <i>Xanthomonas</i>, <i>Pseudomonas syringea</i>, <i>Ralstonia</i>, <i>Acidovorax</i>, and <i>Panotea</i> sp.<br>
-        <b><a href="T3Es_data/T3Es4.faa" target="_blank">T3Es version 1.04</a></b> (November 2022) - added the following validated T3Es: AvrA, AvrB6, AvrBs2, AvrBs4, AvrXa3, AvrXa7, BapC, CigR, HopAF1, HopAK1, HopAO1, HopD1, HopO1-1, HopQ1-1, HopZ1, HrpE3, NopF, NopT, PopW, PopW, PthA, PthA2, PthA3, PthA4, PthB, PthC, PthG, RipAL, RipB, RipTPS, SrfJ, XAC3090, XOO3150, XopA, XopAC, XopAF, XopAG, XopAM, XopAO, XopAP, XopAR, XopAS, XopAU, XopAW, XopC, XopD, XopE1, XopE2, XopF1, XopF2, XopG, XopH, XopI, XopJ2, XopJ4, XopJ5, XopK, XopM, XopN, XopP, XopQ, XopS, XopT, XopV, XopX, XopZ, XopZ1.<br>
+        <b><a href="T3Es_data/T3Es7.faa" target="_blank" download>T3Es version 1.07</a></b> (July 2023) - added newly validated T3E of <i>Ralstonia</i>, RipBT [<a href="https://bsppjournals.onlinelibrary.wiley.com/doi/10.1111/mpp.13342" target="_blank">REF</a>].<br>
+        <b><a href="T3Es_data/T3Es6.faa" target="_blank" download>T3Es version 1.06</a></b> (June 2023) - added newly validated T3Es from <i>Xanthomonas</i>: XopBB, XopBC, XopBD, XopBE, XopBF, XopBG [<a href="https://www.frontiersin.org/articles/10.3389/fpls.2023.1155341/full" target="_blank">REF</a>].<br>
+        <b><a href="T3Es_data/T3Es5.faa" target="_blank" download>T3Es version 1.05</a></b> (January 2023) - added validated T3Es from <i>Xanthomonas</i>, <i>Pseudomonas syringea</i>, <i>Ralstonia</i>, <i>Acidovorax</i>, and <i>Panotea</i> sp.<br>
+        <b><a href="T3Es_data/T3Es4.faa" target="_blank" download>T3Es version 1.04</a></b> (November 2022) - added the following validated T3Es: AvrA, AvrB6, AvrBs2, AvrBs4, AvrXa3, AvrXa7, BapC, CigR, HopAF1, HopAK1, HopAO1, HopD1, HopO1-1, HopQ1-1, HopZ1, HrpE3, NopF, NopT, PopW, PopW, PthA, PthA2, PthA3, PthA4, PthB, PthC, PthG, RipAL, RipB, RipTPS, SrfJ, XAC3090, XOO3150, XopA, XopAC, XopAF, XopAG, XopAM, XopAO, XopAP, XopAR, XopAS, XopAU, XopAW, XopC, XopD, XopE1, XopE2, XopF1, XopF2, XopG, XopH, XopI, XopJ2, XopJ4, XopJ5, XopK, XopM, XopN, XopP, XopQ, XopS, XopT, XopV, XopX, XopZ, XopZ1.<br>
         <b><a href="T3Es_data/T3Es3.faa" target="_blank">T3Es version 1.03</a></b> (September 2022) - removed false T3E E2MEI8 and added missing <i>Ralstonia</i> T3Es and the following T3Es: XopZ2, XopJ4, XopJ2, XopE5, XopAS, XopAQ, XopAL2, XopAF, AvrXccA1.<br>
-        <b><a href="T3Es_data/T3Es.faa" target="_blank">T3Es version 1.01</a></b> (October 2021)</p>
+        <!--<b><a href="T3Es_data/T3Es2.faa" target="_blank" download>T3Es version 1.02</a></b> (August 2022) - removed false T3E E2MEI8 and added missing <i>Ralstonia</i> T3Es.<br>-->
+        <b><a href="T3Es_data/T3Es.faa" target="_blank" download>T3Es version 1.01</a></b> (October 2021)</p>
     </div>
     </div>
     <div id="behind-footer"></div>
-    <nav role="navigation" class="navbar-inverse navbar-fixed-bottom ng-binding" style="color: #cccccc; text-align: center; font-family: Calibri;">
+    <div class="row" style="color: #cccccc; text-align: center; font-family: Calibri;" id="nav_container">
         <h4>
-                Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank">Pupko Group</a>
+                Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank" style="color: #0d6efd;">Pupko Group</a>
         </h4>
-    </nav>
+    </div>
 </body>
 </html>
