@@ -88,6 +88,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     all_prots = 'translated_ORFs.faa'
     effectors_prots = os.path.join(working_directory, 'translated_effectors.faa')
     blast_datasets_dir = f'{data_dir}/blast_data'
+    chaperones = os.path.join(data_dir, 'chaperones.faa')
 
     os.makedirs(tmp_dir, exist_ok=True)
     if not os.path.exists(
@@ -138,6 +139,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     subprocess.check_output(['python', f'{scripts_dir}/find_non_effectors.py', all_prots, effectors_prots])
     subprocess.check_output(
         ['python', f'{scripts_dir}/find_T3SS_components.py', working_directory, all_prots, 'T3SS_data'])
+    subprocess.check_output(['python', f'{scripts_dir}/find_chaperones.py', all_prots, working_directory, chaperones])
     # creating the features extraction commands
     with open(f'{working_directory}/features_jobs.cmds', 'w') as jobs_f:
         # sequence features

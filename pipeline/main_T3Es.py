@@ -730,7 +730,10 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                 f'{output_dir_path}/out_learning/consensus_predictions_with_annotations.csv',
                 f'{output_dir_path}/OG_effector_homologs.csv')
             if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
-                subprocess.check_output(['python', os.path.join(scripts_dir, 'phyletic_patterns.py'), output_dir_path])
+                num_genomes = len(os.listdir(f'{output_dir_path}/Effectidor_runs'))
+                if num_genomes > 1:
+                    subprocess.check_output(['python', os.path.join(scripts_dir, 'phyletic_patterns.py'),
+                                             output_dir_path])
         low_quality_flag = False
         if os.path.exists(f'{output_dir_path}/out_learning/learning_failed.txt'):
             low_quality_flag = True
@@ -789,6 +792,8 @@ def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_
                 <br>
                 <a href='T3SS.csv' target='_blank'>Download T3SS and flagella components' details</a>
                 <br>
+                <a href='chaperones.csv' target='_blank'>Download chaperones details</a>
+                <br>
                 <a href='out_learning/feature_importance.csv' target='_blank'>Download feature importance file</a>
                 <br>
                 <a href='OGs_features.csv' target='_blank'>Download features file</a>
@@ -802,15 +807,23 @@ def edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_
                 <div class="container" style="{CONSTS.CONTAINER_STYLE}" align='center'>
                 ''')
         if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
-            append_to_html(html_path, f'''
-                <br>
-                <h3><b>T3Es presence/absence map</b></h3>
-                <br>
-                <a href='T3Es_presence_absence.png'><img src='T3Es_presence_absence.png' style="max-width: 100%;" /></a>
-                <br>
-                <h3><b>T3SS and flagella components presence/absence map</b></h3>
-                <a href='T3SS_presence_absence.png'><img src='T3SS_presence_absence.png' style="max-width: 100%;" /></a>
-                ''')
+            num_genomes = len(os.listdir(f'{output_dir_path}/Effectidor_runs'))
+            if num_genomes > 1:
+                append_to_html(html_path, f'''
+                    <br>
+                    <h3><b>T3Es presence/absence map</b></h3>
+                    <br>
+                    <a href='T3Es_presence_absence.png'><img src='T3Es_presence_absence.png' style="max-width: 100%;" /></a>
+                    <br>
+                    <h3><b>T3SS and flagella components presence/absence map</b></h3>
+                    <a href='T3SS_presence_absence.png'><img src='T3SS_presence_absence.png' style="max-width: 100%;" /></a>
+                    ''')
+                if os.path.exists('chaperones_presence_absence.png'):
+                    append_to_html(html_path, f'''
+                    <br>
+                    <h3><b>chaperones presence/absence map</b></h3>
+                    <a href='chaperones_presence_absence.png'><img src='chaperones_presence_absence.png' style="max-width: 100%;" /></a>
+                    ''')
         else:
             append_to_html(html_path, f'''
             <br>
