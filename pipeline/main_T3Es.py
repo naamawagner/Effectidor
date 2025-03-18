@@ -346,6 +346,9 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
             error_msg = 'No files were found in the ORFs input! Make sure the files in the ZIP archive are not inside ' \
                         'directories. '
             fail(error_msg, error_path)
+        elif number_of_genomes > 1000:
+            error_msg = f"There are {str(number_of_genomes)} genomes in your input! Effectidor's limit is 1,000 genomes."
+            fail(error_msg, error_path)
         shutil.rmtree(f'{output_dir_path}/ORFs_tmp', ignore_errors=True)
         ORFs_set = set(ORFs_genomes)
     else:
