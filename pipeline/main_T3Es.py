@@ -9,6 +9,7 @@ import shutil
 import re
 import subprocess
 import pandas as pd
+from concurrent.futures import ProcessPoolExecutor
 from add_annotations_to_predictions import make_html_tables
 from csv_to_colored_xlsx_converter import convert_csv_to_colored_xlsx
 import fasta_parser
@@ -676,7 +677,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
 
 def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_proteome, genome_path,
          gff_path, no_T3SS, OG_input_f, PIP=False, hrp=False, mxiE=False, exs=False, tts=False, homology_search=False,
-         signal=False, effectors_coverage='50'):
+         signal=False, effectors_coverage='50', cpu='1'):
 
     error_path = f'{output_dir_path}/error.txt'
     try:
@@ -690,6 +691,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                        gff_path, no_T3SS, error_path, OG_input_f)
 
         if os.path.exists(f'{output_dir_path}/Effectidor_runs'):
+            cmds = []
             for genome in os.listdir(f'{output_dir_path}/Effectidor_runs'):
                 genome_ORFs_path = os.path.join(f'{output_dir_path}/Effectidor_runs', genome, 'ORFs.fasta')
                 genome_output_path = os.path.join(f'{output_dir_path}/Effectidor_runs', genome)
@@ -721,8 +723,11 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                     parameters += ' --translocation_signal'
                 parameters += f' --coverage {effectors_coverage}'
 
-                cmd = f'python {os.path.join(scripts_dir, "T3Es_wrapper.py")} {parameters}'
-                subprocess.check_output(cmd, shell=True)
+                cmd_params = f'python {os.path.join(scripts_dir, "T3Es_wrapper.py")} {parameters}'
+                cmds.append(cmd_params)
+            with ProcessPoolExecutor(max_workers=int(cpu)) as executor:
+                for i in range(0, len(cmds)):
+                    executor.submit(subprocess.check_output, cmds[i], shell=True)
 
         else:
             effectors_learn(error_path, ORFs_path, effectors_path, output_dir_path, tmp_dir, gff_path, genome_path,
@@ -834,6 +839,7 @@ if __name__ == '__main__':
     parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
     parser.add_argument('--tts', help='look for tts-box in promoters', action='store_true')
     parser.add_argument('--effectors_coverage', help='coverage percentage cutoff for effectors homologs', default='50')
+    parser.add_argument('--cpu', help='maximal number of CPUs to use', default='1')
 
     args = parser.parse_args()
 
@@ -851,4 +857,4 @@ if __name__ == '__main__':
     main(args.input_ORFs_path, args.output_dir_path, args.input_effectors_path, args.input_T3Es_path,
          args.host_proteome_path, args.genome_path, args.gff_path, args.no_T3SS, args.OGs_table_path,
          PIP=PIP_flag, hrp=hrp_flag, mxiE=mxiE_flag, exs=exs_flag, tts=tts_flag, homology_search=args.homology_search,
-         signal=args.translocation_signal, effectors_coverage=args.effectors_coverage)
+         signal=args.translocation_signal, effectors_coverage=args.effectors_coverage, cpu=args.cpu)
