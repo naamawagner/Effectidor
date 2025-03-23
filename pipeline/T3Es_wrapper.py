@@ -55,7 +55,7 @@ def write_sh_file(tmp_dir, path_to_fasta, path_for_output_csv, queue='power-pupk
     conda activate secretion_signal!@#\
     export PATH=$CONDA_PREFIX/bin:$PATH!@#\
     python ~/secretion_signal_prediction/src/inference/predict_secretion_signal.py --input_fasta_file {path_to_fasta} \
-    --output_file {path_for_output_csv} --use_large_model!@#\
+    --output_file {path_for_output_csv} --load_llm_from_disk!@#\
     touch {path_for_output_csv}.done!@#\
     touch {os.path.join(tmp_dir, "Embedding_pred.csv.done")}\tEffectidor_embedding'''
 
