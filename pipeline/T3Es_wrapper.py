@@ -1,21 +1,3 @@
-def write_sh_file(tmp_dir, path_to_fasta, path_for_output_csv):
-    content = f'''export HOME=/groups/pupko/yairshimony!@#\
-    # Print some information about the job!@#\
-    echo "Starting my SLURM job"!@#\
-    echo "Job ID: $SLURM_JOB_ID"!@#\
-    echo "Running on nodes: $SLURM_JOB_NODELIST"!@#\
-    echo "Allocated CPUs: $SLURM_JOB_CPUS_PER_NODE"!@#\
-    echo "Cuda visible devices: $CUDA_VISIBLE_DEVICES"!@#\
-    source ~/miniconda3/etc/profile.d/conda.sh!@#\
-    conda activate secretion_signal!@#\
-    export PATH=$CONDA_PREFIX/bin:$PATH!@#\
-    python ~/secretion_signal_prediction/src/inference/predict_secretion_signal.py --input_fasta_file {path_to_fasta} \
-    --output_file {path_for_output_csv} --use_large_model!@#\
-    touch {path_for_output_csv}.done!@#\
-    touch {os.path.join(tmp_dir,"Embedding_pred.csv.done")}\tEffectidor_embedding'''
-
-    with open(f'{tmp_dir}/Embedding.cmds', 'w') as out:
-        out.write(content)
 
 
 def fail(error_msg, error_file_path):
@@ -83,8 +65,6 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
                                      'predict_secretion_signal.py')
         signal_out = f'{working_directory}/Embedding_pred.csv'
         cmd = f'python {signal_script} --input_fasta_file {N_terminal_file_path} --output_file {signal_out}'
-        if True:  # ADD parameter for large model
-            cmd += ' --use_large_model'
         subprocess.check_output(cmd, shell=True)
 
     if not effectors_file:
