@@ -36,6 +36,8 @@ One of the following regulatory elements (that will be searched in the promoters
 4. --exs (for exs-box)
 5. --tts (for tts-box)
 
+To use multiple CPUs (relevant for pan-genomic analysis or when using the translocation_signal flag) specify the number of CPUs using the flag --cpu
+
 ### Example data
 in the <i>Example</i> directory you can find example data. To run a pan-genome analysis, on all the reference genomes of <i>Xanthomonas</i>, run the following command:<br><br>
 python pipeline/main_T3Es.py Example/Pan_genome/ORFs.zip Example/Pan_genome/ Example/Pan_genome/OG_table.csv --genome_path Example/Pan_genome/genome.zip --gff_path Example/Pan_genome/GFF.zip --PIP<br>
