@@ -35,3 +35,9 @@ One of the following regulatory elements (that will be searched in the promoters
 3. --mxiE (for MxiE-box)
 4. --exs (for exs-box)
 5. --tts (for tts-box)
+
+### Example data
+in the <i>Example</i> directory you can find example data. To run a pan-genome analysis, on all the reference genomes of <i>Xanthomonas</i>, run the following command:<br><br>
+python pipeline/main_T3Es.py Example\Pan_genome\ORFs.zip Example\Pan_genome\ Example\Pan_genome\OG_table.csv --genome_path Example\Pan_genome\genome.zip --gff_path Example\Pan_genome\GFF.zip --PIP<br>
+this command will include genome organization and regulatory elements (PIP-box) features in the analysis. To also include the translocation signal feature, add the flag --translocation_signal.
+
