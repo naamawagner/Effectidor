@@ -1,0 +1,141 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Eff3ctidor</title>
+
+    <link rel="shortcut icon" type="image/x-icon" href="/pics/logo.gif" />
+
+    <meta charset="utf-8">
+    <script src="jquery-3.7.1.min.js"></script>
+    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="bootstrap-3.0.3/dist/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="css/general.css">
+    <script src="handle_FAQ.js"></script>
+</head>
+<body>
+    <div class="row" id="jumbo">
+            <div class="col-md-1">
+            </div>
+            <div class="col-md-10" align="center">
+                 <img src="pics/logo.gif" id="nav_bar_image" style="height: 120px;"><br>
+                 <span id="sub-title">A machine-learning based type III effectors predictor</span><br>
+				 <span style="font-size:22px">Prof. Tal Pupko Lab - The Shmunis School of Biomedicine and Cancer Research</span>
+                 <br><br>
+            </div>
+   </div>
+   <nav class="navbar navbar-expand-lg bg-body-tertiary" role="navigation">
+	    <div class="container-fluid" id="nav_container">
+                    <div style="display:table; margin:0 auto;">
+                        <ul class="nav navbar-nav"  id="menu-nav">
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="index.html">Home</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="tutorial.html">Tutorials</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="FAQ.html">FAQ</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="data.html">Data</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="credits.html">Credits</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;"><a href="https://effectidor.tau.ac.il/results/examples/Example_run/output.html">Example run</a></li>
+                            <li class="nav-item active" style="padding: 0px 20px;"><a href="CaseStudy.html">Case Study DC3000</a></li>
+                            <li class="nav-item" style="padding: 0px 20px;float: right"><a href="https://english.tau.ac.il/" id="tau-link" target="_blank"><img src=pics/TAU_LOGO.png id="tau-logo"></a></li>
+                        </ul>
+                    </div>
+           </div>
+    </nav>     <!-- Static navbar -->
+    <div class="container">
+    <div class="col-md-1"></div>
+    <br>
+    <div class="col-md-10">
+        <h2>Effector prediction in <i>Pseudomonas syringae</i> pv. tomato str. DC3000: a case study illustrating interpretation guidelines</h2><br>
+        <p align="justify">
+        This case study illustrates the interpretation of Effectidor's results from a pangenome analysis of <i>Pseudomonas syringae</i> genomospecies 3.
+          This analysis incorporated secretion signal prediction, regulatory elements (hrp-box), and protein sequences from phylogenetically related strains lacking a type 3 secretion system (T3SS).
+          We focus on <i>Pseudomonas syringae</i> pv. tomato str. DC3000 (Pto DC3000), a well-studied bacterium possessing T3SS and numerous known type 3 effectors (T3Es).
+          Details on input data and accession numbers are provided in the 'Detailed input' section below.<br><br>
+        </p>
+        <h3>Results:</h3>
+        <p align="justify">
+          Effectidor II identified 54 orthologous groups (OGs) containing Pto DC3000 genes and pseudogenes as effectors (scores 0.661–0.999),
+          all exhibiting high homology to known effectors in our database. However, three predicted effector OGs appear to contain Pto DC3000 false positives:
+          locus tags PSPTO_RS14865, PSPTO_RS07255, and PSPTO_RS22510, annotated as “putative virulence factor”, “Hrp pilus protein”, and “SpvB/TcaC N-terminal domain-containing protein”, respectively.<br>
+          To identify false positives, we examined annotations, feature values, and feature importance, consulting external databases and publications.
+          Key features (Table 1) were homology to known T3Es, similarity to effectors versus non-effectors, presence of hrp-box in the promoters, and proximity to known effectors.<br>
+        </p>
+      <h5>Table 1: Feature importance as ranked in Effectidor II analysis for Pto DC3000. Full feature importance table is available in the <a href="feature_importance.csv" target="_blank">feature importance file</a></h5>
+      <table border="1">
+          <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Importance</th>
+        </tr>
+        </thead>
+          <tbody>
+        <tr>
+          <td>homology_to_T3Es_(bit_score)_mean</td>
+          <td>0.323</td>
+        </tr>
+        <tr>
+          <td>T3_signal_max</td>
+          <td>0.186</td>
+        </tr>
+        <tr>
+          <td>similarity_to_effectors_vs_non_effectors</td>
+          <td>0.086</td>
+        </tr>
+        <tr>
+          <td>hrp_box_max</td>
+          <td>0.073</td>
+        </tr>
+        <tr>
+          <td>distance_from_closest_effector_median</td>
+          <td>0.026</td>
+        </tr>
+          </tbody>
+      </table>
+        <br>
+      <p align="justify">
+        PSPTO_RS14865, encoding a putative virulence factor was predicted to be an effector with a score of 0.676.
+        While exhibiting effector-like characteristics (homology to T3Es, proximity to effectors in some genomes, and lack of homology to most representative taxa lacking a T3SS),
+          it also displays features inconsistent with effectors: similarity to a non-T3 protein from <i>Azotobacter vinelandii</i>, absence of a hrp-box, and a low T3 signal score.
+          Although some effectors lack hrp-boxes or have weak T3 signals, the ambiguous nature of this OG necessitated search for experimental validation.
+          We found that the locus encodes the protein HopL1, which was previously considered a potential effector due to its coiled-coil domain and other effector-like features
+          but was subsequently shown to be a non-effector [<a href="https://doi.org/10.1094/MPMI-19-0130" target="_blank">1</a>,<a href="https://doi.org/10.1094/MPMI-19-1180" target="_blank">2</a>].<br>
+        PSPTO_RS07255 encodes the HrpA protein, a major structural component of the Hrp pilus.
+          Although exhibiting high homology to the known effector HopY1 (present in the Effectidor II database),
+          PSPTO_RS07255 is considerably shorter and was thus excluded from our positive training set due to the 50% coverage threshold.
+          This annotation suggests a potential false positive, as structural T3SS proteins often share characteristics with effectors.
+          The high variability of these proteins across bacterial species and T3SS subtypes may lead to misclassification.
+          An analysis of the OG features shows high scores for homology to T3Es, T3 signal, hrp box presence, and proximity to other effectors,
+          resulting in a high overall score (0.662). However, this score is lower than those of all true effectors but one,
+          despite the shared characteristics with the positive training set.<br>
+        PSPTO_RS22510 encodes a SpvB/TcaC N-terminal domain-containing protein.
+          Although its annotation did not clearly indicate a false positive, its relatively low score (0.572) – the lowest among the known and predicted effectors,
+          warranted further investigation. Similarly to PSPTO_RS14865, it shows some effector-like characteristics (homology to T3Es, proximity to effectors in some genomes),
+          but is deficient in key features, with a low T3 signal score and the absence of a hrp-box. Therefore, we searched for experimental validation.
+          Testing showed that the first 100 amino acids fused to AvrRpt2 (without a signal peptide) failed to deliver it to plant cells, indicating this is not an effector
+          [<a href="https://doi.org/10.1094/MPMI-19-1180" target="_blank">2</a>].<br>
+        Three additional OGs containing Pto DC3000 genes were predicted to be effectors, scoring between 0.581 and 0.745,
+          but little information on the proteins was available, as they are currently poorly characterized (see full results in the
+          <a href="results.xlsx" target="_blank">results</a> and <a href="OGs_features.csv" target="_blank">OG features</a> files).
+      </p>
+        <h3>Detailed input:</h3>
+        <p align="justify">
+        The pangenome analysis included the <i>Pseudomonas syringae</i> species pv. tomato str. DC3000 (GCF_000007805.1),
+            pv. tomato str. B13-200 (GCF_002966555.1), pv. tomato DAPP-PG 215 (GCF_949769235.1), pv. maculicola str. ES4326 (GCF_000145845.2),
+            pv. tomato str. Delta X (GCF_009800225.1), pv. maculicola str. MAFF 302723 (GCF_016599655.1),
+            Pseudomonas syringae pv. antirrhini str. 126 (GCF_030252405.1), pv. tomato str. GM 113 (GCF_041379965.2),
+            and pv. morsprunorum CFBP 6411 (GCF_900235905.1). The input consisted of ORFs, full genome and GFF files for
+            each pangenome species. The closely related T3SS-lacking bacteria included <i>Acinetobacter baumannii</i>
+            str. ATCC 19606 (GCF_009035845.1), <i>Azotobacter vinelandii</i> DJ (GCF_000021045.1), and
+            <i>Ectopseudomonas khazarica</i> (GCF_017915135.1). The input consisted of protein sequences of each
+            T3SS-lacking bacteria. All input files used are available in NCBI database.<br><br>
+        </p>
+
+    </div></div>
+    <div id="behind-footer"></div>
+    <div class="row" style="color: #cccccc; text-align: center; font-family: Calibri;" id="nav_container">
+        <h4>
+                Research Site | <a href="https://www.tau.ac.il/~talp/" target="_blank" style="color: #0d6efd;">Pupko Group</a>
+        </h4>
+    </div>
+</body>
+</html>

@@ -44,8 +44,14 @@ for f in os.listdir(blast_dataset_dir):
         content = in_f.read()
         replaced_pipes = content.replace('|','^') # MMSeq changes the IDs when pipes are available in the rec.id, so I replace it now with a character that is not expected to be found in the ID, to replace it back while parsing the MMSeq result.
         in_f.close()
-        with open(os.path.join(blast_dataset_dir,f),'w') as out_f:
-            out_f.write(replaced_pipes)
+        succeeded = False
+        while not succeeded:
+            try:
+                with open(os.path.join(blast_dataset_dir,f), 'w') as out_f:
+                    out_f.write(replaced_pipes)
+                succeeded = True
+            except OSError:
+                succeeded = False
 in_f = open(blast_query)
 content = in_f.read()
 replaced_pipes = content.replace('|','^') # MMSeq changes the IDs when pipes are available in the rec.id, so I replace it now with a character that is not expected to be found in the ID, to replace it back while parsing the MMSeq result.
