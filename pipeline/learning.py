@@ -244,7 +244,7 @@ try:
     w_av_AUPRC = average_precision_score(Y_TEST, w_average)
     
     # feature importance
-    rdf = RandomForestClassifier(n_estimators=1000)
+    rdf = RandomForestClassifier(n_estimators=1000, random_state=seed)
     rdf.fit(X, Y)
     importance = rdf.feature_importances_
     sorted_feature_importance = sorted(zip(list(dataset.columns)[1:-1], importance), key=lambda x: x[1], reverse=True)
@@ -373,7 +373,7 @@ except:
     w_av_AUPRC = average_precision_score(Y_TEST, w_average)
     
     # feature importance
-    rdf = RandomForestClassifier(n_estimators=1000)
+    rdf = RandomForestClassifier(n_estimators=1000, random_state=seed)
     rdf.fit(X, Y)
     importance = rdf.feature_importances_
     sorted_feature_importance = sorted(zip(list(dataset.columns)[1:-1], importance), key=lambda x: x[1], reverse=True)
