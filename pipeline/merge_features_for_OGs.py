@@ -89,9 +89,11 @@ def main():
             for row in in_f:
                 to_remove = []
                 for pseudo in pseudogenes:
-                    if f'{pseudo},' in row or f'{pseudo};' in row:
+                    if f'{pseudo},' in row or f'{pseudo};' in row or f'{pseudo}\n' in row or f'{pseudo}\r\n' in row:
                         row = row.replace(f'{pseudo},', f'{pseudo}(pseudogene),')
                         row = row.replace(f'{pseudo};', f'{pseudo}(pseudogene);')
+                        row = row.replace(f'{pseudo}\n', f'{pseudo}(pseudogene)\n')
+                        row = row.replace(f'{pseudo}\r\n', f'{pseudo}(pseudogene)\r\n')
                         to_remove.append(pseudo)
                 out_f.write(row)
                 for pseudo in to_remove:
