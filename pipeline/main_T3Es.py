@@ -132,8 +132,8 @@ def verify_ORFs(ORFs_path):
                f'and only the ORFs of one genome. This number cannot exceed 10,000 ORFs per genome. If it contains ' \
                f'data of multiple genomes, separate them to different files (compressed together in a ZIP archive) ' \
                f'such that every file will contain the ORFs of a single genome. '
-    start_code = ['ATG', 'GTG', 'TTG']
-    end_code = ['TAA', 'TAG', 'TGA']
+    start_code = ['ATG', 'GTG', 'TTG', 'atg', 'gtg', 'ttg']
+    end_code = ['TAA', 'TAG', 'TGA', 'taa', 'tag', 'tga']
     # correct frame if needed and specified before verifying the input contains coding sequences
     corrected_recs = []
     for rec in ORFs_recs:
