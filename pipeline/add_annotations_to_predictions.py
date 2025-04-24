@@ -2,6 +2,7 @@ from Bio import SeqIO
 import csv
 import pandas as pd
 import os
+import fasta_parser
 
 
 def create_annotations_f(ORFs_f, gff_f='', out_f='', pseudo_f=''):
@@ -9,26 +10,41 @@ def create_annotations_f(ORFs_f, gff_f='', out_f='', pseudo_f=''):
     The annotation is extracted from the gff file if given and otherwise from the ORFs fasta file.
     It is then saved to the out_f (csv format)
     '''
+    locus_dic = fasta_parser.parse_ORFs(ORFs_f)
     locus_annotation = {}
     pseudo_genes = []
     if gff_f:
         with open(gff_f) as gff:
             for line in gff:
                 if not line.startswith('#'):
-                    row = line.strip().split('\t')
-                    if len(row) == 9:
-                        if row[2] == 'CDS':
+                    line_l = line.strip().split('\t')
+                    if len(line_l) > 2:
+                        if line_l[2] == 'CDS':
                             locus, annot = '', ''
-                            features = row[-1].split(';')
-                            for fe in features:
-                                if 'locus_tag=' in fe:
-                                    locus = fe.split('=')[1]
-                                elif 'product=' in fe:
-                                    annot = fe.split('=')[1]
-                            if 'pseudo=true' in row[-1]:
+                            is_locus_tag = False
+                            features_l = line_l[-1].split(';')
+                            for feature in features_l:
+                                if feature.startswith('locus'):
+                                    locus = feature.split('=')[1]
+                                    is_locus_tag = True
+                                elif 'product=' in feature:
+                                    annot = feature.split('=')[1]
+                            if not is_locus_tag:
+                                for feature in features_l:
+                                    if feature.startswith('ID=CDS:'):
+                                        locus = feature.split(':')[1]
+                                        is_locus_tag = True
+                                        break
+                            if not is_locus_tag:
+                                for locus_tag in locus_dic:
+                                    if f'{locus_tag};' in line_l[-1]:
+                                        locus = locus_tag
+                                        break
+                            if 'pseudo=true' in line_l[-1]:
                                 pseudo_genes.append(locus)
                                 #annot = 'pseudogene ' + annot
                             locus_annotation[locus] = annot
+
     else:  # get the annotations from the fasta file
         recs = SeqIO.parse(ORFs_f, 'fasta')
         for rec in recs:
