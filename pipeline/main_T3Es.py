@@ -337,6 +337,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                 if error_msg:
                     fail(f'For file {file} in your ORFs input: {error_msg}', error_path)
                 genome_name = '_'.join(file.split('/')[-1].split('.')[0].split(' '))
+                genome_name = re.sub(r'\W', '', rf'{genome_name}')
                 ORFs_genomes.append(genome_name)
                 os.makedirs(os.path.join(output_dir_path, 'Effectidor_runs', genome_name), exist_ok=True)
                 shutil.move(os.path.join(output_dir_path, 'ORFs_tmp', file),
@@ -374,6 +375,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                 if os.path.isfile(f'{output_dir_path}/gff_tmp/{file}') and not file.startswith(
                         '_') and not file.startswith('.'):
                     genome_name = '_'.join(file.split('/')[-1].split('.')[0].split(' '))
+                    genome_name = re.sub(r'\W', '', rf'{genome_name}')
                     gff_genomes.append(genome_name)
                     if genome_name in os.listdir(f'{output_dir_path}/Effectidor_runs'):
                         shutil.move(os.path.join(output_dir_path, 'gff_tmp', file),
@@ -419,6 +421,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                             error_msg = f'Illegal fasta files in {file} in full genome archive: {error_msg}'
                             fail(error_msg, error_path)
                         genome_name = '_'.join(file.split('/')[-1].split('.')[0].split(' '))
+                        genome_name = re.sub(r'\W', '', rf'{genome_name}')
                         # print(f'file:{file}, genome:{genome_name}')
                         full_genome_names.append(genome_name)
                         if genome_name in os.listdir(f'{output_dir_path}/Effectidor_runs'):
@@ -473,6 +476,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                     if error_msg:
                         fail(error_msg, error_path)
                     genome_name = '_'.join(file.split('/')[-1].split('.')[0].split(' '))
+                    genome_name = re.sub(r'\W', '', rf'{genome_name}')
                     if genome_name in os.listdir(f'{output_dir_path}/Effectidor_runs'):
                         shutil.move(os.path.join(output_dir_path, 'effectors_tmp', file),
                                     os.path.join(output_dir_path, 'Effectidor_runs', genome_name, 'effectors.fasta'))
