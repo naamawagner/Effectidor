@@ -620,7 +620,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                        f'{output_dir_path} {identity_cutoff} {coverage_cutoff}\tfind_OGs_effectidor\n'
         with open(os.path.join(output_dir_path, 'find_OGs.cmds'), 'w') as out_f:
             out_f.write(find_OGs_cmd)
-        cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {os.path.join(output_dir_path, "find_OGs.cmds")} ' \
+        cmd = f'python {os.path.join(scripts_dir,"auxiliaries", "q_submitter_power.py")} {os.path.join(output_dir_path, "find_OGs.cmds")} ' \
               f'{output_dir_path} -q {queue} '
         OGs_job_number = subprocess.check_output(cmd, shell=True).decode('ascii').strip()
         # make sure it was submitted successfully before proceeding
@@ -667,7 +667,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                 cmds_f = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'features_wrapper.cmds')
                 with open(cmds_f, 'w') as job_f:
                     job_f.write(job_cmd)
-                cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {cmds_f} ' \
+                cmd = f'python {os.path.join(scripts_dir, "auxiliaries", "q_submitter_power.py")} {cmds_f} ' \
                       f'{os.path.join(output_dir_path, "Effectidor_runs", genome)} -q {queue}'
                 subprocess.check_output(cmd, shell=True)
                 # make sure it was submitted successfully before proceeding

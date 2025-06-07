@@ -1,3 +1,10 @@
+import effectidor_CONSTANTS as CONSTS
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('main')
+
+
 def create_effectors_html(effectors_file, ORFs_file, out_dir):
     from Bio import SeqIO
     import csv
@@ -108,6 +115,8 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     subprocess.check_output(
         ['python', f'{scripts_dir}/translate_fasta.py', ORFs_file, effectors_file, all_prots, effectors_prots])
 
+    logger.info(f'effectors_learn: signalp = {signalp}')
+
     if signal:  # make N-terminal sequences for Signal search
         # os.makedirs(signal_prot_dir, exist_ok=True)
         recs = SeqIO.parse(all_prots, 'fasta')
@@ -135,6 +144,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         eff2 = SeqIO.to_dict(SeqIO.parse(effectors_prots2, 'fasta'))
         eff1.update(eff2)
         SeqIO.write(eff1.values(), effectors_prots, 'fasta')
+
     # find and create non effectors fasta file
     subprocess.check_output(['python', f'{scripts_dir}/find_non_effectors.py', all_prots, effectors_prots])
     subprocess.check_output(
@@ -144,16 +154,16 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     with open(f'{working_directory}/features_jobs.cmds', 'w') as jobs_f:
         # sequence features
         jobs_f.write(
-            f'''module load MMseqs2/May2024; python {scripts_dir}/sequence_features.py {ORFs_file} {effectors_prots} {working_directory}!@#\
+            f'''{CONSTS.MODULE_LOAD}; python {scripts_dir}/sequence_features.py {ORFs_file} {effectors_prots} {working_directory}!@#\
                         touch {os.path.join(tmp_dir, "physical_features.done")}\tsequence_features\n''')
         # sequence similarity features
         jobs_f.write(
-            f'''module load MMseqs2/May2024; python {scripts_dir}/homology.py {ORFs_file} {all_prots} {blast_datasets_dir} {working_directory}!@#\
+            f'''{CONSTS.MODULE_LOAD}; python {scripts_dir}/homology.py {ORFs_file} {all_prots} {blast_datasets_dir} {working_directory}!@#\
                         touch {os.path.join(tmp_dir, "homology_features.done")}\thomology\n''')
         if gff_file:
             # genome organization features
             jobs_f.write(
-                f'''module load MMseqs2/May2024; python {scripts_dir}/genome_organization.py {ORFs_file} {effectors_prots} {working_directory} {gff_file}!@#\
+                f'{CONSTS.MODULE_LOAD}; python {scripts_dir}/genome_organization.py {ORFs_file} {effectors_prots} {working_directory} {gff_file}!@#\
                         touch {os.path.join(tmp_dir, "genome_organization_features.done")}\tgenome_organization\n''')
             if MGE:
                 jobs_f.write(
@@ -161,7 +171,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
                     touch {os.path.join(tmp_dir, "mobile_genetic_elements.csv.done")}\tmobile_genetic_elements\n''')
             if full_genome_f:
                 # regulatory elements features
-                cmds = f'module load MMseqs2/May2024; python {scripts_dir}/pip_box_features.py {ORFs_file} {working_directory} {gff_file} {full_genome_f}'
+                cmds = f'{CONSTS.MODULE_LOAD}; python {scripts_dir}/pip_box_features.py {ORFs_file} {working_directory} {gff_file} {full_genome_f}'
                 if PIP:
                     cmds += ' --PIP'
                 if hrp:
@@ -178,21 +188,21 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
     if signalp:
         with open(f'{working_directory}/signalp.cmds', 'w') as sig_f:
             sig_f.write(
-                f'''module load MMseqs2/May2024; python {scripts_dir}/signal_peptide_features.py {ORFs_file} {all_prots} {working_directory}!@#\
-                            touch {os.path.join(tmp_dir, "signal_p_features.done")}\tsignalP\n''')
+                f'module load signalp6-6.0; {CONSTS.MODULE_LOAD}; /lsweb/josef_sites/effectidor/effectidor_env/bin/python {scripts_dir}/signal_peptide_features.py {ORFs_file} {all_prots} {working_directory}!@#\
+                                touch {os.path.join(tmp_dir, "signal_p_features.done")}\tsignalP\n''')
         if not os.path.exists(f'{working_directory}/signal_p_features.done'):
             subprocess.call(
-                f'{os.path.join(scripts_dir, "q_submitter.py")} --cpu 3 {working_directory}/signalp.cmds {tmp_dir} -q {queue}',
+                f'python {os.path.join(scripts_dir, "auxiliaries", "q_submitter_power.py")} --cpu 3 {working_directory}/signalp.cmds {tmp_dir} -q {queue}',
                 shell=True)
     if not os.path.exists(f'{working_directory}/physical_features.done'):
         subprocess.call(
-            f'{os.path.join(scripts_dir, "q_submitter.py")} {working_directory}/features_jobs.cmds {tmp_dir} -q {queue}',
+            f'python {os.path.join(scripts_dir, "auxiliaries", "q_submitter_power.py")} {working_directory}/features_jobs.cmds {tmp_dir} -q {queue} --memory 4',
             shell=True)
+
     if signal:
         if not os.path.exists(f'{working_directory}/Embedding_pred.csv.done'):
-            cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} {os.path.join(tmp_dir, "Embedding.cmds")} {tmp_dir} -q {queue} --cpu 10 --memory 15'
+            cmd = f'python {os.path.join(scripts_dir, "auxiliaries", "q_submitter_power.py")} {os.path.join(tmp_dir, "Embedding.cmds")} {tmp_dir} -q {queue} --cpu 10 --memory 15'
             subprocess.call(cmd, shell=True)
-    # TO COMPLETE: make sure the jobs were submitted before proceeding
     create_annotations_f(ORFs_file, gff_file, 'annotations.csv', 'pseudogenes.txt')
     x = sum([item.endswith('done') for item in os.listdir(working_directory)])
     # amount_of_expected_results = 3
@@ -231,6 +241,8 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
             label_dict[locus] = [locus, '?']
     label_df = pd.DataFrame.from_dict(label_dict, orient='index', columns=['locus', 'is_effector'])
 
+    # files_to_merge =['physical_features.csv', 'homology_features.csv', 'signal_p_features.csv']
+    # done_files = ['physical_features.done', 'homology_features.done', 'signal_p_features.done']
     files_to_merge = ['physical_features.csv', 'homology_features.csv']
     done_files = ['physical_features.done', 'homology_features.done']
     if signalp:
@@ -300,18 +312,19 @@ if __name__ == '__main__':
     parser.add_argument('--signalp', help='extract SignalP6 feature', action='store_true')
     parser.add_argument('--mobile_genetics_elements', help='extract distance from mobile genetics elements',
                         action='store_true')
-    parser.add_argument('--homology_search',
-                        help='search additional effectors based on homology to internal dataset',
+    parser.add_argument('--homology_search', help='search additional effectors based on homology to internal dataset',
                         action='store_true')
     parser.add_argument('--coverage', help='minimal coverage with effector homolog', default='50')
     parser.add_argument('-v', '--verbose', help='Increase output verbosity', action='store_true')
 
     args = parser.parse_args()
 
+    '''
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
+    '''
 
     effectors_learn(args.error_path, args.input_ORFs_path, args.input_effectors_path, args.output_dir_path,
                     f'{args.output_dir_path}/tmp', args.queue, args.gff_file, args.full_genome_f, PIP=args.PIP,
