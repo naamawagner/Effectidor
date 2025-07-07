@@ -682,6 +682,10 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                                 msg = error.read()
                             error_msg = f'Oops :(\n In genome {Genome} {msg}'
                             fail(error_msg, error_path)
+                    if os.path.exists(os.path.join(output_dir_path, 'error_OGs.txt')):
+                        with open(os.path.join(output_dir_path, 'error_OGs.txt')) as f:
+                            error_msg = f.read()
+                        fail(f'Error in OG calculation: {error_msg}', error_path)
                     currently_running = [genome for genome in currently_running if not
                                         os.path.exists(os.path.join(output_dir_path, "Effectidor_runs",
                                         genome, 'features.csv'))]
@@ -695,8 +699,12 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                             genome_path, PIP=PIP, hrp=hrp, mxiE=mxiE, exs=exs, tts=tts,
                             homology_search=homology_search, signal=signal, signalp=signalp, MGE=MGE,
                             coverage=effectors_coverage)
-        # add a check for failed features jobs...
         while not os.path.exists(os.path.join(output_dir_path, 'clean_orthologs_table.csv')):
+            # make sure it didn't fail
+            if os.path.exists(os.path.join(output_dir_path, 'error_OGs.txt')):
+                with open(os.path.join(output_dir_path, 'error_OGs.txt')) as f:
+                    error_msg = f.read()
+                fail(f'Error in OG calculation: {error_msg}', error_path)
             # make sure the find_OGs job was finished before proceeding
             sleep(60)
         subprocess.check_output(['python', os.path.join(scripts_dir, 'merge_features_for_OGs.py'), output_dir_path])
@@ -774,6 +782,8 @@ def finalize_html(html_path, error_path, run_number, predicted_table, positives_
                   output_dir_path):
     succeeded = not os.path.exists(error_path)
     logger.info(f'SUCCEEDED = {succeeded}')
+    f = open(os.path.join(output_dir_path, f'effectidor_{run_number}.END_OK'), "w")
+    f.close()
     if succeeded:
         edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_table,
                           low_confidence_flag, output_dir_path)

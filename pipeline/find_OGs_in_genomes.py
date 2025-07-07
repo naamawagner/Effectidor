@@ -6,11 +6,16 @@ import subprocess
 import csv
 import shutil
 import time
+import sys
+sys.path.append('/lsweb/josef_sites/effectidor/auxiliaries')
+from auxiliaries import fail
 
 working_directory = argv[1]
 identity_cutoff = argv[2]  # default: '50'
 coverage_cutoff = argv[3] # default: '60'
-scripts_dir = '/groups/pupko/naamawagner/T3Es_webserver/scripts/OGs/scripts/'
+error_path = os.path.join(working_directory, 'error_OGs.txt')
+#scripts_dir = '/groups/pupko/naamawagner/T3Es_webserver/scripts/OGs/scripts/'
+scripts_dir = '/lsweb/josef_sites/effectidor/auxiliaries/'
 os.chdir(working_directory)
 if not os.path.exists('genomes_for_Microbializer'):
     os.makedirs('genomes_for_Microbializer')
@@ -38,11 +43,15 @@ python /lsweb/pupko/microbializer/pipeline/main.py --contigs_dir \
 {coverage_cutoff} --account_name pupkoweb-users -q pupkoweb\tMicrobializer_for_Effectidor'''
 with open('search_OGs.cmds', 'w') as cmds_f:
     cmds_f.write(cmds_file_content)
-cmd = f'{os.path.join(scripts_dir, "q_submitter.py")} search_OGs.cmds {working_directory} --memory 4'
+cmd = f'python {os.path.join(scripts_dir, "q_submitter_power.py")} search_OGs.cmds {working_directory} --memory 4'
 subprocess.call(cmd, shell=True)
 
 Microbializer_output_f = 'M1CR0B1AL1Z3R_output_OGs/05a_orthogroups/orthogroups.csv'
 while not os.path.exists(Microbializer_output_f):
+    if os.path.exists('M1CR0B1AL1Z3R_output_OGs/error.txt'):
+        with open('M1CR0B1AL1Z3R_output_OGs/error.txt') as error:
+            error_msg = error.read()
+        fail(error_msg, error_path)
     # while the job hasn't finished
     time.sleep(60)
 
