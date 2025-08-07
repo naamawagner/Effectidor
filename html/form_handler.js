@@ -19,42 +19,47 @@ function validate_read_files() {
     var T3Es = document.getElementById("T3Es").value;
     
     if (gff != '' && (!/^[\x00-\x7F]*$/.test(gff))) {
-        alert("GFF3 file name contains non ASCII characters!")
+        alert("GFF3 file name contains non ASCII characters!");
         return false;
     }
-    
+
     if (genome != '' && (!/^[\x00-\x7F]*$/.test(genome))) {
-        alert("Full genome file name contains non ASCII characters!")
+        alert("Full genome file name contains non ASCII characters!");
         return false;
     }
-    
+
     if (host != '' && (!/^[\x00-\x7F]*$/.test(host))) {
-        alert("Host proteome file name contains non ASCII characters!")
+        alert("Host proteome file name contains non ASCII characters!");
         return false;
     }
-    
+
     if (no_T3SS != '' && (!/^[\x00-\x7F]*$/.test(no_T3SS))) {
-        alert("Proteomes of closely related bacteria without T3SS file name contains non ASCII characters!")
+        alert("Proteomes of closely related bacteria without T3SS file name contains non ASCII characters!");
         return false;
     }
-    
+
     if (ORFs != '' && (!/^[\x00-\x7F]*$/.test(ORFs))) {
-        alert("ORFs file name contains non ASCII characters!")
+        alert("ORFs file name contains non ASCII characters!");
         return false;
     }
-    
+
     if (effectors != '' && (!/^[\x00-\x7F]*$/.test(effectors))) {
-        alert("effectors file name contains non ASCII characters!")
+        alert("effectors file name contains non ASCII characters!");
         return false;
     }
-    
+
     if (T3Es != '' && (!/^[\x00-\x7F]*$/.test(T3Es))) {
-        alert("Effectors for homology search file name contains non ASCII characters!")
+        alert("Effectors for homology search file name contains non ASCII characters!");
         return false;
     }
-    
+
+    if (T3Es != '' && (!T3Es.endsWith(".txt")) && (!T3Es.endsWith(".fasta")) && (!T3Es.endsWith(".faa"))) {
+        alert("Illegal file type for the Effectors for homology input! This file must be of protein fasta format. Only fasta files with extension faa/fasta/txt can be processed.");
+        return false;
+    }
+
     if (job_title != '' && (!/^[\x00-\x7F]*$/.test(job_title))) {
-        alert("Job title contains non ASCII characters!")
+        alert("Job title contains non ASCII characters!");
         return false;
     }
     
