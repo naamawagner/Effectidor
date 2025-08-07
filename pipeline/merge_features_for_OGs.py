@@ -70,11 +70,14 @@ with open(os.path.join(working_directory, 'pseudogenes.txt'), 'w') as pseudo_f:
     pseudo_f.write('\n'.join(pseudogenes))
 
 T3SS_loci_to_remove = merged_T3SS_df.values
-flattened_T3SS_loci = pd.Series(reduce(lambda a, b: np.hstack((a, b)), T3SS_loci_to_remove))
-flattened_T3SS_loci_no_nan = list(flattened_T3SS_loci.dropna())
-T3SS_OGs_to_remove = set([flatten_ortho_dict[locus] for locus in flattened_T3SS_loci_no_nan])
-OGs_table = pd.read_csv('clean_orthologs_table.csv', index_col='OG_name', dtype=str)
-OGs_no_T3SS = OGs_table.drop(index=list(T3SS_OGs_to_remove))
+if len(T3SS_loci_to_remove) > 0:
+    flattened_T3SS_loci = pd.Series(reduce(lambda a, b: np.hstack((a, b)), T3SS_loci_to_remove))
+    flattened_T3SS_loci_no_nan = list(flattened_T3SS_loci.dropna())
+    T3SS_OGs_to_remove = set([flatten_ortho_dict[locus] for locus in flattened_T3SS_loci_no_nan])
+    OGs_table = pd.read_csv('clean_orthologs_table.csv', index_col='OG_name', dtype=str)
+    OGs_no_T3SS = OGs_table.drop(index=list(T3SS_OGs_to_remove))
+else:
+    OGs_no_T3SS = pd.read_csv('clean_orthologs_table.csv', index_col='OG_name', dtype=str)
 # OGs_no_T3SS.to_csv('clean_orthologs_table_noT3SS.csv')
 chaperon_loci_to_remove = merged_chaperones_df.values
 if len(chaperon_loci_to_remove) > 0:
@@ -228,3 +231,6 @@ updated_features.columns = ['_'.join(col) for col in updated_features.columns.va
 updated_features.columns = [col.replace('label', '_').strip('_') for col in updated_features.columns]
 updated_features.sort_values(by=list(updated_features.columns[1:]), inplace=True)
 updated_features.to_csv('OGs_features.csv', index=False)
+
+f = open('merge_OGs.done', 'w')
+f.close()

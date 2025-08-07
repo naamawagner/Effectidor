@@ -110,7 +110,7 @@ def verify_fasta_format(fasta_path, Type, input_name):
         except UnicodeDecodeError as e:
             logger.info(e.args)
             line_number += 1  # the line that was failed to be read
-            return f'Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA ' \
+            return f'In {input_name}: Illegal <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA ' \
                    f'format</a>. Line {line_number} in fasta contains one (or more) non <a ' \
                    f'href="https://en.wikipedia.org/wiki/ASCII" target="_blank">ascii</a> character(s). '
     # override the old file with the curated content
@@ -707,7 +707,18 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                 fail(f'Error in OG calculation: {error_msg}', error_path)
             # make sure the find_OGs job was finished before proceeding
             sleep(60)
-        subprocess.check_output(['python', os.path.join(scripts_dir, 'merge_features_for_OGs.py'), output_dir_path])
+        merge_OGs_cmd = f'module load MMseqs2/May2024;!@#python ' \
+                       f'{os.path.join(scripts_dir, "merge_features_for_OGs.py")} ' \
+                       f'{output_dir_path}\tmerge_OGs_effectidor\n'
+        with open(os.path.join(output_dir_path, 'merge_OGs.cmds'), 'w') as out_f:
+            out_f.write(merge_OGs_cmd)
+        cmd = f'python {os.path.join(scripts_dir, "auxiliaries", "q_submitter_power.py")} {os.path.join(output_dir_path, "merge_OGs.cmds")} ' \
+              f'{output_dir_path} -q {queue} --memory 20'
+        subprocess.check_output(cmd, shell=True)
+        while not os.path.exists(os.path.join(output_dir_path, 'merge_OGs.done')):
+            sleep(30)
+        # I put it in a job as for large runs it requires more memory
+        #subprocess.check_output(['python', os.path.join(scripts_dir, 'merge_features_for_OGs.py'), output_dir_path])
 
         annotations_df = pd.read_csv(f'{output_dir_path}/OGs_annotations.csv')
         features_data = pd.read_csv(f'{output_dir_path}/OGs_features.csv')
