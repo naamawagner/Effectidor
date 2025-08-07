@@ -109,7 +109,7 @@
             <br> a tutorial video for this input is available <a href="tutorial_videos/input_8_gff3_full_genome_regulatory_elements.mp4" target="_blank">here</a>.
         </li>
         <li>
-        <b>Full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files</b>. The full genome will be used to search for regulatory elements in the promoter region of each ORF. Speciffically, we allow searching for the following motifs: PIP-box, relevant for <i>Xanthomonas</i>, <i>Ralstonia</i>, and <i>Acidovorax</i>. hrp-box, relevant for <i>Pseudomonas syringae</i> and plant pathogens of the Enterobacteria family. mxiE-box, relevant for <i>Shigella</i>. exs-box, relevant for <i>Pseudomonas aeruginosa</i>. tts-box which is relevant for rhizobia.
+        <b>Full genome <a href="https://www.ncbi.nlm.nih.gov/blast/fasta.shtml" target="_blank">FASTA</a> files</b>. The full genome will be used to search for regulatory elements in the promoter region of each ORF. Specifically, we allow searching for the following motifs: PIP-box, relevant for <i>Xanthomonas</i>, <i>Ralstonia</i>, and <i>Acidovorax</i>. hrp-box, relevant for <i>Pseudomonas syringae</i> and plant pathogens of the Enterobacteria family. mxiE-box, relevant for <i>Shigella</i>. exs-box, relevant for <i>Pseudomonas aeruginosa</i>. tts-box which is relevant for rhizobia.
             <br> a tutorial video for this input is available <a href="tutorial_videos/input_8_gff3_full_genome_regulatory_elements.mp4" target="_blank">here</a>.
         </li>
     </ol>
@@ -117,13 +117,14 @@
     <h3 onclick="Open_running_time()" style="cursor:pointer;">What is the expected running time of Effectidor?</h3><br>
     <div id="running_timeQ" style="display:none;">
     <p>The running time depends on many factors, among them the input you supply and the load in our servers.
-    <br>It can take a few minutes and up to several hours. In extreme cases, for example, when analyzing many genomes simultaneously, it can take several days. We will email you a link to the results upon submission, and upon completion.
+    <br>In most cases, it can take a few minutes and up to several hours. In extreme cases, for example, when analyzing hundreds of genomes simultaneously, it can take several days. We will send you a link to the results upon submission and upon completion, by email.
+    <br>Note that the limit for every submission is one week. Therefore, if your job hasn't finished within a week it was too heavy. Try to reduce the number of genomes analyzed, or the advanced options used (especially the secretion signal prediction, which is the heaviest component that can be spared).
     </p><br>
     </div>
     <h3 onclick="Open_saving_time()" style="cursor:pointer;">For how long will my results be saved in the servers?</h3><br>
     <div id="saving_timeQ" style="display:none;">
-    <p>The results will be saved in our servers for 3 months.
-    <br>After 3 months they will be permanently deleted from our servers.</p><br>
+    <p>The results will be saved in our servers for one month from the time of submission.
+    <br>After one month they will be permanently deleted from our servers.</p><br>
     </div>
     <h3 onclick="Open_email()" style="cursor:pointer;">Why do you need my email?</h3><br>
     <div id="emailQ" style="display:none;">
@@ -131,7 +132,9 @@
     </div>
     <h3 onclick="Open_genomes()" style="cursor:pointer;">Can I use Effectidor to run the analysis on several genomes simultaneously?</h3><br>
     <div id="genomesQ" style="display:none;">
-    <p>Yes! Effectidor V2 supports pan-genome analysis. The training and prediction are done on ortholog groups (OGs).</p>
+    <p>Yes! Effectidor V2 supports pan-genome analysis. The training and prediction are done on ortholog groups (OGs).
+    <br>For basic runs, up to ~1,000 genomes can be processed. For runs that include the prediction of the secretion signal, approximately 800 genomes can be processed.
+    </p>
     </div>
     </div></div>
     <div id="behind-footer"></div>
