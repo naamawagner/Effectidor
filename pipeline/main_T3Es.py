@@ -38,6 +38,8 @@ def verify_fasta_format(fasta_path, Type, input_name):
 
     flag = False
     if Type == 'DNA':
+        if int(float(file_size)) >= 11*(10**6):
+            return f'{input_name} is too big! It should contain a single bacterial data. For pan-genome analysis, data of separate genomes should be provided in separate files (see instructions)'
         legal_chars = set(
             Bio.SeqUtils.IUPACData.ambiguous_dna_letters.lower() + Bio.SeqUtils.IUPACData.ambiguous_dna_letters)
     else:  # Type == 'protein'
@@ -157,6 +159,8 @@ def verify_effectors_f(effectors_path, ORFs_path):
     logger.info(f'Validating effectors:{effectors_path}')
     effectors_recs = [rec.id for rec in SeqIO.parse(effectors_path, 'fasta')]
     effectors_set = set([rec.id for rec in SeqIO.parse(effectors_path, 'fasta')])
+    if len(effectors_set) > 150:
+        return f'Illegal effectors records. There are {str(len(effectors_set))} records in this input. This is more than can be encoded in a single bacterial genome.'
     ORFs_recs = set([rec.id for rec in SeqIO.parse(ORFs_path, 'fasta')])
     if not effectors_set.issubset(ORFs_recs):
         not_in_ORFs = ', '.join([rec for rec in effectors_set.difference(ORFs_recs)])
