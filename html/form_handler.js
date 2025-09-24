@@ -43,8 +43,18 @@ function validate_read_files() {
         return false;
     }
 
+    if (ORFs != '' && (!ORFs.endsWith(".txt")) && (!ORFs.endsWith(".fasta")) && (!ORFs.endsWith(".fna")) && (!ORFs.endsWith(".zip"))) {
+        alert("Illegal file type for the ORFs input! This file must be of DNA fasta format. Only fasta files with extension fna/fasta/txt, or a zip archive, can be processed.");
+        return false;
+    }
+
     if (effectors != '' && (!/^[\x00-\x7F]*$/.test(effectors))) {
         alert("effectors file name contains non ASCII characters!");
+        return false;
+    }
+
+    if (effectors != '' && (!effectors.endsWith(".txt")) && (!effectors.endsWith(".fasta")) && (!effectors.endsWith(".fna")) && (!effectors.endsWith(".zip"))) {
+        alert("Illegal file type for the effectors input! This file must be of DNA fasta format. Only fasta files with extension fna/fasta/txt, or a zip archive, can be processed.");
         return false;
     }
 
