@@ -3,6 +3,7 @@ import csv
 import pandas as pd
 import os
 import fasta_parser
+import re
 
 
 def create_annotations_f(ORFs_f, gff_f='', out_f='', pseudo_f=''):
@@ -51,13 +52,15 @@ def create_annotations_f(ORFs_f, gff_f='', out_f='', pseudo_f=''):
             is_locus = False
             annotation = ''
             header = rec.description
-            header_l = header.split('[')  # split by '[' and not by spaces as the annotation fields contain spaces
-            for a in header_l:
-                if 'locus_tag=' in a:
-                    locus = a.split('=')[1].strip('] ')
-                    is_locus = True
-                elif 'protein=' in a:
-                    annotation = a.split('=')[1].strip('] ')
+            if re.search('\[locus_tag=[A-Za-z0-9_]+\]', header):
+                is_locus = True
+                header_l = header.split('[')  # split by '[' and not by spaces as the annotation fields contain spaces
+                for a in header_l:
+                    if 'locus_tag=' in a:
+                        locus = a.split('=')[1].strip('] ')
+                                   
+                    elif 'protein=' in a:
+                        annotation = a.split('=')[1].strip('] ')
 
             if is_locus:
                 locus_annotation[locus] = annotation
@@ -67,6 +70,12 @@ def create_annotations_f(ORFs_f, gff_f='', out_f='', pseudo_f=''):
                 locus_annotation[rec.id] = annotation
                 if 'pseudo=true' in header:
                     pseudo_genes.append(rec.id)
+        for locus in list(locus_annotation.keys()):
+            if locus not in locus_dic:
+                locus_annotation.pop(locus)
+        for locus in locus_dic:
+            if locus not in locus_annotation:
+                locus_annotation[locus] = ''
     with open(out_f, 'w', newline='') as out:
         writer = csv.writer(out)
         header = ['locus', 'annotation']
