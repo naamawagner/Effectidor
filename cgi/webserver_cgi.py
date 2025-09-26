@@ -84,7 +84,7 @@ def write_html_prefix(output_path, run_number):
     </nav>
     <br><div class="container" style="{CONSTS.CONTAINER_STYLE}" align="justify"> 
     <H1 align=center>Job Status - <FONT color='red'>RUNNING</FONT></h1>
-    <br>Effectidor is now processing your request. This page will be automatically updated every {CONSTS.RELOAD_INTERVAL} seconds (until the job is done). You can also reload it manually. Once the job has finished, the output will appear below. A link to this page was sent to your email in case you wish to view these results at a later time without recalculating them. Please note that the results will be kept in the server for 3 months.
+    <br>Effectidor is now processing your request. This page will be automatically updated every {CONSTS.RELOAD_INTERVAL} seconds (until the job is done). You can also reload it manually. Once the job has finished, the output will appear below. A link to this page was sent to your email in case you wish to view these results at a later time without recalculating them. Please note that the results will be kept in the server for one month.
     <br><br></div>''')
         f.flush()
 
