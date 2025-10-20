@@ -735,9 +735,9 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                             signal=signal, coverage=effectors_coverage)
 
         # add a check for failed features jobs...
-        while not os.path.exists(os.path.join(output_dir_path, 'clean_orthologs_table.csv')):
+        # while not os.path.exists(os.path.join(output_dir_path, 'clean_orthologs_table.csv')):
             # make sure the find_OGs job was finished before proceeding
-            sleep(60)
+            # sleep(60)
         subprocess.check_output(['python', os.path.join(scripts_dir, 'merge_features_for_OGs.py'), output_dir_path,
                                  OG_input_f])
 
