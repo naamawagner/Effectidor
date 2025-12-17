@@ -167,7 +167,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
                         touch {os.path.join(tmp_dir, "genome_organization_features.done")}\tgenome_organization\n''')
             if MGE:
                 jobs_f.write(
-                    f'''module load MMseqs2/May2024; python {scripts_dir}/mobile_genetic_elements.py {gff_file} {working_directory}/mobile_genetic_elements.csv!@#\
+                    f'''module load MMseqs2/May2024; python {scripts_dir}/mobile_genetic_elements.py {gff_file} {ORFs_file} {working_directory}/mobile_genetic_elements.csv!@#\
                     touch {os.path.join(tmp_dir, "mobile_genetic_elements.csv.done")}\tmobile_genetic_elements\n''')
             if full_genome_f:
                 # regulatory elements features
