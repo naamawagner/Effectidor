@@ -1,8 +1,10 @@
 import os
 import csv
+from Bio import SeqIO
+from fasta_parser import parse_ORFs
 
 
-def parse_gff_for_MGE(gff_path: str) -> tuple[dict, dict, dict]:
+def parse_gff_for_MGE(gff_path: str, locus_dic: dict) -> tuple[dict, dict, dict]:
     mobile_element = {'integrase', 'recombinase', 'transposase'}
     exclude_element = {'reca', 'recb', 'recc', 'recd', 'rada', 'ruvc', 'recf', 'recbcd',
                        'uvrd'}
@@ -20,8 +22,47 @@ def parse_gff_for_MGE(gff_path: str) -> tuple[dict, dict, dict]:
                                          key_value in parts[-1].split(';') if '=' in key_value}
                 sequence_id: str = parts[0]
                 if parts[2] == 'CDS':
-                    product: str = attributes_dict.get('product', '').lower()
-                    locus_tag: str = attributes_dict.get('locus_tag', 'Unknown')
+                    product: str = attributes_dict.get('product', attributes_dict.get('Product', '')).lower()
+
+                    # Extract locus_tag using multiple methods (like pip_box_features.py)
+                    locus_tag: str = None
+                    is_locus_tag: bool = False
+                    features_l: list = parts[-1].split(';')
+
+                    # Method 1: locus_tag attribute
+                    for feature in features_l:
+                        if feature.startswith('locus'):
+                            locus_tag = feature.split('=')[1]
+                            is_locus_tag = True
+                            break
+
+                    # Method 2: ID=CDS:xxx format
+                    if not is_locus_tag:
+                        for feature in features_l:
+                            if feature.startswith('ID=CDS:'):
+                                locus_tag = feature.split(':')[1]
+                                is_locus_tag = True
+                                break
+
+                    # Method 3: Plain ID=xxx format (no CDS: prefix)
+                    if not is_locus_tag:
+                        for feature in features_l:
+                            if feature.startswith('ID=') and ':' not in feature:
+                                locus_tag = feature.split('=')[1]
+                                is_locus_tag = True
+                                break
+
+                    # Method 4: Search in locus_dic from ORF file
+                    if not is_locus_tag:
+                        for locus in locus_dic:
+                            if f'{locus};' in parts[-1]:
+                                locus_tag = locus
+                                is_locus_tag = True
+                                break
+
+                    if not is_locus_tag:
+                        continue
+
                     if any(element in product for element in mobile_element) and not any(
                             non_mge in product for non_mge in exclude_element):
                         if sequence_id not in mobile_genetic_elements:
@@ -105,11 +146,12 @@ def find_closest_mge(output_path: str, dict_orfs: dict, genomic_components: dict
             csv.writer(full_csvfile).writerow(closest_mge)
 
 
-def main(gff_path: str, output_path: str):
+def main(gff_path: str, orfs_path: str, output_path: str):
+    locus_dic: dict = parse_ORFs(orfs_path)
     mobile_elements: dict
     dict_orfs: dict
     genomic_components: dict
-    mobile_elements, dict_orfs, genomic_components = parse_gff_for_MGE(gff_path)
+    mobile_elements, dict_orfs, genomic_components = parse_gff_for_MGE(gff_path, locus_dic)
     for sequence_id in dict_orfs.keys():
         find_closest_mge(output_path, dict_orfs, genomic_components, sequence_id, mobile_elements)
     endfile = open(f'{output_path}.done', 'w')
@@ -124,8 +166,10 @@ if __name__ == '__main__':
     # Define arguments
     parser.add_argument('gff_file', help="Path to the GFF file",
                         type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
+    parser.add_argument('orfs_file', help="Path to the ORFs FASTA file",
+                        type=lambda path: path if os.path.exists(path) else parser.error(f'{path} does not exist!'))
     parser.add_argument('output_path', help="Output CSV file path for locus_tag and distance")
 
     args = parser.parse_args()
 
-    main(args.gff_file, args.output_path)
+    main(args.gff_file, args.orfs_file, args.output_path)

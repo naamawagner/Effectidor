@@ -93,7 +93,7 @@ def effectors_learn(error_path, ORFs_file, effectors_file, working_directory, tm
         # genome organization features
         Features_cmds.append(f'python {scripts_dir}/genome_organization.py {ORFs_file} {effectors_prots} {working_directory} {gff_file}')
         # mobile genetic elements features
-        Features_cmds.append(f'python {scripts_dir}/mobile_genetic_elements.py {gff_file} {working_directory}/mobile_genetic_elements.csv')
+        Features_cmds.append(f'python {scripts_dir}/mobile_genetic_elements.py {gff_file} {ORFs_file} {working_directory}/mobile_genetic_elements.csv')
         if full_genome_f:
             # regulatory elements features
             cmd = f'python {scripts_dir}/pip_box_features.py {ORFs_file} {working_directory} {gff_file} {full_genome_f}'
