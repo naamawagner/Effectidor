@@ -344,7 +344,7 @@ def validate_genome_and_gff(gff_f, genome_f, ORFs_f):
 
 
 def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path, gff_path,
-                   no_T3SS_path, error_path):
+                   no_T3SS_path, error_path, signal=False):
     logger.info('Validating input...')
     if ORFs_path.endswith('.zip'):
         ORFs_genomes = []
@@ -378,6 +378,9 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
             fail(error_msg, error_path)
         elif number_of_genomes > 1000:
             error_msg = f"There are {str(number_of_genomes)} genomes in your input! Effectidor's limit is 1,000 genomes."
+            fail(error_msg, error_path)
+        elif signal and number_of_genomes > 400:
+            error_msg = f"There are {str(number_of_genomes)} genomes in your input. Effectidor currently supports analyses that include the secretion signal feature on up to 400 genomes per analysis. To run it on larger amount of genomes, please run without this feature."
             fail(error_msg, error_path)
         shutil.rmtree(f'{output_dir_path}/ORFs_tmp', ignore_errors=True)
         ORFs_set = set(ORFs_genomes)
@@ -645,7 +648,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
         os.makedirs(tmp_dir, exist_ok=True)
 
         validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, host_proteome, genome_path,
-                       gff_path, no_T3SS, error_path)
+                       gff_path, no_T3SS, error_path, signal=signal)
 
         find_OGs_cmd = f'module load MMseqs2/May2024;!@#python ' \
                        f'{os.path.join(scripts_dir, "find_OGs_in_genomes.py")} ' \
