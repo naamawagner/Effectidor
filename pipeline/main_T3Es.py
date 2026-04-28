@@ -1,10 +1,11 @@
 import sys
 import os
 import logging
+import warnings
 import Bio.SeqUtils
 import effectidor_CONSTANTS as CONSTS  # from /effectidor/auxiliaries
 from time import sleep, time
-sys.path.append('/lsweb/josef_sites/effectidor/auxiliaries')
+sys.path.append('/effectidor/script/auxiliaries')
 from auxiliaries import fail, update_html, append_to_html  # from /effectidor/auxiliaries
 from Bio import SeqIO
 from T3Es_wrapper import effectors_learn
@@ -20,10 +21,34 @@ blast_datasets_dir = f'{data_dir}/blast_data'
 scripts_dir = CONSTS.EFFECTIDOR_EXEC
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('main')
+logging.captureWarnings(True)
+#logger = logging.getLogger('main')
+logger = logging.getLogger()
+
+for handler in logger.handlers[:]:
+    logger.removeHandler(handler)
+
+'''
+handler = logging.StreamHandler(sys.stdout)   # instead of stderr
+logger.addHandler(handler)
+'''
+
+# --- Handler 1: stdout for INFO and below ---
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setLevel(logging.DEBUG)      # or INFO
+stdout_handler.addFilter(lambda record: record.levelno < logging.ERROR)
+
+# --- Handler 2: stderr for ERROR and above ---
+stderr_handler = logging.StreamHandler(sys.stderr)
+stderr_handler.setLevel(logging.ERROR)
+
+# Add handlers
+logger.addHandler(stdout_handler)
+logger.addHandler(stderr_handler)
 
 ILLEGAL_CHARS = ':;,\'\"'
 
+python_ver = 'python' #/groups/pupko/modules/python-anaconda3.6.5/bin/python
 
 def has_illegal_chars(s):
     # Check if the first word in the string (which is the record ID) contains illegal characters
@@ -490,6 +515,9 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
                         if error_msg:
                             error_msg = f'In {genome_name}: {error_msg}'
                             fail(error_msg, error_path)
+                    else:
+                        error_msg = f'Illegal effectors input: {file} does not match any of the ORFs input names!'
+                        fail(error_msg, error_path)
         else:
             error_msg = verify_fasta_format(effectors_path, 'DNA', 'input effectors')
             if error_msg:
@@ -572,7 +600,7 @@ def validate_input(output_dir_path, ORFs_path, effectors_path, input_T3Es_path, 
     logger.info('finished validate_input')
 
 
-def cleanup_is_running(queues=('pupkolab', 'pupkoweb')):
+def cleanup_is_running(queues=('pupkolab', 'itaym-pool')):
     for q in queues:
         try:
             if subprocess.check_output(f'qstat {q} | grep cleanup_effec', shell=True):
@@ -624,7 +652,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                        f'{output_dir_path} {identity_cutoff} {coverage_cutoff}\tfind_OGs_effectidor\n'
         with open(os.path.join(output_dir_path, 'find_OGs.cmds'), 'w') as out_f:
             out_f.write(find_OGs_cmd)
-        cmd = f'python {os.path.join(scripts_dir,"auxiliaries", "q_submitter_power.py")} {os.path.join(output_dir_path, "find_OGs.cmds")} ' \
+        cmd = f'{python_ver} {os.path.join(scripts_dir,"auxiliaries", "q_submitter_power.py")} {os.path.join(output_dir_path, "find_OGs.cmds")} ' \
               f'{output_dir_path} -q {queue} '
         OGs_job_number = subprocess.check_output(cmd, shell=True).decode('ascii').strip()
         # make sure it was submitted successfully before proceeding
@@ -671,7 +699,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                 cmds_f = os.path.join(output_dir_path, 'Effectidor_runs', genome, 'features_wrapper.cmds')
                 with open(cmds_f, 'w') as job_f:
                     job_f.write(job_cmd)
-                cmd = f'python {os.path.join(scripts_dir, "auxiliaries", "q_submitter_power.py")} {cmds_f} ' \
+                cmd = f'{python_ver} {os.path.join(scripts_dir, "auxiliaries", "q_submitter_power.py")} {cmds_f} ' \
                       f'{os.path.join(output_dir_path, "Effectidor_runs", genome)} -q {queue}'
                 subprocess.check_output(cmd, shell=True)
                 # make sure it was submitted successfully before proceeding
@@ -716,7 +744,7 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
                        f'{output_dir_path}\tmerge_OGs_effectidor\n'
         with open(os.path.join(output_dir_path, 'merge_OGs.cmds'), 'w') as out_f:
             out_f.write(merge_OGs_cmd)
-        cmd = f'python {os.path.join(scripts_dir, "auxiliaries", "q_submitter_power.py")} {os.path.join(output_dir_path, "merge_OGs.cmds")} ' \
+        cmd = f'{python_ver} {os.path.join(scripts_dir, "auxiliaries", "q_submitter_power.py")} {os.path.join(output_dir_path, "merge_OGs.cmds")} ' \
               f'{output_dir_path} -q {queue} --memory 20'
         subprocess.check_output(cmd, shell=True)
         while not os.path.exists(os.path.join(output_dir_path, 'merge_OGs.done')):
@@ -795,14 +823,33 @@ def main(ORFs_path, output_dir_path, effectors_path, input_T3Es_path, host_prote
 
 def finalize_html(html_path, error_path, run_number, predicted_table, positives_table, T3SS_table, low_confidence_flag,
                   output_dir_path):
-    succeeded = not os.path.exists(error_path)
-    logger.info(f'SUCCEEDED = {succeeded}')
-    f = open(os.path.join(output_dir_path, f'effectidor_{run_number}.END_OK'), "w")
-    f.close()
+    
+    #check if word error exists in error_path
+    succeeded = True
+    if os.path.exists(error_path): 
+        if os.path.exists(error_path): 
+            pattern = "error"
+            exclude = "error in future"
+            exclude2 = "error in a future"
+            exclude3 = "Socket timed out"
+            with open(error_path) as f:
+                for line in f:
+                    if (pattern in line.lower()) and (exclude not in line.lower()) and (exclude2 not in line.lower()) and (exclude3 not in line.lower()):
+                        succeeded = False
+                    if line.find('returned non-zero exit status 1') != -1:
+                        succeeded = False
+                    if line.find('Illegal fasta file') != -1:
+                        succeeded = False
+                    if line.find('error:') != -1:
+                        succeeded = False
+        
+    logger.info(f'SUCCEEDED = {succeeded}') 
     if succeeded:
+        open(os.path.join(output_dir_path, f'effectidor_{run_number}.END_OK'), "w").close()
         edit_success_html(CONSTS, html_path, predicted_table, positives_table, T3SS_table,
                           low_confidence_flag, output_dir_path)
     else:
+        open(os.path.join(output_dir_path, f'effectidor_{run_number}.END_FAIL'), "w").close()
         edit_failure_html(CONSTS, error_path, html_path, run_number)
     add_closing_html_tags(html_path, CONSTS, run_number)
 
@@ -991,7 +1038,7 @@ if __name__ == '__main__':
     parser.add_argument('--exs', help='look for exs-box in promoters', action='store_true')
     parser.add_argument('--tts', help='look for tts-box in promoters', action='store_true')
     parser.add_argument('-q', '--queue_name', help='The cluster to which the job(s) will be submitted to',
-                        default='power-pupko')
+                        default='itaym-pool')
     parser.add_argument('--identity_cutoff', help='identity percentage cutoff for orthologs and paralogs search',
                         default='50')
     parser.add_argument('--coverage_cutoff', help='coverage percentage cutoff for orthologs and paralogs search',
